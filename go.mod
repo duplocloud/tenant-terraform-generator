@@ -1,4 +1,4 @@
-module duplo-tenant-terraform-generator
+module tenant-terraform-generator
 
 go 1.17
 

@@ -3,14 +3,14 @@ package main
 //ReadMe : https://dev.to/pdcommunity/write-terraform-files-in-go-with-hclwrite-2e1j
 import (
 	"crypto/tls"
-	"duplo-tenant-terraform-generator/duplosdk"
-	tfgenerator "duplo-tenant-terraform-generator/tf-generator"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"tenant-terraform-generator/duplosdk"
+	tfgenerator "tenant-terraform-generator/tf-generator"
 )
 
 func init() {
