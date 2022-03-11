@@ -1,11 +1,11 @@
 package tfgenerator
 
 import (
-	"duplo-tenant-terraform-generator/duplosdk"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"tenant-terraform-generator/duplosdk"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 
