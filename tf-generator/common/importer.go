@@ -1,4 +1,4 @@
-package tfgenerator
+package common
 
 import (
 	"context"
@@ -16,13 +16,13 @@ type Importer struct {
 }
 
 type ImportConfig struct {
-	resourceAddress string
-	resourceId      string
-	workingDir      string
+	ResourceAddress string
+	ResourceId      string
+	WorkingDir      string
 }
 
 func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
-	log.Printf("[TRACE] Importing terraform resource  : (%s, %s).", importConfig.resourceAddress, importConfig.resourceId)
+	log.Printf("[TRACE] Importing terraform resource  : (%s, %s).", importConfig.ResourceAddress, importConfig.ResourceId)
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
 		Version: version.Must(version.NewVersion("0.14.11")),
@@ -32,7 +32,7 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	if err != nil {
 		log.Fatalf("error installing Terraform: %s", err)
 	}
-	tf, err := tfexec.NewTerraform(importConfig.workingDir, execPath)
+	tf, err := tfexec.NewTerraform(importConfig.WorkingDir, execPath)
 	if err != nil {
 		log.Fatalf("error running NewTerraform: %s", err)
 	}
@@ -41,7 +41,7 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	if err != nil {
 		log.Fatalf("error running Init: %s", err)
 	}
-	err = tf.Import(context.Background(), importConfig.resourceAddress, importConfig.resourceId)
+	err = tf.Import(context.Background(), importConfig.ResourceAddress, importConfig.ResourceId)
 	if err != nil {
 		log.Fatalf("error running Import: %s", err)
 	}
@@ -53,5 +53,5 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	stateJson, err := json.Marshal(state.Values)
 	fmt.Println(string(stateJson))
 
-	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.resourceAddress, importConfig.resourceId)
+	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
 }

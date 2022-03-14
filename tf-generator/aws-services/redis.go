@@ -1,4 +1,4 @@
-package tfgenerator
+package awsservices
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
+	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
@@ -14,7 +15,7 @@ import (
 type Redis struct {
 }
 
-func (r *Redis) Generate(config *Config, client *duplosdk.Client) {
+func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Redis TF generation started. =====>")
 	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
 	list, clientErr := client.EcacheInstanceList(config.TenantId)
@@ -87,11 +88,11 @@ func (r *Redis) Generate(config *Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &Importer{}
-				importer.Import(config, &ImportConfig{
-					resourceAddress: "duplocloud_ecache_instance." + shortName,
-					resourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
-					workingDir:      workingDir,
+				importer := &common.Importer{}
+				importer.Import(config, &common.ImportConfig{
+					ResourceAddress: "duplocloud_ecache_instance." + shortName,
+					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
+					WorkingDir:      workingDir,
 				})
 			}
 		}

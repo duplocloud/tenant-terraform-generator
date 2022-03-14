@@ -1,4 +1,4 @@
-package tfgenerator
+package common
 
 import (
 	"fmt"

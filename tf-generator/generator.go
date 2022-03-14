@@ -1,8 +1,10 @@
 package tfgenerator
 
-import "tenant-terraform-generator/duplosdk"
+import (
+	"tenant-terraform-generator/duplosdk"
+	"tenant-terraform-generator/tf-generator/common"
+)
 
 type Generator interface {
-	Generate(config *Config, client *duplosdk.Client)
-	SetNext(Generator)
+	Generate(config *common.Config, client *duplosdk.Client)
 }

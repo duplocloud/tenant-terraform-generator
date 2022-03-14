@@ -1,4 +1,4 @@
-package tfgenerator
+package awsservices
 
 import (
 	"fmt"
@@ -6,21 +6,22 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
+	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
 
-type AppBackend struct {
+type AwsServicesBackend struct {
 }
 
-func (ab *AppBackend) Generate(config *Config, client *duplosdk.Client) {
-	log.Println("[TRACE] <====== App backend TF generation started. =====>")
+func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.Client) {
+	log.Println("[TRACE] <====== AWS Services backend TF generation started. =====>")
 	// create new empty hcl file object
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	path := filepath.Join("target", config.CustomerName, config.AppProject, "backend.tf")
+	path := filepath.Join("target", config.CustomerName, config.AwsServicesProject, "backend.tf")
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
@@ -41,7 +42,7 @@ func (ab *AppBackend) Generate(config *Config, client *duplosdk.Client) {
 	s3BackendBody.SetAttributeValue("region",
 		cty.StringVal("us-west-2")) // TODO - Take region from ENV VAR
 	s3BackendBody.SetAttributeValue("key",
-		cty.StringVal(config.AppProject))
+		cty.StringVal(config.AwsServicesProject))
 
 	s3BackendBody.SetAttributeValue("workspace_key_prefix",
 		cty.StringVal("tenant:"))
@@ -50,5 +51,5 @@ func (ab *AppBackend) Generate(config *Config, client *duplosdk.Client) {
 
 	fmt.Printf("%s", hclFile.Bytes())
 	tfFile.Write(hclFile.Bytes())
-	log.Println("[TRACE] <====== App Services backend TF generation done. =====>")
+	log.Println("[TRACE] <====== AWS Services backend TF generation done. =====>")
 }

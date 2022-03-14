@@ -1,4 +1,4 @@
-package tfgenerator
+package common
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ type OutputVarConfig struct {
 }
 
 type OutputVars struct {
-	targetLocation string
-	outputVars     []OutputVarConfig
+	TargetLocation string
+	OutputVars     []OutputVarConfig
 }
 
 func (ov *OutputVars) Generate() {
@@ -29,7 +29,7 @@ func (ov *OutputVars) Generate() {
 	// create new empty hcl file object
 	hclFile := hclwrite.NewEmptyFile()
 	// create new file on system
-	path := filepath.Join(ov.targetLocation, "outputs.tf")
+	path := filepath.Join(ov.TargetLocation, "outputs.tf")
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
@@ -38,7 +38,7 @@ func (ov *OutputVars) Generate() {
 
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
-	for _, outVarConfig := range ov.outputVars {
+	for _, outVarConfig := range ov.OutputVars {
 		if len(outVarConfig.Name) > 0 {
 			outputVarblock := rootBody.AppendNewBlock("output",
 				[]string{outVarConfig.Name})

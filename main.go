@@ -11,6 +11,9 @@ import (
 	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	tfgenerator "tenant-terraform-generator/tf-generator"
+	"tenant-terraform-generator/tf-generator/app"
+	"tenant-terraform-generator/tf-generator/common"
+	"tenant-terraform-generator/tf-generator/tenant"
 )
 
 func init() {
@@ -63,7 +66,7 @@ func validateAndGetDuploClient() *duplosdk.Client {
 	return c
 }
 
-func validateAndGetConfig() *tfgenerator.Config {
+func validateAndGetConfig() *common.Config {
 
 	tenantId := os.Getenv("tenant_id")
 	if len(tenantId) == 0 {
@@ -114,7 +117,7 @@ func validateAndGetConfig() *tfgenerator.Config {
 		generateTfState = generateTfStateBool
 	}
 
-	return &tfgenerator.Config{
+	return &common.Config{
 		TenantId:             tenantId,
 		CustomerName:         custName,
 		DuploProviderVersion: duploProviderVersion,
@@ -125,7 +128,7 @@ func validateAndGetConfig() *tfgenerator.Config {
 	}
 }
 
-func initTargetDir(config *tfgenerator.Config) {
+func initTargetDir(config *common.Config) {
 	tenantProject := filepath.Join("target", config.CustomerName, config.TenantProject)
 	err := os.RemoveAll(tenantProject)
 	if err != nil {
@@ -146,15 +149,24 @@ func initTargetDir(config *tfgenerator.Config) {
 	os.MkdirAll(appProject, os.ModePerm)
 }
 
-func startTFGeneration(config *tfgenerator.Config, client *duplosdk.Client) {
+func startTFGeneration(config *common.Config, client *duplosdk.Client) {
+	// Register all tf generators here in the list, Sequence matters.
+	generatorList := []tfgenerator.Generator{
+		&common.Provider{},
+		&tenant.Tenant{},
+		&app.Services{},
+	}
 
+	for _, g := range generatorList {
+		g.Generate(config, client)
+	}
 	// Generate provider terraform for admin-tenant, aws-services and app
-	providerTFGenerator := &tfgenerator.Provider{}
-	providerTFGenerator.Generate(config, client)
+	// providerTFGenerator := &tfgenerator.Provider{}
+	// providerTFGenerator.Generate(config, client)
 
 	// Generate admin-tenant terraform
-	tenantTFGenerator := &tfgenerator.Tenant{}
-	tenantTFGenerator.Generate(config, client)
+	// tenantTFGenerator := &tfgenerator.Tenant{}
+	// tenantTFGenerator.Generate(config, client)
 
 	//tenantBackendGenerator := &tfgenerator.TenantBackend{}
 	//tenantBackendGenerator.SetNext(tenantTFGenerator)
@@ -180,8 +192,8 @@ func startTFGeneration(config *tfgenerator.Config, client *duplosdk.Client) {
 	// appBackendTFGenerator := &tfgenerator.AppBackend{}
 	// appBackendTFGenerator.Generate(config, client)
 
-	servicesTFGenerator := &tfgenerator.Services{}
-	servicesTFGenerator.Generate(config, client)
+	// servicesTFGenerator := &tfgenerator.Services{}
+	// servicesTFGenerator.Generate(config, client)
 
 }
 

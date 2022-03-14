@@ -1,4 +1,4 @@
-package tfgenerator
+package app
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"tenant-terraform-generator/duplosdk"
+	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -17,7 +18,7 @@ import (
 type Services struct {
 }
 
-func (s *Services) Generate(config *Config, client *duplosdk.Client) {
+func (s *Services) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Duplo Services TF generation started. =====>")
 	workingDir := filepath.Join("target", config.CustomerName, config.AppProject)
 	list, clientErr := client.ReplicationControllerList(config.TenantId)
@@ -208,17 +209,17 @@ func (s *Services) Generate(config *Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &Importer{}
-				importer.Import(config, &ImportConfig{
-					resourceAddress: "duplocloud_duplo_service." + service.Name,
-					resourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerApiV2/" + service.Name,
-					workingDir:      workingDir,
+				importer := &common.Importer{}
+				importer.Import(config, &common.ImportConfig{
+					ResourceAddress: "duplocloud_duplo_service." + service.Name,
+					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerApiV2/" + service.Name,
+					WorkingDir:      workingDir,
 				})
 				if configPresent {
-					importer.Import(config, &ImportConfig{
-						resourceAddress: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
-						resourceId:      "v2/subscriptions/" + config.TenantId + "/ServiceLBConfigsV2/" + service.Name,
-						workingDir:      workingDir,
+					importer.Import(config, &common.ImportConfig{
+						ResourceAddress: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ServiceLBConfigsV2/" + service.Name,
+						WorkingDir:      workingDir,
 					})
 				}
 			}

@@ -1,4 +1,4 @@
-package tfgenerator
+package tenant
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
+	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -15,7 +16,7 @@ import (
 type Tenant struct {
 }
 
-func (t *Tenant) Generate(config *Config, client *duplosdk.Client) {
+func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	workingDir := filepath.Join("target", config.CustomerName, config.TenantProject)
 
 	log.Println("[TRACE] <====== Tenant TF generation started. =====>")
@@ -118,67 +119,67 @@ func (t *Tenant) Generate(config *Config, client *duplosdk.Client) {
 	// 4. ==========================================================================================
 	// Import all created resources.
 	if config.GenerateTfState {
-		importer := &Importer{}
-		importer.Import(config, &ImportConfig{
-			resourceAddress: "duplocloud_tenant.tenant",
-			resourceId:      "v2/admin/TenantV2/" + config.TenantId,
-			workingDir:      workingDir,
+		importer := &common.Importer{}
+		importer.Import(config, &common.ImportConfig{
+			ResourceAddress: "duplocloud_tenant.tenant",
+			ResourceId:      "v2/admin/TenantV2/" + config.TenantId,
+			WorkingDir:      workingDir,
 		})
-		importer.Import(config, &ImportConfig{
-			resourceAddress: "duplocloud_tenant_config.tenant-config",
-			resourceId:      config.TenantId,
-			workingDir:      workingDir,
+		importer.Import(config, &common.ImportConfig{
+			ResourceAddress: "duplocloud_tenant_config.tenant-config",
+			ResourceId:      config.TenantId,
+			WorkingDir:      workingDir,
 		})
 	}
 }
 
 func generateVars(workingDir string, duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfrastructureConfig) {
-	varConfigs := make(map[string]VarConfig)
+	varConfigs := make(map[string]common.VarConfig)
 
-	regionVar := VarConfig{
+	regionVar := common.VarConfig{
 		Name:       "region",
 		DefaultVal: infraConfig.Region,
 		TypeVal:    "string",
 	}
 	varConfigs["region"] = regionVar
 
-	infraVar := VarConfig{
+	infraVar := common.VarConfig{
 		Name:       "infra_name",
 		DefaultVal: duplo.PlanID,
 		TypeVal:    "string",
 	}
 	varConfigs["infra_name"] = infraVar
 
-	certVar := VarConfig{
+	certVar := common.VarConfig{
 		Name:       "cert_arn",
 		DefaultVal: "null",
 		TypeVal:    "string",
 	}
 	varConfigs["cert_arn"] = certVar
 
-	tenantNameVar := VarConfig{
+	tenantNameVar := common.VarConfig{
 		Name:       "tenant_name",
 		DefaultVal: duplo.AccountName,
 		TypeVal:    "string",
 	}
 	varConfigs["tenant_name"] = tenantNameVar
 
-	vars := make([]VarConfig, len(varConfigs))
+	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
 	}
 
-	varsGenerator := Vars{
-		targetLocation: workingDir,
-		vars:           vars,
+	varsGenerator := common.Vars{
+		TargetLocation: workingDir,
+		Vars:           vars,
 	}
 	varsGenerator.Generate()
 }
 
 func generateOutputVars(workingDir string) {
-	outVarConfigs := make(map[string]OutputVarConfig)
+	outVarConfigs := make(map[string]common.OutputVarConfig)
 
-	tenantNameVar := OutputVarConfig{
+	tenantNameVar := common.OutputVarConfig{
 		Name:          "tenant_name",
 		ActualVal:     "duplocloud_tenant.tenant.account_name",
 		DescVal:       "The tenant name",
@@ -186,7 +187,7 @@ func generateOutputVars(workingDir string) {
 	}
 	outVarConfigs["tenant_name"] = tenantNameVar
 
-	tenantIdVar := OutputVarConfig{
+	tenantIdVar := common.OutputVarConfig{
 		Name:          "tenant_id",
 		ActualVal:     "duplocloud_tenant.tenant.tenant_id",
 		DescVal:       "The tenant ID",
@@ -194,7 +195,7 @@ func generateOutputVars(workingDir string) {
 	}
 	outVarConfigs["tenant_id"] = tenantIdVar
 
-	certVar := OutputVarConfig{
+	certVar := common.OutputVarConfig{
 		Name:          "cert_arn",
 		ActualVal:     "var.cert_arn",
 		DescVal:       "The duplo plan certificate arn.",
@@ -202,14 +203,14 @@ func generateOutputVars(workingDir string) {
 	}
 	outVarConfigs["cert_arn"] = certVar
 
-	outVars := make([]OutputVarConfig, len(outVarConfigs))
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
 	for _, v := range outVarConfigs {
 		outVars = append(outVars, v)
 	}
 
-	outVarsGenerator := OutputVars{
-		targetLocation: workingDir,
-		outputVars:     outVars,
+	outVarsGenerator := common.OutputVars{
+		TargetLocation: workingDir,
+		OutputVars:     outVars,
 	}
 	outVarsGenerator.Generate()
 }
