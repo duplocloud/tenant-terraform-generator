@@ -140,19 +140,6 @@ func (c *Client) TenantGetKafkaCluster(tenantID string, name string) (*DuploKafk
 	}, nil
 }
 
-func (c *Client) TenantGetAwsCloudResource(tenantID string, resourceType int, name string) (*DuploAwsCloudResource, ClientError) {
-	allResources, err := c.TenantListAwsCloudResources(tenantID)
-	if err != nil {
-		return nil, err
-	}
-	for _, resource := range *allResources {
-		if resource.Type == resourceType && resource.Name == name {
-			return &resource, nil
-		}
-	}
-	return nil, nil
-}
-
 func (c *Client) TenantListKafkaCluster(tenantID string) (*[]DuploKafkaCluster, ClientError) {
 	allResources, err := c.TenantListAwsCloudResources(tenantID)
 	m := make(map[string]DuploKafkaCluster)

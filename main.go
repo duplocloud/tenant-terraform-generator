@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	tfgenerator "tenant-terraform-generator/tf-generator"
-	"tenant-terraform-generator/tf-generator/app"
+	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
 	"tenant-terraform-generator/tf-generator/tenant"
 )
@@ -154,7 +154,8 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	generatorList := []tfgenerator.Generator{
 		&common.Provider{},
 		&tenant.Tenant{},
-		&app.Services{},
+		//&app.Services{},
+		&awsservices.S3Bucket{},
 	}
 
 	for _, g := range generatorList {
