@@ -22,6 +22,7 @@ type ImportConfig struct {
 }
 
 func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
+	log.Println("[TRACE] <================================== TF Import in progress. ==================================>")
 	log.Printf("[TRACE] Importing terraform resource  : (%s, %s).", importConfig.ResourceAddress, importConfig.ResourceId)
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
@@ -54,4 +55,5 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	fmt.Println(string(stateJson))
 
 	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
+	log.Println("[TRACE] <====================================================================>")
 }
