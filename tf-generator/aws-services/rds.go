@@ -17,7 +17,7 @@ type Rds struct {
 
 func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== RDS TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.RdsInstanceList(config.TenantId)
 	//Get tenant from duplo
 

@@ -22,9 +22,9 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	tenantProject := filepath.Join("target", config.CustomerName, config.TenantProject, "provider.tf")
-	awsServicesProject := filepath.Join("target", config.CustomerName, config.AwsServicesProject, "provider.tf")
-	appProject := filepath.Join("target", config.CustomerName, config.AppProject, "provider.tf")
+	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject, "provider.tf")
+	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject, "provider.tf")
+	appProject := filepath.Join(config.TFCodePath, config.AppProject, "provider.tf")
 	tenantProjectFile, err := os.Create(tenantProject)
 	if err != nil {
 		fmt.Println(err)

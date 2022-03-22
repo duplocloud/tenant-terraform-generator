@@ -76,6 +76,13 @@ func validateAndGetConfig() *common.Config {
 		os.Exit(1)
 	}
 
+	awsAccountId := os.Getenv("aws_account_id")
+	if len(tenantId) == 0 {
+		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "aws_account_id")
+		log.Printf("[TRACE] - %s", err)
+		os.Exit(1)
+	}
+
 	custName := os.Getenv("customer_name")
 	if len(custName) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "customer_name")
@@ -126,28 +133,37 @@ func validateAndGetConfig() *common.Config {
 		AwsServicesProject:   awsServicesProject,
 		AppProject:           appProject,
 		GenerateTfState:      generateTfState,
+		AccountID:            awsAccountId,
 	}
 }
 
 func initTargetDir(config *common.Config) {
-	tenantProject := filepath.Join("target", config.CustomerName, config.TenantProject)
+	config.TFCodePath = filepath.Join("target", config.CustomerName, "terraform")
+	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
 	err := os.RemoveAll(tenantProject)
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.MkdirAll(tenantProject, os.ModePerm)
-	awsServicesProject := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	err = os.RemoveAll(awsServicesProject)
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.MkdirAll(awsServicesProject, os.ModePerm)
-	appProject := filepath.Join("target", config.CustomerName, config.AppProject)
+	appProject := filepath.Join(config.TFCodePath, config.AppProject)
 	err = os.RemoveAll(appProject)
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.MkdirAll(appProject, os.ModePerm)
+	scriptsPath := filepath.Join("target", config.CustomerName, "scripts")
+	err = os.RemoveAll(scriptsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	os.MkdirAll(scriptsPath, os.ModePerm)
+	duplosdk.CopyDirectory("./scripts", scriptsPath)
 }
 
 func startTFGeneration(config *common.Config, client *duplosdk.Client) {
@@ -158,6 +174,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&tenant.TenantBackend{},
 		&awsservices.AwsServicesBackend{},
 		&awsservices.Hosts{},
+		&awsservices.ASG{},
 		&awsservices.Rds{},
 		&awsservices.Redis{},
 		&awsservices.Kafka{},

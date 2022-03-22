@@ -21,7 +21,7 @@ func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	path := filepath.Join("target", config.CustomerName, config.AwsServicesProject, "backend.tf")
+	path := filepath.Join(config.TFCodePath, config.AwsServicesProject, "backend.tf")
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)

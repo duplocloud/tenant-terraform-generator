@@ -17,7 +17,7 @@ type Hosts struct {
 
 func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Hosts TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.NativeHostGetList(config.TenantId)
 	//Get tenant from duplo
 
@@ -30,7 +30,9 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 		for _, host := range *list {
 			shortName := host.FriendlyName[len("duploservices-"+host.UserAccount+"-"):len(host.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo host : %s", host.FriendlyName)
-
+			if isPartOfAsg(host) {
+				continue
+			}
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -69,8 +71,10 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 				cty.NumberIntVal(int64(host.AgentPlatform)))
 			hostBody.SetAttributeValue("zone",
 				cty.NumberIntVal(int64(host.Zone)))
-			hostBody.SetAttributeValue("user_account",
-				cty.StringVal(host.UserAccount))
+			if len(host.UserAccount) > 0 {
+				hostBody.SetAttributeValue("user_account",
+					cty.StringVal(host.UserAccount))
+			}
 			hostBody.SetAttributeValue("is_minion",
 				cty.BoolVal(host.IsMinion))
 			hostBody.SetAttributeValue("is_ebs_optimized",
@@ -81,8 +85,10 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 				cty.BoolVal(host.AllocatedPublicIP))
 			hostBody.SetAttributeValue("cloud",
 				cty.NumberIntVal(int64(host.Cloud)))
-			hostBody.SetAttributeValue("base64_user_data",
-				cty.StringVal(host.Base64UserData))
+			if len(host.Base64UserData) > 0 {
+				hostBody.SetAttributeValue("base64_user_data",
+					cty.StringVal(host.Base64UserData))
+			}
 
 			if host.MinionTags != nil {
 				for _, duploObject := range *host.MinionTags {
@@ -145,4 +151,13 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 		}
 	}
 	log.Println("[TRACE] <====== Hosts TF generation done. =====>")
+}
+
+func isPartOfAsg(host duplosdk.DuploNativeHost) bool {
+	asgTagKey := []string{"aws:autoscaling:groupName"}
+	asgTag := duplosdk.SelectKeyValues(host.Tags, asgTagKey)
+	if asgTag != nil && len(*asgTag) > 0 {
+		return true
+	}
+	return false
 }

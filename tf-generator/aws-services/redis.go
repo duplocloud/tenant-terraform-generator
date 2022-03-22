@@ -17,7 +17,7 @@ type Redis struct {
 
 func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Redis TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.EcacheInstanceList(config.TenantId)
 	//Get tenant from duplo
 

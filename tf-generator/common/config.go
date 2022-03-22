@@ -10,4 +10,6 @@ type Config struct {
 	AwsServicesProject   string
 	AppProject           string
 	GenerateTfState      bool
+	AccountID            string
+	TFCodePath           string
 }

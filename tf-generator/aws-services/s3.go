@@ -18,7 +18,7 @@ type S3Bucket struct {
 
 func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== S3 bucket TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListS3Buckets(config.TenantId)
 
 	//duplo, clientErr := client.TenantGetS3BucketSettings(config.TenantId)

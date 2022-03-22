@@ -21,7 +21,7 @@ func (ab *AppBackend) Generate(config *common.Config, client *duplosdk.Client) {
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	path := filepath.Join("target", config.CustomerName, config.AppProject, "backend.tf")
+	path := filepath.Join(config.TFCodePath, config.AppProject, "backend.tf")
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)

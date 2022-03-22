@@ -17,7 +17,7 @@ type Tenant struct {
 }
 
 func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
-	workingDir := filepath.Join("target", config.CustomerName, config.TenantProject)
+	workingDir := filepath.Join(config.TFCodePath, config.TenantProject)
 
 	log.Println("[TRACE] <====== Tenant TF generation started. =====>")
 	duplo, clientErr := client.TenantGet(config.TenantId)

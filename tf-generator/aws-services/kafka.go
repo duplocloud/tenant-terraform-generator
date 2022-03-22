@@ -17,7 +17,7 @@ type Kafka struct {
 
 func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== kafka TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AwsServicesProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListKafkaCluster(config.TenantId)
 	//Get tenant from duplo
 

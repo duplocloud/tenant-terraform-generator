@@ -19,7 +19,7 @@ type ECS struct {
 
 func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Duplo ECS TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AppProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 
 	list, clientErr := client.EcsServiceList(config.TenantId)
 

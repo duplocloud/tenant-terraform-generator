@@ -20,7 +20,7 @@ type Services struct {
 
 func (s *Services) Generate(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== Duplo Services TF generation started. =====>")
-	workingDir := filepath.Join("target", config.CustomerName, config.AppProject)
+	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.ReplicationControllerList(config.TenantId)
 
 	if clientErr != nil {
