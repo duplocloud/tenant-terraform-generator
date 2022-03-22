@@ -5,6 +5,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/hashicorp/hcl/v2"
+
 	"tenant-terraform-generator/duplosdk"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -63,15 +66,27 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		}))
 
 	// Add duplo provider block
-	provider := rootBody.AppendNewBlock("provider",
+	duploProvider := rootBody.AppendNewBlock("provider",
 		[]string{"duplocloud"})
 
-	providerBody := provider.Body()
+	duploProviderBody := duploProvider.Body()
 	// providerBody.SetAttributeValue("duplo_host",
 	// 	cty.StringVal(client.HostURL))
 	// providerBody.SetAttributeValue("duplo_token",
 	// 	cty.StringVal(client.Token))
-	providerBody.AppendNewline()
+	duploProviderBody.AppendNewline()
+
+	awsProvider := rootBody.AppendNewBlock("provider",
+		[]string{"aws"})
+	awsProviderBody := awsProvider.Body()
+	awsProviderBody.SetAttributeTraversal("region", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "region",
+		},
+	})
 	fmt.Printf("%s", hclFile.Bytes())
 	tenantProjectFile.Write(hclFile.Bytes())
 	awsServicesProjectFile.Write(hclFile.Bytes())

@@ -210,16 +210,18 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// }
 
 	tenantGeneratorList := []tfgenerator.Generator{
-		&tenant.TenantBackend{},
 		&tenant.Tenant{},
 	}
+	if config.S3Backend {
+		tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
+	}
+
 	for _, g := range tenantGeneratorList {
 		g.Generate(config, client)
 	}
 
 	//tf = tfInit(config, config.AwsServicesDir)
 	awsServcesGeneratorList := []tfgenerator.Generator{
-		&awsservices.AwsServicesBackend{},
 		&awsservices.Hosts{},
 		&awsservices.ASG{},
 		&awsservices.Rds{},
@@ -227,16 +229,20 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.Kafka{},
 		&awsservices.S3Bucket{},
 	}
-
+	if config.S3Backend {
+		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
+	}
 	for _, g := range awsServcesGeneratorList {
 		g.Generate(config, client)
 	}
 
 	//tf = tfInit(config, config.AppDir)
 	appGeneratorList := []tfgenerator.Generator{
-		&app.AppBackend{},
 		&app.Services{},
 		&app.ECS{},
+	}
+	if config.S3Backend {
+		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
 	}
 	for _, g := range appGeneratorList {
 		g.Generate(config, client)

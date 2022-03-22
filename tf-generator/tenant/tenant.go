@@ -47,7 +47,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	path := filepath.Join(workingDir, "tenant.tf")
+	path := filepath.Join(workingDir, "main.tf")
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
@@ -57,6 +57,44 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
 
+	localsBlock := rootBody.AppendNewBlock("locals",
+		nil)
+	localsBlockBody := localsBlock.Body()
+
+	localsBlockBody.SetAttributeTraversal("region", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "region",
+		},
+	})
+	localsBlockBody.SetAttributeTraversal("plan_id", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "infra_name",
+		},
+	})
+	localsBlockBody.SetAttributeTraversal("cert_arn", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "cert_arn",
+		},
+	})
+	localsBlockBody.SetAttributeTraversal("tenant_name", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "terraform",
+		},
+		hcl.TraverseAttr{
+			Name: "workspace",
+		},
+	})
+	localsBlockBody.AppendNewline()
+
 	// Add duplocloud_tenant resource
 	tenant := rootBody.AppendNewBlock("resource",
 		[]string{"duplocloud_tenant",
@@ -64,7 +102,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	tenantBody := tenant.Body()
 	tenantBody.SetAttributeTraversal("account_name", hcl.Traversal{
 		hcl.TraverseRoot{
-			Name: "var",
+			Name: "local",
 		},
 		hcl.TraverseAttr{
 			Name: "tenant_name",
@@ -72,10 +110,10 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	})
 	tenantBody.SetAttributeTraversal("plan_id", hcl.Traversal{
 		hcl.TraverseRoot{
-			Name: "var",
+			Name: "local",
 		},
 		hcl.TraverseAttr{
-			Name: "infra_name",
+			Name: "plan_id",
 		},
 	})
 	tenantBody.SetAttributeValue("allow_deletion",
