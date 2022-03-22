@@ -37,8 +37,7 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	if err != nil {
 		log.Fatalf("error running NewTerraform: %s", err)
 	}
-
-	err = tf.Init(context.Background(), tfexec.Upgrade(true))
+	err = tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.BackendConfig("bucket=duplo-tfstate-"+config.AccountID), tfexec.BackendConfig("dynamodb_table=duplo-tfstate-"+config.AccountID+"-lock"))
 	if err != nil {
 		log.Fatalf("error running Init: %s", err)
 	}
