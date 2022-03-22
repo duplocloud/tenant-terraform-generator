@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"tenant-terraform-generator/duplosdk"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
@@ -37,10 +38,41 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	if err != nil {
 		log.Fatalf("error running NewTerraform: %s", err)
 	}
-	err = tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.BackendConfig("bucket=duplo-tfstate-"+config.AccountID), tfexec.BackendConfig("dynamodb_table=duplo-tfstate-"+config.AccountID+"-lock"))
+	//backend := "-backend-config=bucket=duplo-tfstate-" + config.AccountID + " -backend-config=dynamodb_table=duplo-tfstate-" + config.AccountID + "-lock"
+	//err = tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.BackendConfig("bucket=duplo-tfstate-"+config.AccountID), tfexec.BackendConfig("dynamodb_table=duplo-tfstate-"+config.AccountID+"-lock"))
+	if config.S3Backend {
+		err = tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.BackendConfig("bucket=duplo-tfstate-"+config.AccountID))
+	} else {
+		err = tf.Init(context.Background(), tfexec.Upgrade(true))
+	}
+
 	if err != nil {
 		log.Fatalf("error running Init: %s", err)
 	}
+
+	workspaceList, activeWorkspace, err := tf.WorkspaceList(context.Background())
+	if err != nil {
+		log.Fatalf("error running tf workspace list: %s", err)
+	}
+	if len(workspaceList) > 0 {
+		log.Printf("[TRACE] Workspace List (%s).", workspaceList)
+		log.Printf("[TRACE] Active Workspace (%s).", activeWorkspace)
+	}
+
+	if duplosdk.Contains(workspaceList, config.TenantName) {
+		err = tf.WorkspaceSelect(context.Background(), config.TenantName)
+		if err != nil {
+			log.Fatalf("error running tf workspace select: %s", err)
+		}
+		log.Printf("[TRACE] (%s) workspace is selected.", config.TenantName)
+	} else {
+		err := tf.WorkspaceNew(context.Background(), config.TenantName)
+		if err != nil {
+			log.Fatalf("error running tf workspace new: %s", err)
+		}
+		log.Printf("[TRACE] (%s) workspace is created.", config.TenantName)
+	}
+
 	err = tf.Import(context.Background(), importConfig.ResourceAddress, importConfig.ResourceId)
 	if err != nil {
 		log.Fatalf("error running Import: %s", err)
