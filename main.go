@@ -171,8 +171,8 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	generatorList := []tfgenerator.Generator{
 		&common.Provider{},
 		// admin-tenant
-		&tenant.Tenant{},
 		&tenant.TenantBackend{},
+		&tenant.Tenant{},
 		//aws-services
 		&awsservices.AwsServicesBackend{},
 		&awsservices.Hosts{},
