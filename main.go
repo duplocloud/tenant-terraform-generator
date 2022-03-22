@@ -170,8 +170,10 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// Register all tf generators here in the list, Sequence matters.
 	generatorList := []tfgenerator.Generator{
 		&common.Provider{},
+		// admin-tenant
 		&tenant.Tenant{},
 		&tenant.TenantBackend{},
+		//aws-services
 		&awsservices.AwsServicesBackend{},
 		&awsservices.Hosts{},
 		&awsservices.ASG{},
@@ -179,6 +181,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.Redis{},
 		&awsservices.Kafka{},
 		&awsservices.S3Bucket{},
+		//app
 		&app.AppBackend{},
 		&app.Services{},
 		&app.ECS{},
@@ -187,71 +190,4 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	for _, g := range generatorList {
 		g.Generate(config, client)
 	}
-	// Generate provider terraform for admin-tenant, aws-services and app
-	// providerTFGenerator := &tfgenerator.Provider{}
-	// providerTFGenerator.Generate(config, client)
-
-	// Generate admin-tenant terraform
-	// tenantTFGenerator := &tfgenerator.Tenant{}
-	// tenantTFGenerator.Generate(config, client)
-
-	//tenantBackendGenerator := &tfgenerator.TenantBackend{}
-	//tenantBackendGenerator.SetNext(tenantTFGenerator)
-
-	// Generate aws-services terraform
-	// awsServicesBackendTFGenerator := &tfgenerator.AwsServicesBackend{}
-	// awsServicesBackendTFGenerator.Generate(config, client)
-
-	// hostsTFGenerator := &tfgenerator.Hosts{}
-	// hostsTFGenerator.Generate(config, client)
-
-	// rdsTFGenerator := &tfgenerator.Rds{}
-	// rdsTFGenerator.Generate(config, client)
-
-	// redisTFGenerator := &tfgenerator.Redis{}
-	// redisTFGenerator.Generate(config, client)
-
-	// kafkaTFGenerator := &tfgenerator.Kafka{}
-	// kafkaTFGenerator.Generate(config, client)
-
-	// Generate app terraform
-
-	// appBackendTFGenerator := &tfgenerator.AppBackend{}
-	// appBackendTFGenerator.Generate(config, client)
-
-	// servicesTFGenerator := &tfgenerator.Services{}
-	// servicesTFGenerator.Generate(config, client)
-
 }
-
-// func tfRunTest(config *tfgenerator.Config) {
-// 	installer := &releases.ExactVersion{
-// 		Product: product.Terraform,
-// 		Version: version.Must(version.NewVersion("0.14.11")),
-// 	}
-
-// 	execPath, err := installer.Install(context.Background())
-// 	if err != nil {
-// 		log.Fatalf("error installing Terraform: %s", err)
-// 	}
-// 	workingDir := filepath.Join("target", config.CustomerName, config.TenantProject)
-// 	tf, err := tfexec.NewTerraform(workingDir, execPath)
-// 	if err != nil {
-// 		log.Fatalf("error running NewTerraform: %s", err)
-// 	}
-
-// 	err = tf.Init(context.Background(), tfexec.Upgrade(true))
-// 	if err != nil {
-// 		log.Fatalf("error running Init: %s", err)
-// 	}
-// 	err = tf.Import(context.Background(), "duplocloud_tenant.tenant", "v2/admin/TenantV2/"+config.TenantId)
-// 	if err != nil {
-// 		log.Fatalf("error running Import: %s", err)
-// 	}
-// 	state, err := tf.Show(context.Background())
-// 	if err != nil {
-// 		log.Fatalf("error running Show: %s", err)
-// 	}
-// 	stateJson, err := json.Marshal(state.Values)
-// 	fmt.Println(string(stateJson)) // "0.1"
-// }
