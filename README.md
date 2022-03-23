@@ -30,7 +30,7 @@ export AWS_DEFAULT_REGION="us-west-2"
 export AWS_PROFILE="duplo-msp"
 ```
 
-4. S3 Bucket for terraform remote state which is created by duplo automatically with the name `duplo-tfstate-873909615026`
+4. S3 Bucket for terraform remote state which is created by duplo automatically with the name `duplo-tfstate-128329325849`
 
    
 
