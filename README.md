@@ -46,9 +46,9 @@ export AWS_PROFILE="duplo-msp"
   make run
   ```
 
-- Output : target folder is created along with customer name as mention in env vars. This will contain all terraform projects as mentioned below.
+- **Output** : target folder is created along with customer name as mention in env vars. This will contain all terraform projects as mentioned below.
 
   - **Project : admin-tenant** This projects manages creation of duplo tenant.
   - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Elastic Search inside duplo.
-  - **Project : aws-services** This project manages duplo services like eks and ecs etc.
+  - **Project : app** This project manages duplo services like eks and ecs etc.
 
