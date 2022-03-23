@@ -222,6 +222,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 
 	//tf = tfInit(config, config.AwsServicesDir)
 	awsServcesGeneratorList := []tfgenerator.Generator{
+		&awsservices.AwsServicesMain{},
 		&awsservices.Hosts{},
 		&awsservices.ASG{},
 		&awsservices.Rds{},

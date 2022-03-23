@@ -8,6 +8,7 @@ import (
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -49,16 +50,16 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) {
 				[]string{"duplocloud_rds_instance",
 					shortName})
 			rdsBody := rdsBlock.Body()
-			// rdsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			rdsBody.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			rdsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			// rdsBody.SetAttributeValue("tenant_id",
+			// 	cty.StringVal(config.TenantId))
 			rdsBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
 			rdsBody.SetAttributeValue("engine",

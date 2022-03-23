@@ -9,6 +9,7 @@ import (
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -61,16 +62,16 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
 				[]string{"duplocloud_s3_bucket",
 					shortName})
 			s3Body := s3Block.Body()
-			// s3Body.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			s3Body.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			s3Body.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			// s3Body.SetAttributeValue("tenant_id",
+			// 	cty.StringVal(config.TenantId))
 			s3Body.SetAttributeValue("name",
 				cty.StringVal(shortName))
 

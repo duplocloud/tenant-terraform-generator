@@ -8,6 +8,7 @@ import (
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -54,16 +55,16 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 				[]string{"duplocloud_aws_kafka_cluster",
 					shortName})
 			kafkaBody := kafkaBlock.Body()
-			// kafkaBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			kafkaBody.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			kafkaBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			// kafkaBody.SetAttributeValue("tenant_id",
+			// 	cty.StringVal(config.TenantId))
 			kafkaBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
 

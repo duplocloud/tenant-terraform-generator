@@ -93,7 +93,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 			Name: "workspace",
 		},
 	})
-	localsBlockBody.AppendNewline()
+	rootBody.AppendNewline()
 
 	// Add duplocloud_tenant resource
 	tenant := rootBody.AppendNewBlock("resource",
@@ -118,7 +118,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	})
 	tenantBody.SetAttributeValue("allow_deletion",
 		cty.BoolVal(true))
-
+	rootBody.AppendNewline()
 	// Add duplocloud_tenant_config resource
 
 	tenantConfig := rootBody.AppendNewBlock("resource",
@@ -240,6 +240,14 @@ func generateOutputVars(workingDir string) {
 		RootTraversal: true,
 	}
 	outVarConfigs["cert_arn"] = certVar
+
+	regionVar := common.OutputVarConfig{
+		Name:          "region",
+		ActualVal:     "var.region",
+		DescVal:       "The duplo plan region.",
+		RootTraversal: true,
+	}
+	outVarConfigs["region"] = regionVar
 
 	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
 	for _, v := range outVarConfigs {

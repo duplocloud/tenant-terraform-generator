@@ -8,6 +8,7 @@ import (
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -51,16 +52,16 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) {
 				[]string{"duplocloud_aws_host",
 					shortName})
 			hostBody := hostBlock.Body()
-			// hostBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			hostBody.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			hostBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			// hostBody.SetAttributeValue("tenant_id",
+			// 	cty.StringVal(config.TenantId))
 			hostBody.SetAttributeValue("friendly_name",
 				cty.StringVal(shortName))
 			hostBody.SetAttributeValue("image_id",
