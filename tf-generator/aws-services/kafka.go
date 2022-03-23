@@ -16,7 +16,7 @@ import (
 type Kafka struct {
 }
 
-func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
+func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== kafka TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListKafkaCluster(config.TenantId)
@@ -24,9 +24,9 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
-
+	tfContext := common.TFContext{}
 	if list != nil {
 		for _, kafka := range *list {
 			shortName := kafka.Name[len("duploservices-"+config.TenantName+"-"):len(kafka.Name)]
@@ -35,7 +35,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 			clusterInfo, clientErr := client.TenantGetKafkaClusterInfo(config.TenantId, kafka.Arn)
 			if clientErr != nil {
 				fmt.Println(clientErr)
-				return
+				return nil, clientErr
 			}
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -45,7 +45,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return nil, err
 			}
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
@@ -90,14 +90,16 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &common.Importer{}
-				importer.Import(config, &common.ImportConfig{
+				importConfigs := []common.ImportConfig{}
+				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_kafka_cluster." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
 					WorkingDir:      workingDir,
 				})
+				tfContext.ImportConfigs = importConfigs
 			}
 		}
 	}
 	log.Println("[TRACE] <====== kafka TF generation done. =====>")
+	return &tfContext, nil
 }

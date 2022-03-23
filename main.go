@@ -209,18 +209,17 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// 	tfNewWorkspace(config, tf)
 	// }
 
+	log.Println("[TRACE] <====== Start TF generation for tenant project. =====>")
 	tenantGeneratorList := []tfgenerator.Generator{
 		&tenant.Tenant{},
 	}
 	if config.S3Backend {
 		tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
 	}
+	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
+	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
-	for _, g := range tenantGeneratorList {
-		g.Generate(config, client)
-	}
-
-	//tf = tfInit(config, config.AwsServicesDir)
+	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
 	awsServcesGeneratorList := []tfgenerator.Generator{
 		&awsservices.AwsServicesMain{},
 		&awsservices.Hosts{},
@@ -233,11 +232,10 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	if config.S3Backend {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
 	}
-	for _, g := range awsServcesGeneratorList {
-		g.Generate(config, client)
-	}
+	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
+	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
-	//tf = tfInit(config, config.AppDir)
+	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
 	appGeneratorList := []tfgenerator.Generator{
 		&app.Services{},
 		&app.ECS{},
@@ -245,14 +243,65 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	if config.S3Backend {
 		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
 	}
-	for _, g := range appGeneratorList {
-		g.Generate(config, client)
-	}
-	if config.GenerateTfState {
+	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
+	log.Println("[TRACE] <====== End TF generation for app project. =====>")
+
+	if config.GenerateTfState && config.S3Backend {
 		tf = tfInit(config, config.AppDir)
 		tfDeleteWorkspace(config, tf)
 	}
 
+}
+
+func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, generatorList []tfgenerator.Generator, targetLocation string) {
+
+	tfContext := common.TFContext{
+		TargetLocation: targetLocation,
+		InputVars:      []common.VarConfig{},
+		OutputVars:     []common.OutputVarConfig{},
+	}
+
+	// 1. Generate Duplo TF resources.
+	for _, g := range generatorList {
+		c, err := g.Generate(config, client)
+		if err != nil {
+			log.Fatalf("error running admin tenant tf generation: %s", err)
+		}
+		if c != nil {
+			if len(c.InputVars) > 0 {
+				tfContext.InputVars = append(tfContext.InputVars, c.InputVars...)
+			}
+			if len(c.OutputVars) > 0 {
+				tfContext.OutputVars = append(tfContext.OutputVars, c.OutputVars...)
+			}
+			if len(c.ImportConfigs) > 0 {
+				tfContext.ImportConfigs = append(tfContext.ImportConfigs, c.ImportConfigs...)
+			}
+		}
+	}
+	// 2. Generate input vars.
+	if len(tfContext.InputVars) > 0 {
+		varsGenerator := common.Vars{
+			TargetLocation: tfContext.TargetLocation,
+			Vars:           tfContext.InputVars,
+		}
+		varsGenerator.Generate()
+	}
+	// 3. Generate output vars.
+	if len(tfContext.OutputVars) > 0 {
+		outVarsGenerator := common.OutputVars{
+			TargetLocation: tfContext.TargetLocation,
+			OutputVars:     tfContext.OutputVars,
+		}
+		outVarsGenerator.Generate()
+	}
+	// 4. Import all resources
+	if config.GenerateTfState && len(tfContext.ImportConfigs) > 0 {
+		importer := &common.Importer{}
+		for _, ic := range tfContext.ImportConfigs {
+			importer.Import(config, &ic)
+		}
+	}
 }
 
 func tfInit(config *common.Config, workingDir string) *tfexec.Terraform {

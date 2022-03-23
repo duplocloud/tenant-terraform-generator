@@ -15,7 +15,7 @@ import (
 type TenantBackend struct {
 }
 
-func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client) {
+func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== Tenant backend TF generation started. =====>")
 	// create new empty hcl file object
 	hclFile := hclwrite.NewEmptyFile()
@@ -25,7 +25,7 @@ func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
@@ -52,4 +52,5 @@ func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client
 	fmt.Printf("%s", hclFile.Bytes())
 	tfFile.Write(hclFile.Bytes())
 	log.Println("[TRACE] <====== Tenant backend TF generation done. =====>")
+	return nil, nil
 }

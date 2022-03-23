@@ -16,7 +16,7 @@ import (
 type ASG struct {
 }
 
-func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) {
+func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== ASG TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.AsgProfileGetList(config.TenantId)
@@ -24,9 +24,9 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) {
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
-
+	tfContext := common.TFContext{}
 	if list != nil {
 		for _, asgProfile := range *list {
 			shortName := asgProfile.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(asgProfile.FriendlyName)]
@@ -40,7 +40,7 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) {
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return nil, err
 			}
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
@@ -141,14 +141,16 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &common.Importer{}
-				importer.Import(config, &common.ImportConfig{
+				importConfigs := []common.ImportConfig{}
+				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_asg_profile." + shortName,
 					ResourceId:      config.TenantId + "/" + asgProfile.FriendlyName,
 					WorkingDir:      workingDir,
 				})
+				tfContext.ImportConfigs = importConfigs
 			}
 		}
 	}
 	log.Println("[TRACE] <====== ASG TF generation done. =====>")
+	return &tfContext, nil
 }

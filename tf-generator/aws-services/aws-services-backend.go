@@ -15,7 +15,7 @@ import (
 type AwsServicesBackend struct {
 }
 
-func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.Client) {
+func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== AWS Services backend TF generation started. =====>")
 	// create new empty hcl file object
 	hclFile := hclwrite.NewEmptyFile()
@@ -25,7 +25,7 @@ func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
@@ -52,4 +52,5 @@ func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.
 	fmt.Printf("%s", hclFile.Bytes())
 	tfFile.Write(hclFile.Bytes())
 	log.Println("[TRACE] <====== AWS Services backend TF generation done. =====>")
+	return nil, nil
 }

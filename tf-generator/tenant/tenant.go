@@ -16,7 +16,7 @@ import (
 type Tenant struct {
 }
 
-func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
+func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	workingDir := filepath.Join(config.TFCodePath, config.TenantProject)
 
 	log.Println("[TRACE] <====== Tenant TF generation started. =====>")
@@ -24,18 +24,19 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	//Get tenant from duplo
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
 	infraConfig, clientErr := client.InfrastructureGetConfig(duplo.PlanID)
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
-
+	tfContext := common.TFContext{}
 	//1. ==========================================================================================
 	// Generate variables
 	log.Printf("[TRACE] Genrating vars for Tenant Name : %s", duplo.AccountName)
-	generateVars(workingDir, duplo, infraConfig)
+	inputVars := generateVars(duplo, infraConfig)
+	tfContext.InputVars = inputVars
 	log.Printf("[TRACE] Vars genrated for Tenant Name : %s", duplo.AccountName)
 
 	//2. ==========================================================================================
@@ -51,7 +52,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 
 	// initialize the body of the new file object
@@ -151,27 +152,40 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) {
 	// 3. ==========================================================================================
 	// Generate outputs
 	log.Printf("[TRACE] Genrating output vars for Tenant Name : %s", duplo.AccountName)
-	generateOutputVars(workingDir)
+	outVars := generateOutputVars(workingDir)
+	tfContext.OutputVars = outVars
 	log.Printf("[TRACE] Output vars generated for Tenant Name : %s", duplo.AccountName)
 
 	// 4. ==========================================================================================
 	// Import all created resources.
 	if config.GenerateTfState {
-		importer := &common.Importer{}
-		importer.Import(config, &common.ImportConfig{
+		importConfigs := []common.ImportConfig{}
+		importConfigs = append(importConfigs, common.ImportConfig{
 			ResourceAddress: "duplocloud_tenant.tenant",
 			ResourceId:      "v2/admin/TenantV2/" + config.TenantId,
 			WorkingDir:      workingDir,
-		})
-		importer.Import(config, &common.ImportConfig{
+		}, common.ImportConfig{
 			ResourceAddress: "duplocloud_tenant_config.tenant-config",
 			ResourceId:      config.TenantId,
 			WorkingDir:      workingDir,
 		})
+		tfContext.ImportConfigs = importConfigs
+		// importer := &common.Importer{}
+		// importer.Import(config, &common.ImportConfig{
+		// 	ResourceAddress: "duplocloud_tenant.tenant",
+		// 	ResourceId:      "v2/admin/TenantV2/" + config.TenantId,
+		// 	WorkingDir:      workingDir,
+		// })
+		// importer.Import(config, &common.ImportConfig{
+		// 	ResourceAddress: "duplocloud_tenant_config.tenant-config",
+		// 	ResourceId:      config.TenantId,
+		// 	WorkingDir:      workingDir,
+		// })
 	}
+	return &tfContext, nil
 }
 
-func generateVars(workingDir string, duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfrastructureConfig) {
+func generateVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfrastructureConfig) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
 	regionVar := common.VarConfig{
@@ -207,14 +221,15 @@ func generateVars(workingDir string, duplo *duplosdk.DuploTenant, infraConfig *d
 		vars = append(vars, v)
 	}
 
-	varsGenerator := common.Vars{
-		TargetLocation: workingDir,
-		Vars:           vars,
-	}
-	varsGenerator.Generate()
+	// varsGenerator := common.Vars{
+	// 	TargetLocation: workingDir,
+	// 	Vars:           vars,
+	// }
+	// varsGenerator.Generate()
+	return vars
 }
 
-func generateOutputVars(workingDir string) {
+func generateOutputVars(workingDir string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	tenantNameVar := common.OutputVarConfig{
@@ -254,9 +269,10 @@ func generateOutputVars(workingDir string) {
 		outVars = append(outVars, v)
 	}
 
-	outVarsGenerator := common.OutputVars{
-		TargetLocation: workingDir,
-		OutputVars:     outVars,
-	}
-	outVarsGenerator.Generate()
+	// outVarsGenerator := common.OutputVars{
+	// 	TargetLocation: workingDir,
+	// 	OutputVars:     outVars,
+	// }
+	// outVarsGenerator.Generate()
+	return outVars
 }

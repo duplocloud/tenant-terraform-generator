@@ -24,48 +24,48 @@ type OutputVars struct {
 }
 
 func (ov *OutputVars) Generate() {
-	log.Println("[TRACE] <====== Output Variables TF generation started. =====>")
+	if len(ov.OutputVars) > 0 {
+		log.Println("[TRACE] <====== Output Variables TF generation started. =====>")
 
-	// create new empty hcl file object
-	hclFile := hclwrite.NewEmptyFile()
-	// create new file on system
-	path := filepath.Join(ov.TargetLocation, "outputs.tf")
-	tfFile, err := os.Create(path)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// initialize the body of the new file object
-	rootBody := hclFile.Body()
-	for _, outVarConfig := range ov.OutputVars {
-		if len(outVarConfig.Name) > 0 {
-			outputVarblock := rootBody.AppendNewBlock("output",
-				[]string{outVarConfig.Name})
-			outputVarBody := outputVarblock.Body()
-			if len(outVarConfig.ActualVal) > 0 {
-				if outVarConfig.RootTraversal {
-					outputVarBody.SetAttributeTraversal("value", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: outVarConfig.ActualVal,
-						},
-					})
-				} else {
-					outputVarBody.SetAttributeValue("value",
-						cty.StringVal(outVarConfig.ActualVal))
-				}
-			}
-
-			if len(outVarConfig.DescVal) > 0 {
-				outputVarBody.SetAttributeValue("description",
-					cty.StringVal(outVarConfig.DescVal))
-			}
-			rootBody.AppendNewline()
+		// create new empty hcl file object
+		hclFile := hclwrite.NewEmptyFile()
+		// create new file on system
+		path := filepath.Join(ov.TargetLocation, "outputs.tf")
+		tfFile, err := os.Create(path)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 
-	}
+		// initialize the body of the new file object
+		rootBody := hclFile.Body()
+		for _, outVarConfig := range ov.OutputVars {
+			if len(outVarConfig.Name) > 0 {
+				outputVarblock := rootBody.AppendNewBlock("output",
+					[]string{outVarConfig.Name})
+				outputVarBody := outputVarblock.Body()
+				if len(outVarConfig.ActualVal) > 0 {
+					if outVarConfig.RootTraversal {
+						outputVarBody.SetAttributeTraversal("value", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: outVarConfig.ActualVal,
+							},
+						})
+					} else {
+						outputVarBody.SetAttributeValue("value",
+							cty.StringVal(outVarConfig.ActualVal))
+					}
+				}
 
-	fmt.Printf("%s", hclFile.Bytes())
-	tfFile.Write(hclFile.Bytes())
-	log.Println("[TRACE] <====== Output Variables TF generation done. =====>")
+				if len(outVarConfig.DescVal) > 0 {
+					outputVarBody.SetAttributeValue("description",
+						cty.StringVal(outVarConfig.DescVal))
+				}
+			}
+		}
+
+		fmt.Printf("%s", hclFile.Bytes())
+		tfFile.Write(hclFile.Bytes())
+		log.Println("[TRACE] <====== Output Variables TF generation done. =====>")
+	}
 }

@@ -17,7 +17,7 @@ import (
 type S3Bucket struct {
 }
 
-func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
+func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== S3 bucket TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListS3Buckets(config.TenantId)
@@ -31,9 +31,9 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
-
+	tfContext := common.TFContext{}
 	if list != nil {
 		for _, s3 := range *list {
 			shortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
@@ -52,7 +52,7 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return nil, err
 			}
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
@@ -98,14 +98,16 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &common.Importer{}
-				importer.Import(config, &common.ImportConfig{
+				importConfigs := []common.ImportConfig{}
+				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_s3_bucket." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
+				tfContext.ImportConfigs = importConfigs
 			}
 		}
 	}
 	log.Println("[TRACE] <====== S3 Bucket TF generation done. =====>")
+	return &tfContext, nil
 }

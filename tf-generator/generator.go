@@ -11,7 +11,7 @@ import (
 )
 
 type Generator interface {
-	Generate(config *common.Config, client *duplosdk.Client)
+	Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error)
 }
 
 type ObjectAttrTokens struct {

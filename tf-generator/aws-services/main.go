@@ -19,7 +19,7 @@ import (
 type AwsServicesMain struct {
 }
 
-func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Client) {
+func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 
 	log.Println("[TRACE] <====== AWS services main TF generation started. =====>")
@@ -33,7 +33,7 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 	tfFile, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 
 	// initialize the body of the new file object
@@ -111,6 +111,7 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 			Name: "workspace",
 		},
 	})
+
 	//configMap := map[string]cty.Value{}
 	// tokens := hclwrite.Tokens{
 	// 	//{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
@@ -181,5 +182,25 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 	fmt.Printf("%s", hclFile.Bytes())
 	tfFile.Write(hclFile.Bytes())
 	log.Println("[TRACE] <====== Aws services main TF generation done. =====>")
+	return &common.TFContext{
+		InputVars: generateVars(),
+	}, nil
+}
 
+func generateVars() []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	regionVar := common.VarConfig{
+		Name:       "region",
+		DefaultVal: "us-west-2",
+		TypeVal:    "string",
+	}
+	varConfigs["region"] = regionVar
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+
+	return vars
 }

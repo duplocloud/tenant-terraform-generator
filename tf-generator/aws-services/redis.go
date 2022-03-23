@@ -16,7 +16,7 @@ import (
 type Redis struct {
 }
 
-func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
+func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== Redis TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.EcacheInstanceList(config.TenantId)
@@ -24,9 +24,9 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return
+		return nil, clientErr
 	}
-
+	tfContext := common.TFContext{}
 	if list != nil {
 		for _, redis := range *list {
 			shortName := redis.Identifier[len("duplo-"):len(redis.Identifier)]
@@ -40,7 +40,7 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)
-				return
+				return nil, err
 			}
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
@@ -89,14 +89,16 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) {
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importer := &common.Importer{}
-				importer.Import(config, &common.ImportConfig{
+				importConfigs := []common.ImportConfig{}
+				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_ecache_instance." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
 					WorkingDir:      workingDir,
 				})
+				tfContext.ImportConfigs = importConfigs
 			}
 		}
 	}
 	log.Println("[TRACE] <====== redis TF generation done. =====>")
+	return &tfContext, nil
 }

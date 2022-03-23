@@ -16,3 +16,10 @@ type Config struct {
 	AccountID            string
 	TFCodePath           string
 }
+
+type TFContext struct {
+	TargetLocation string
+	InputVars      []VarConfig
+	OutputVars     []OutputVarConfig
+	ImportConfigs  []ImportConfig
+}
