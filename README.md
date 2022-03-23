@@ -38,7 +38,7 @@ export AWS_PROFILE="duplo-msp"
 
 - Clone this repository.
 
-- Prepare environmental variables as mentioned above.
+- Prepare environment variables as mentioned above.
 
 - Run using  following command
 
