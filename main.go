@@ -167,7 +167,10 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	os.MkdirAll(tenantProject, os.ModePerm)
+	err = os.MkdirAll(tenantProject, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	config.AdminTenantDir = tenantProject
 
 	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject)
@@ -175,7 +178,10 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	os.MkdirAll(awsServicesProject, os.ModePerm)
+	err = os.MkdirAll(awsServicesProject, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	config.AwsServicesDir = awsServicesProject
 
 	appProject := filepath.Join(config.TFCodePath, config.AppProject)
@@ -183,7 +189,10 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	os.MkdirAll(appProject, os.ModePerm)
+	err = os.MkdirAll(appProject, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	config.AppDir = appProject
 
 	scriptsPath := filepath.Join("target", config.CustomerName, "scripts")
@@ -191,8 +200,14 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	os.MkdirAll(scriptsPath, os.ModePerm)
-	duplosdk.CopyDirectory("./scripts", scriptsPath)
+	err = os.MkdirAll(scriptsPath, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = duplosdk.CopyDirectory("./scripts", scriptsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func startTFGeneration(config *common.Config, client *duplosdk.Client) {

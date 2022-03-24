@@ -88,8 +88,20 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		},
 	})
 	fmt.Printf("%s", hclFile.Bytes())
-	tenantProjectFile.Write(hclFile.Bytes())
-	awsServicesProjectFile.Write(hclFile.Bytes())
-	appProjectFile.Write(hclFile.Bytes())
+	_, err = tenantProjectFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = awsServicesProjectFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = appProjectFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	log.Println("[TRACE] <====== Provider TF generation done. =====>")
 }

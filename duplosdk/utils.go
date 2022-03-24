@@ -174,6 +174,9 @@ func Copy(srcFile, dstFile string) error {
 	defer out.Close()
 
 	in, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
 	defer in.Close()
 	if err != nil {
 		return err

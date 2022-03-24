@@ -146,7 +146,11 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	rootBody.AppendNewline()
 
 	fmt.Printf("%s", hclFile.Bytes())
-	tfFile.Write(hclFile.Bytes())
+	_, err = tfFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 	log.Println("[TRACE] <====== Tenant TF generation done. =====>")
 
 	// 3. ==========================================================================================

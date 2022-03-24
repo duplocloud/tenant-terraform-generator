@@ -171,7 +171,11 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// }
 			// TODO - Handle tags, network_interface
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			log.Printf("[TRACE] Terraform config is generated for duplo ASG : %s", asgProfile.FriendlyName)
 
 			outVars := generateAsgOutputVars(asgProfile, varFullPrefix, shortName)

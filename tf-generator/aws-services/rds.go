@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
+
+const RDS_VAR_PREFIX = "rds_"
 
 type Rds struct {
 }
@@ -31,6 +34,10 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 		for _, rds := range *list {
 			shortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo RDS Instance : %s", rds.Identifier)
+
+			varFullPrefix := RDS_VAR_PREFIX + shortName + "_"
+			inputVars := generateRdsVars(rds, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -64,10 +71,22 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				cty.StringVal(shortName))
 			rdsBody.SetAttributeValue("engine",
 				cty.NumberIntVal(int64(rds.Engine)))
-			rdsBody.SetAttributeValue("engine_version",
-				cty.StringVal(rds.EngineVersion))
-			rdsBody.SetAttributeValue("size",
-				cty.StringVal(rds.SizeEx))
+			rdsBody.SetAttributeTraversal("engine_version", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "engine_version",
+				},
+			})
+			rdsBody.SetAttributeTraversal("size", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "size",
+				},
+			})
 
 			if len(rds.SnapshotID) > 0 {
 				rdsBody.SetAttributeValue("snapshot_id",
@@ -85,17 +104,28 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// }
 			// rdsBody.SetAttributeValue("store_details_in_secret_manager",
 			// 	cty.BoolVal(rds.StoreDetailsInSecretManager))
-
-			rdsBody.SetAttributeValue("encrypt_storage",
-				cty.BoolVal(rds.EncryptStorage))
+			rdsBody.SetAttributeTraversal("encrypt_storage", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "encrypt_storage",
+				},
+			})
 			rdsBody.SetAttributeValue("enable_logging",
 				cty.BoolVal(rds.EnableLogging))
 			rdsBody.SetAttributeValue("multi_az",
 				cty.BoolVal(rds.MultiAZ))
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			log.Printf("[TRACE] Terraform config is generated for duplo RDS instance : %s", rds.Identifier)
 
+			outVars := generateRdsOutputVars(varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
@@ -111,4 +141,85 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 	log.Println("[TRACE] <====== RDS TF generation done. =====>")
 
 	return &tfContext, nil
+}
+
+func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	var1 := common.VarConfig{
+		Name:       prefix + "engine_version",
+		DefaultVal: duplo.EngineVersion,
+		TypeVal:    "string",
+	}
+	varConfigs["engine_version"] = var1
+
+	var2 := common.VarConfig{
+		Name:       prefix + "size",
+		DefaultVal: duplo.SizeEx,
+		TypeVal:    "string",
+	}
+	varConfigs["size"] = var2
+
+	var3 := common.VarConfig{
+		Name:       prefix + "encrypt_storage",
+		DefaultVal: strconv.FormatBool(duplo.EncryptStorage),
+		TypeVal:    "bool",
+	}
+	varConfigs["encrypt_storage"] = var3
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
+}
+
+func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	var1 := common.OutputVarConfig{
+		Name:          prefix + "fullname",
+		ActualVal:     "duplocloud_rds_instance." + shortName + ".identifier",
+		DescVal:       "The full name of the RDS instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["fullname"] = var1
+
+	var2 := common.OutputVarConfig{
+		Name:          prefix + "arn",
+		ActualVal:     "duplocloud_rds_instance." + shortName + ".arn",
+		DescVal:       "The ARN of the RDS instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["arn"] = var2
+
+	var3 := common.OutputVarConfig{
+		Name:          prefix + "endpoint",
+		ActualVal:     "duplocloud_rds_instance." + shortName + ".endpoint",
+		DescVal:       "The endpoint of the RDS instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["endpoint"] = var3
+
+	var4 := common.OutputVarConfig{
+		Name:          prefix + "host",
+		ActualVal:     "duplocloud_rds_instance." + shortName + ".host",
+		DescVal:       "The DNS hostname of the RDS instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["host"] = var4
+
+	var5 := common.OutputVarConfig{
+		Name:          prefix + "port",
+		ActualVal:     "duplocloud_rds_instance." + shortName + ".port",
+		DescVal:       "The listening port of the RDS instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["port"] = var5
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }

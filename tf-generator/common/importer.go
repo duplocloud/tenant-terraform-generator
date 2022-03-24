@@ -2,8 +2,6 @@ package common
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"tenant-terraform-generator/duplosdk"
 
@@ -77,13 +75,13 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	if err != nil {
 		log.Fatalf("error running Import: %s", err)
 	}
-	state, err := tf.Show(context.Background())
+	_, err = tf.Show(context.Background())
 	if err != nil {
 		log.Fatalf("error running Show: %s", err)
 	}
 
-	stateJson, err := json.Marshal(state.Values)
-	fmt.Println(string(stateJson))
+	//_, err = json.Marshal(state.Values)
+	//fmt.Println(string(stateJson))
 
 	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
 	log.Println("[TRACE] <====================================================================>")
@@ -97,13 +95,13 @@ func (i *Importer) ImportWithoutInit(config *Config, importConfig *ImportConfig,
 	if err != nil {
 		log.Fatalf("error running Import: %s", err)
 	}
-	state, err := tf.Show(context.Background())
+	_, err = tf.Show(context.Background())
 	if err != nil {
 		log.Fatalf("error running Show: %s", err)
 	}
 
-	stateJson, err := json.Marshal(state.Values)
-	fmt.Println(string(stateJson))
+	//_, err = json.Marshal(state.Values)
+	//fmt.Println(string(stateJson))
 
 	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
 	log.Println("[TRACE] <====================================================================>")

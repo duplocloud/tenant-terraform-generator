@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
+
+const REDIS_VAR_PREFIX = "redis_"
 
 type Redis struct {
 }
@@ -31,6 +34,10 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		for _, redis := range *list {
 			shortName := redis.Identifier[len("duplo-"):len(redis.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo Redis Instance : %s", redis.Identifier)
+
+			varFullPrefix := REDIS_VAR_PREFIX + shortName + "_"
+			inputVars := generateRedisVars(redis, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -64,12 +71,22 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.StringVal(shortName))
 			redisBody.SetAttributeValue("cache_type",
 				cty.NumberIntVal(int64(0)))
-			redisBody.SetAttributeValue("replicas",
-				cty.NumberIntVal(int64(redis.Replicas)))
-
-			redisBody.SetAttributeValue("size",
-				cty.StringVal(redis.Size))
-
+			redisBody.SetAttributeTraversal("replicas", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "replicas",
+				},
+			})
+			redisBody.SetAttributeTraversal("size", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "size",
+				},
+			})
 			redisBody.SetAttributeValue("encryption_at_rest",
 				cty.BoolVal(redis.EncryptionAtRest))
 			redisBody.SetAttributeValue("encryption_in_transit",
@@ -84,8 +101,15 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			log.Printf("[TRACE] Terraform config is generated for duplo redis instance : %s", redis.Identifier)
+
+			outVars := generateRedisOutputVars(varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
@@ -101,4 +125,78 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	log.Println("[TRACE] <====== redis TF generation done. =====>")
 	return &tfContext, nil
+}
+
+func generateRedisVars(duplo duplosdk.DuploEcacheInstance, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	var1 := common.VarConfig{
+		Name:       prefix + "replicas",
+		DefaultVal: strconv.Itoa(duplo.Replicas),
+		TypeVal:    "number",
+	}
+	varConfigs["replicas"] = var1
+
+	var2 := common.VarConfig{
+		Name:       prefix + "size",
+		DefaultVal: duplo.Size,
+		TypeVal:    "string",
+	}
+	varConfigs["size"] = var2
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
+}
+
+func generateRedisOutputVars(prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	var1 := common.OutputVarConfig{
+		Name:          prefix + "fullname",
+		ActualVal:     "duplocloud_ecache_instance." + shortName + ".identifier",
+		DescVal:       "The full name of the elasticache instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["fullname"] = var1
+
+	var2 := common.OutputVarConfig{
+		Name:          prefix + "arn",
+		ActualVal:     "duplocloud_ecache_instance." + shortName + ".arn",
+		DescVal:       "The ARN of the elasticache instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["arn"] = var2
+
+	var3 := common.OutputVarConfig{
+		Name:          prefix + "endpoint",
+		ActualVal:     "duplocloud_ecache_instance." + shortName + ".endpoint",
+		DescVal:       "The endpoint of the elasticache instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["endpoint"] = var3
+
+	var4 := common.OutputVarConfig{
+		Name:          prefix + "host",
+		ActualVal:     "duplocloud_ecache_instance." + shortName + ".host",
+		DescVal:       "The DNS hostname of the elasticache instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["host"] = var4
+
+	var5 := common.OutputVarConfig{
+		Name:          prefix + "port",
+		ActualVal:     "duplocloud_ecache_instance." + shortName + ".port",
+		DescVal:       "The listening port of the elasticache instance.",
+		RootTraversal: true,
+	}
+	outVarConfigs["port"] = var5
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }

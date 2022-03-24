@@ -180,7 +180,11 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 	// 	cty.ObjectVal(configMap))
 
 	fmt.Printf("%s", hclFile.Bytes())
-	tfFile.Write(hclFile.Bytes())
+	_, err = tfFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 	log.Println("[TRACE] <====== Aws services main TF generation done. =====>")
 	return &common.TFContext{
 		InputVars: generateVars(),

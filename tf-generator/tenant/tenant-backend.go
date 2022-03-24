@@ -50,7 +50,11 @@ func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client
 		cty.True)
 
 	fmt.Printf("%s", hclFile.Bytes())
-	tfFile.Write(hclFile.Bytes())
+	_, err = tfFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 	log.Println("[TRACE] <====== Tenant backend TF generation done. =====>")
 	return nil, nil
 }

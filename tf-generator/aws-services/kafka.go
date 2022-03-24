@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
+
+const KAFKA_VAR_PREFIX = "kafka_"
 
 type Kafka struct {
 }
@@ -37,6 +40,9 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				fmt.Println(clientErr)
 				return nil, clientErr
 			}
+			varFullPrefix := KAFKA_VAR_PREFIX + shortName + "_"
+			inputVars := generateKafkaVars(clusterInfo, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -67,16 +73,32 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// 	cty.StringVal(config.TenantId))
 			kafkaBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
-
-			kafkaBody.SetAttributeValue("storage_size",
-				cty.NumberIntVal(int64(clusterInfo.BrokerNodeGroup.StorageInfo.EbsStorageInfo.VolumeSize)))
-
-			kafkaBody.SetAttributeValue("instance_type",
-				cty.StringVal(clusterInfo.BrokerNodeGroup.InstanceType))
+			kafkaBody.SetAttributeTraversal("storage_size", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "storage_size",
+				},
+			})
+			kafkaBody.SetAttributeTraversal("instance_type", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "instance_type",
+				},
+			})
 
 			if clusterInfo.CurrentSoftware != nil {
-				kafkaBody.SetAttributeValue("kafka_version",
-					cty.StringVal(clusterInfo.CurrentSoftware.KafkaVersion))
+				kafkaBody.SetAttributeTraversal("kafka_version", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "kafka_version",
+					},
+				})
 				kafkaBody.SetAttributeValue("configuration_revision",
 					cty.NumberIntVal(int64(clusterInfo.CurrentSoftware.ConfigurationRevision)))
 				kafkaBody.SetAttributeValue("configuration_arn",
@@ -85,8 +107,16 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+
 			log.Printf("[TRACE] Terraform config is generated for duplo kafka instance : %s", shortName)
+
+			outVars := generateKafkaOutputVars(varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
@@ -102,4 +132,101 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	log.Println("[TRACE] <====== kafka TF generation done. =====>")
 	return &tfContext, nil
+}
+
+func generateKafkaVars(duplo *duplosdk.DuploKafkaClusterInfo, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	var1 := common.VarConfig{
+		Name:       prefix + "kafka_version",
+		DefaultVal: duplo.CurrentSoftware.KafkaVersion,
+		TypeVal:    "string",
+	}
+	varConfigs["kafka_version"] = var1
+
+	var2 := common.VarConfig{
+		Name:       prefix + "instance_type",
+		DefaultVal: duplo.BrokerNodeGroup.InstanceType,
+		TypeVal:    "string",
+	}
+	varConfigs["instance_type"] = var2
+
+	var3 := common.VarConfig{
+		Name:       prefix + "storage_size",
+		DefaultVal: strconv.Itoa(duplo.BrokerNodeGroup.StorageInfo.EbsStorageInfo.VolumeSize),
+		TypeVal:    "number",
+	}
+	varConfigs["storage_size"] = var3
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
+}
+
+func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	var1 := common.OutputVarConfig{
+		Name:          prefix + "fullname",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".fullname",
+		DescVal:       "The full name of the Kakfa cluster.",
+		RootTraversal: true,
+	}
+	outVarConfigs["fullname"] = var1
+
+	var2 := common.OutputVarConfig{
+		Name:          prefix + "arn",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".arn",
+		DescVal:       "The ARN of the Kafka cluster.",
+		RootTraversal: true,
+	}
+	outVarConfigs["arn"] = var2
+
+	var3 := common.OutputVarConfig{
+		Name:          prefix + "number_of_broker_nodes",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".number_of_broker_nodes",
+		DescVal:       "The desired total number of broker nodes in the kafka cluster.",
+		RootTraversal: true,
+	}
+	outVarConfigs["number_of_broker_nodes"] = var3
+
+	var4 := common.OutputVarConfig{
+		Name:          prefix + "plaintext_bootstrap_broker_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".plaintext_bootstrap_broker_string",
+		DescVal:       "The bootstrap broker connect string for plaintext (unencrypted) connections.",
+		RootTraversal: true,
+	}
+	outVarConfigs["plaintext_bootstrap_broker_string"] = var4
+
+	var5 := common.OutputVarConfig{
+		Name:          prefix + "plaintext_zookeeper_connect_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".plaintext_zookeeper_connect_string",
+		DescVal:       "The bootstrap broker connect string for plaintext (unencrypted) connections.",
+		RootTraversal: true,
+	}
+	outVarConfigs["plaintext_zookeeper_connect_string"] = var5
+
+	var6 := common.OutputVarConfig{
+		Name:          prefix + "tls_bootstrap_broker_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".tls_bootstrap_broker_string",
+		DescVal:       "The bootstrap broker connect string for TLS (encrypted) connections.",
+		RootTraversal: true,
+	}
+	outVarConfigs["tls_bootstrap_broker_string"] = var6
+
+	var7 := common.OutputVarConfig{
+		Name:          prefix + "tls_zookeeper_connect_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".tls_zookeeper_connect_string",
+		DescVal:       "he bootstrap broker connect string for plaintext (unencrypted) connections.",
+		RootTraversal: true,
+	}
+	outVarConfigs["tls_zookeeper_connect_string"] = var7
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }

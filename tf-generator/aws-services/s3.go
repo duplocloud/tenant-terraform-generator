@@ -113,7 +113,11 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 			defaultEncrBody.SetAttributeValue("method",
 				cty.StringVal(encryptionMethod))
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			log.Printf("[TRACE] Terraform config is generated for duplo s3 bucket : %s", shortName)
 
 			outVars := generateS3OutputVars(s3, varFullPrefix, shortName)

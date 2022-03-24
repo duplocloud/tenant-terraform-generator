@@ -13,6 +13,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+const HOST_VAR_PREFIX = "host_"
+
 type Hosts struct {
 }
 
@@ -34,6 +36,9 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			if isPartOfAsg(host) {
 				continue
 			}
+			varFullPrefix := HOST_VAR_PREFIX + shortName + "_"
+			inputVars := generateHostVars(host, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -64,10 +69,22 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// 	cty.StringVal(config.TenantId))
 			hostBody.SetAttributeValue("friendly_name",
 				cty.StringVal(shortName))
-			hostBody.SetAttributeValue("image_id",
-				cty.StringVal(host.ImageID))
-			hostBody.SetAttributeValue("capacity",
-				cty.StringVal(host.Capacity))
+			hostBody.SetAttributeTraversal("image_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "image_id",
+				},
+			})
+			hostBody.SetAttributeTraversal("capacity", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "capacity",
+				},
+			})
 			hostBody.SetAttributeValue("agent_platform",
 				cty.NumberIntVal(int64(host.AgentPlatform)))
 			hostBody.SetAttributeValue("zone",
@@ -137,9 +154,15 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// }
 			// TODO - Handle tags, network_interface
 			//fmt.Printf("%s", hclFile.Bytes())
-			tfFile.Write(hclFile.Bytes())
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			log.Printf("[TRACE] Terraform config is generated for duplo host : %s", host.FriendlyName)
 
+			outVars := generateHostOutputVars(host, varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
@@ -163,4 +186,53 @@ func isPartOfAsg(host duplosdk.DuploNativeHost) bool {
 		return true
 	}
 	return false
+}
+
+func generateHostVars(duplo duplosdk.DuploNativeHost, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	imageIdVar := common.VarConfig{
+		Name:       prefix + "image_id",
+		DefaultVal: duplo.ImageID,
+		TypeVal:    "string",
+	}
+	varConfigs["image_id"] = imageIdVar
+
+	capacityVar := common.VarConfig{
+		Name:       prefix + "capacity",
+		DefaultVal: duplo.Capacity,
+		TypeVal:    "string",
+	}
+	varConfigs["capacity"] = capacityVar
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
+}
+
+func generateHostOutputVars(duplo duplosdk.DuploNativeHost, prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	var1 := common.OutputVarConfig{
+		Name:          prefix + "instance_id",
+		ActualVal:     "duplocloud_aws_host." + shortName + ".instance_id",
+		DescVal:       "The AWS EC2 instance ID of the host.",
+		RootTraversal: true,
+	}
+	outVarConfigs["instance_id"] = var1
+	var2 := common.OutputVarConfig{
+		Name:          prefix + "private_ip_address",
+		ActualVal:     "duplocloud_aws_host." + shortName + ".private_ip_address",
+		DescVal:       "The primary private IP address assigned to the host.",
+		RootTraversal: true,
+	}
+	outVarConfigs["private_ip_address"] = var2
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }

@@ -78,7 +78,11 @@ func (v *Vars) Generate() {
 		}
 
 		fmt.Printf("%s", hclFile.Bytes())
-		tfFile.Write(hclFile.Bytes())
+		_, err = tfFile.Write(hclFile.Bytes())
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		log.Println("[TRACE] <====== Variables TF generation done. =====>")
 	}
 }

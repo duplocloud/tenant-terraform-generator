@@ -204,8 +204,11 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			//}
 
-			tfFile.Write(hclFile.Bytes())
-
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
