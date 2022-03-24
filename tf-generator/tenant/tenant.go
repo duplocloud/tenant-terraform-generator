@@ -35,7 +35,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	//1. ==========================================================================================
 	// Generate variables
 	log.Printf("[TRACE] Genrating vars for Tenant Name : %s", duplo.AccountName)
-	inputVars := generateVars(duplo, infraConfig)
+	inputVars := generateTenantVars(duplo, infraConfig, config)
 	tfContext.InputVars = inputVars
 	log.Printf("[TRACE] Vars genrated for Tenant Name : %s", duplo.AccountName)
 
@@ -152,7 +152,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	// 3. ==========================================================================================
 	// Generate outputs
 	log.Printf("[TRACE] Genrating output vars for Tenant Name : %s", duplo.AccountName)
-	outVars := generateOutputVars(workingDir)
+	outVars := generateTenantOutputVars(workingDir)
 	tfContext.OutputVars = outVars
 	log.Printf("[TRACE] Output vars generated for Tenant Name : %s", duplo.AccountName)
 
@@ -185,7 +185,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	return &tfContext, nil
 }
 
-func generateVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfrastructureConfig) []common.VarConfig {
+func generateTenantVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfrastructureConfig, config *common.Config) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
 	regionVar := common.VarConfig{
@@ -204,7 +204,7 @@ func generateVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfras
 
 	certVar := common.VarConfig{
 		Name:       "cert_arn",
-		DefaultVal: "null",
+		DefaultVal: config.CertArn,
 		TypeVal:    "string",
 	}
 	varConfigs["cert_arn"] = certVar
@@ -229,7 +229,7 @@ func generateVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.DuploInfras
 	return vars
 }
 
-func generateOutputVars(workingDir string) []common.OutputVarConfig {
+func generateTenantOutputVars(workingDir string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	tenantNameVar := common.OutputVarConfig{

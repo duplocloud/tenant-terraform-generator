@@ -50,10 +50,17 @@ func (v *Vars) Generate() {
 						varBody.SetAttributeValue("default",
 							cty.NullVal(cty.String))
 					} else {
-						varBody.SetAttributeValue("default",
-							cty.StringVal(varConfig.DefaultVal))
+						if "string" == varConfig.TypeVal {
+							varBody.SetAttributeValue("default",
+								cty.StringVal(varConfig.DefaultVal))
+						} else if "number" == varConfig.TypeVal || "bool" == varConfig.TypeVal {
+							varBody.SetAttributeTraversal("default", hcl.Traversal{
+								hcl.TraverseRoot{
+									Name: varConfig.DefaultVal,
+								},
+							})
+						}
 					}
-
 				}
 
 				if len(varConfig.DescVal) > 0 {

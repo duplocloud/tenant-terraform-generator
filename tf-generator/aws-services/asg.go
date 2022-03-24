@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
+
+const ASG_VAR_PREFIX = "asg_"
 
 type ASG struct {
 }
@@ -31,11 +34,13 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		for _, asgProfile := range *list {
 			shortName := asgProfile.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(asgProfile.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo ASG : %s", asgProfile.FriendlyName)
+			varFullPrefix := ASG_VAR_PREFIX + shortName + "_"
 
-			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
-
+			inputVars := generateAsgVars(asgProfile, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new file on system
+
 			path := filepath.Join(workingDir, "asg-"+shortName+".tf")
 			tfFile, err := os.Create(path)
 			if err != nil {
@@ -61,16 +66,46 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// 	cty.StringVal(config.TenantId))
 			asgBody.SetAttributeValue("friendly_name",
 				cty.StringVal(shortName))
-			asgBody.SetAttributeValue("instance_count",
-				cty.NumberIntVal(int64(asgProfile.DesiredCapacity)))
-			asgBody.SetAttributeValue("min_instance_count",
-				cty.NumberIntVal(int64(asgProfile.MinSize)))
-			asgBody.SetAttributeValue("max_instance_count",
-				cty.NumberIntVal(int64(asgProfile.MaxSize)))
-			asgBody.SetAttributeValue("image_id",
-				cty.StringVal(asgProfile.ImageID))
-			asgBody.SetAttributeValue("capacity",
-				cty.StringVal(asgProfile.Capacity))
+			asgBody.SetAttributeTraversal("instance_count", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "instance_count",
+				},
+			})
+			asgBody.SetAttributeTraversal("min_instance_count", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "min_instance_count",
+				},
+			})
+			asgBody.SetAttributeTraversal("max_instance_count", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "max_instance_count",
+				},
+			})
+			asgBody.SetAttributeTraversal("image_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "image_id",
+				},
+			})
+			asgBody.SetAttributeTraversal("capacity", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "capacity",
+				},
+			})
 			asgBody.SetAttributeValue("agent_platform",
 				cty.NumberIntVal(int64(asgProfile.AgentPlatform)))
 			asgBody.SetAttributeValue("zone",
@@ -139,6 +174,8 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			tfFile.Write(hclFile.Bytes())
 			log.Printf("[TRACE] Terraform config is generated for duplo ASG : %s", asgProfile.FriendlyName)
 
+			outVars := generateAsgOutputVars(asgProfile, varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
@@ -153,4 +190,67 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	log.Println("[TRACE] <====== ASG TF generation done. =====>")
 	return &tfContext, nil
+}
+
+func generateAsgVars(duplo duplosdk.DuploAsgProfile, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	imageIdVar := common.VarConfig{
+		Name:       prefix + "image_id",
+		DefaultVal: duplo.ImageID,
+		TypeVal:    "string",
+	}
+	varConfigs["image_id"] = imageIdVar
+
+	capacityVar := common.VarConfig{
+		Name:       prefix + "capacity",
+		DefaultVal: duplo.Capacity,
+		TypeVal:    "string",
+	}
+	varConfigs["capacity"] = capacityVar
+
+	instanceCountVar := common.VarConfig{
+		Name:       prefix + "instance_count",
+		DefaultVal: strconv.Itoa(duplo.DesiredCapacity),
+		TypeVal:    "number",
+	}
+	varConfigs["instance_count"] = instanceCountVar
+
+	minCountVar := common.VarConfig{
+		Name:       prefix + "min_instance_count",
+		DefaultVal: strconv.Itoa(duplo.MinSize),
+		TypeVal:    "number",
+	}
+	varConfigs["min_instance_count"] = minCountVar
+
+	maxCountVar := common.VarConfig{
+		Name:       prefix + "max_instance_count",
+		DefaultVal: strconv.Itoa(duplo.MaxSize),
+		TypeVal:    "number",
+	}
+	varConfigs["max_instance_count"] = maxCountVar
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
+}
+
+func generateAsgOutputVars(duplo duplosdk.DuploAsgProfile, prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	fullNameVar := common.OutputVarConfig{
+		Name:          prefix + "fullname",
+		ActualVal:     "duplocloud_asg_profile." + shortName + ".fullname",
+		DescVal:       "The full name of the ASG.",
+		RootTraversal: true,
+	}
+	outVarConfigs["fullname"] = fullNameVar
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }

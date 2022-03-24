@@ -88,3 +88,23 @@ func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
 	log.Println("[TRACE] <====================================================================>")
 }
+
+func (i *Importer) ImportWithoutInit(config *Config, importConfig *ImportConfig, tf *tfexec.Terraform) {
+	log.Println("[TRACE] <================================== TF Import in progress. ==================================>")
+	log.Printf("[TRACE] Importing terraform resource  : (%s, %s).", importConfig.ResourceAddress, importConfig.ResourceId)
+
+	err := tf.Import(context.Background(), importConfig.ResourceAddress, importConfig.ResourceId)
+	if err != nil {
+		log.Fatalf("error running Import: %s", err)
+	}
+	state, err := tf.Show(context.Background())
+	if err != nil {
+		log.Fatalf("error running Show: %s", err)
+	}
+
+	stateJson, err := json.Marshal(state.Values)
+	fmt.Println(string(stateJson))
+
+	log.Printf("[TRACE] Terraform resource (%s, %s) is imported.", importConfig.ResourceAddress, importConfig.ResourceId)
+	log.Println("[TRACE] <====================================================================>")
+}

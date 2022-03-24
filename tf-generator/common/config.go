@@ -3,6 +3,7 @@ package common
 type Config struct {
 	TenantId             string
 	TenantName           string
+	CertArn              string
 	CustomerName         string
 	AdminTenantDir       string
 	AwsServicesDir       string

@@ -2,7 +2,6 @@ package main
 
 //ReadMe : https://dev.to/pdcommunity/write-terraform-files-in-go-with-hclwrite-2e1j
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -16,12 +15,6 @@ import (
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
 	"tenant-terraform-generator/tf-generator/tenant"
-
-	"github.com/hashicorp/go-version"
-
-	"github.com/hashicorp/hc-install/product"
-	"github.com/hashicorp/hc-install/releases"
-	"github.com/hashicorp/terraform-exec/tfexec"
 )
 
 func init() {
@@ -97,6 +90,13 @@ func validateAndGetConfig() *common.Config {
 		os.Exit(1)
 	}
 
+	certArn := os.Getenv("cert_arn")
+	if len(custName) == 0 {
+		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "cert_arn")
+		log.Printf("[TRACE] - %s", err)
+		os.Exit(1)
+	}
+
 	duploProviderVersion := os.Getenv("duplo_provider_version")
 	if len(custName) == 0 {
 		duploProviderVersion = "0.7.0"
@@ -156,6 +156,7 @@ func validateAndGetConfig() *common.Config {
 		GenerateTfState:      generateTfState,
 		AccountID:            awsAccountId,
 		S3Backend:            s3Backend,
+		CertArn:              certArn,
 	}
 }
 
@@ -195,7 +196,7 @@ func initTargetDir(config *common.Config) {
 }
 
 func startTFGeneration(config *common.Config, client *duplosdk.Client) {
-	var tf *tfexec.Terraform
+	// var tf *tfexec.Terraform
 	providerGen := &common.Provider{}
 	providerGen.Generate(config, client)
 
@@ -216,6 +217,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	if config.S3Backend {
 		tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
 	}
+
 	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
@@ -246,10 +248,10 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
 	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
-	if config.GenerateTfState && config.S3Backend {
-		tf = tfInit(config, config.AppDir)
-		tfDeleteWorkspace(config, tf)
-	}
+	// if config.GenerateTfState && config.S3Backend {
+	// 	tf = tfInit(config, config.AppDir)
+	// 	tfDeleteWorkspace(config, tf)
+	// }
 
 }
 
@@ -297,49 +299,16 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 	}
 	// 4. Import all resources
 	if config.GenerateTfState && len(tfContext.ImportConfigs) > 0 {
+		tfInitializer := common.TfInitializer{
+			WorkingDir: targetLocation,
+			Config:     config,
+		}
+		tf := tfInitializer.InitWithWorkspace()
 		importer := &common.Importer{}
 		for _, ic := range tfContext.ImportConfigs {
-			importer.Import(config, &ic)
+			//importer.Import(config, &ic)
+			importer.ImportWithoutInit(config, &ic, tf)
 		}
-	}
-}
-
-func tfInit(config *common.Config, workingDir string) *tfexec.Terraform {
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("0.14.11")),
-	}
-
-	execPath, err := installer.Install(context.Background())
-	if err != nil {
-		log.Fatalf("error installing Terraform: %s", err)
-	}
-	tf, err := tfexec.NewTerraform(workingDir, execPath)
-	if err != nil {
-		log.Fatalf("error running NewTerraform: %s", err)
-	}
-	if config.S3Backend {
-		err = tf.Init(context.Background(), tfexec.Upgrade(true), tfexec.BackendConfig("bucket=duplo-tfstate-"+config.AccountID), tfexec.BackendConfig("dynamodb_table=duplo-tfstate-"+config.AccountID+"-lock"))
-	} else {
-		err = tf.Init(context.Background(), tfexec.Upgrade(true))
-	}
-
-	if err != nil {
-		log.Fatalf("error running Init: %s", err)
-	}
-	return tf
-}
-
-func tfNewWorkspace(config *common.Config, tf *tfexec.Terraform) {
-	err := tf.WorkspaceNew(context.Background(), config.TenantName)
-	if err != nil {
-		log.Fatalf("error running tf workspace new: %s", err)
-	}
-}
-
-func tfDeleteWorkspace(config *common.Config, tf *tfexec.Terraform) {
-	err := tf.WorkspaceDelete(context.Background(), config.TenantName)
-	if err != nil {
-		log.Fatalf("error running tf workspace delete: %s", err)
+		//tfInitializer.DeleteWorkspace(config, tf)
 	}
 }
