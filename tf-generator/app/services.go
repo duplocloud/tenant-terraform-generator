@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -14,6 +15,9 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
+
+const SVC_VAR_PREFIX = "svc_"
+const EXCLUDE_SVC_STR = "duploinfrasvc"
 
 type Services struct {
 }
@@ -31,6 +35,13 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 	if list != nil {
 		for _, service := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo service : %s", service.Name)
+
+			if strings.Contains(service.Name, EXCLUDE_SVC_STR) {
+				continue
+			}
+			varFullPrefix := SVC_VAR_PREFIX + service.Name + "_"
+			inputVars := generateScvVars(service, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -237,4 +248,21 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 
 	log.Println("[TRACE] <====== Duplo Services TF generation done. =====>")
 	return &tfContext, nil
+}
+
+func generateScvVars(duplo duplosdk.DuploReplicationController, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	imageIdVar := common.VarConfig{
+		Name:       prefix + "docker_image",
+		DefaultVal: (*duplo.Template.Containers)[0].Image,
+		TypeVal:    "string",
+	}
+	varConfigs["docker_image"] = imageIdVar
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
 }
