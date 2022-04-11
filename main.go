@@ -254,6 +254,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 
 	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
 	appGeneratorList := []tfgenerator.Generator{
+		&app.AppMain{},
 		&app.Services{},
 		&app.ECS{},
 	}

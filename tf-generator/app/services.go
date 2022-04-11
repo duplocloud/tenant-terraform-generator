@@ -49,16 +49,16 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				[]string{"duplocloud_duplo_service",
 					service.Name})
 			svcBody := svcBlock.Body()
-			// svcBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			svcBody.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			svcBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			// svcBody.SetAttributeValue("tenant_id",
+			// 	cty.StringVal(config.TenantId))
 			svcBody.SetAttributeValue("name",
 				cty.StringVal(service.Name))
 
@@ -80,8 +80,10 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					cty.NumberIntVal(int64(service.Template.AgentPlatform)))
 				svcBody.SetAttributeValue("cloud",
 					cty.NumberIntVal(int64(service.Template.Cloud)))
-				svcBody.SetAttributeValue("allocation_tags",
-					cty.StringVal(service.Template.AllocationTags))
+				if len(service.Template.AllocationTags) > 0 {
+					svcBody.SetAttributeValue("allocation_tags",
+						cty.StringVal(service.Template.AllocationTags))
+				}
 				if len(service.Template.OtherDockerConfig) > 0 {
 					OtherDockerConfigMap := make(map[string]interface{})
 					err := json.Unmarshal([]byte(service.Template.OtherDockerConfig), &OtherDockerConfigMap)
