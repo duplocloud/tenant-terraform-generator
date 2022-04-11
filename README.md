@@ -5,7 +5,7 @@
 1. Terraform version greater than or equals to `v0.14.11`
 2. Create named profiles for the AWS CLI, [Refer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
    Lets say `duplo-msp` aws profile is created.
-3. Following environmental variables to be exported in the shell while running this projects.
+3. Following environment variables to be exported in the shell while running this projects.
 
 ```shell
 # Required Vars
