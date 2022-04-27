@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -35,7 +36,7 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			shortName := redis.Identifier[len("duplo-"):len(redis.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo Redis Instance : %s", redis.Identifier)
 
-			varFullPrefix := REDIS_VAR_PREFIX + shortName + "_"
+			varFullPrefix := REDIS_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 			inputVars := generateRedisVars(redis, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 

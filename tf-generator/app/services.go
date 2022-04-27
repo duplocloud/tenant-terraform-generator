@@ -39,8 +39,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			if strings.Contains(service.Name, EXCLUDE_SVC_STR) {
 				continue
 			}
-			varFullPrefix := SVC_VAR_PREFIX + service.Name + "_"
-			inputVars := generateScvVars(service, varFullPrefix)
+			varFullPrefix := SVC_VAR_PREFIX + strings.ReplaceAll(service.Name, "-", "_") + "_"
+			inputVars := generateSvcVars(service, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new empty hcl file object
@@ -155,8 +155,15 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 
 				// If there is at least one container, get the first docker image from it.
 				if service.Template.Containers != nil && len(*service.Template.Containers) > 0 {
-					svcBody.SetAttributeValue("docker_image",
-						cty.StringVal((*service.Template.Containers)[0].Image))
+					svcBody.SetAttributeTraversal("docker_image",
+						hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "var",
+							},
+							hcl.TraverseAttr{
+								Name: varFullPrefix + "docker_image",
+							},
+						})
 				}
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo service : %s", service.Name)
@@ -250,7 +257,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 	return &tfContext, nil
 }
 
-func generateScvVars(duplo duplosdk.DuploReplicationController, prefix string) []common.VarConfig {
+func generateSvcVars(duplo duplosdk.DuploReplicationController, prefix string) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
 	imageIdVar := common.VarConfig{

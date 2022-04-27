@@ -39,7 +39,7 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 			}
 			shortName = strings.Join(parts, "-")
 			log.Printf("[TRACE] Generating terraform config for duplo s3 bucket : %s", shortName)
-			varFullPrefix := S3_VAR_PREFIX + shortName + "_"
+			varFullPrefix := S3_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 

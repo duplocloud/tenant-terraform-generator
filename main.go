@@ -208,6 +208,15 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, ".gitignore"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = duplosdk.Copy(".envrc", filepath.Join("target", config.CustomerName, ".envrc"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func startTFGeneration(config *common.Config, client *duplosdk.Client) {

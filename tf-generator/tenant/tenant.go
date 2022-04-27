@@ -58,6 +58,7 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
 
+	// initialize local vars
 	localsBlock := rootBody.AppendNewBlock("locals",
 		nil)
 	localsBlockBody := localsBlock.Body()
@@ -94,6 +95,15 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 			Name: "workspace",
 		},
 	})
+	rootBody.AppendNewline()
+
+	// duplocloud_infrastructure block
+	infraDs := rootBody.AppendNewBlock("data",
+		[]string{"duplocloud_infrastructure",
+			"infra"})
+	infraDsBody := infraDs.Body()
+	infraDsBody.SetAttributeValue("infra_name",
+		cty.StringVal(duplo.PlanID))
 	rootBody.AppendNewline()
 
 	// Add duplocloud_tenant resource
@@ -213,13 +223,6 @@ func generateTenantVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.Duplo
 	}
 	varConfigs["cert_arn"] = certVar
 
-	tenantNameVar := common.VarConfig{
-		Name:       "tenant_name",
-		DefaultVal: duplo.AccountName,
-		TypeVal:    "string",
-	}
-	varConfigs["tenant_name"] = tenantNameVar
-
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
@@ -267,6 +270,22 @@ func generateTenantOutputVars(workingDir string) []common.OutputVarConfig {
 		RootTraversal: true,
 	}
 	outVarConfigs["region"] = regionVar
+
+	infraNameVar := common.OutputVarConfig{
+		Name:          "infra_name",
+		ActualVal:     "data.duplocloud_infrastructure.infra.infra_name",
+		DescVal:       "The duplo infra name.",
+		RootTraversal: true,
+	}
+	outVarConfigs["infra_name"] = infraNameVar
+
+	vpcIdVar := common.OutputVarConfig{
+		Name:          "vpc_id",
+		ActualVal:     "data.duplocloud_infrastructure.infra.vpc_id",
+		DescVal:       "The VPC or VNet ID.",
+		RootTraversal: true,
+	}
+	outVarConfigs["vpc_id"] = vpcIdVar
 
 	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
 	for _, v := range outVarConfigs {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -35,7 +36,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			shortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo RDS Instance : %s", rds.Identifier)
 
-			varFullPrefix := RDS_VAR_PREFIX + shortName + "_"
+			varFullPrefix := RDS_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 			inputVars := generateRdsVars(rds, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 

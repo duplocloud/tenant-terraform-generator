@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -34,7 +35,7 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		for _, asgProfile := range *list {
 			shortName := asgProfile.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(asgProfile.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo ASG : %s", asgProfile.FriendlyName)
-			varFullPrefix := ASG_VAR_PREFIX + shortName + "_"
+			varFullPrefix := ASG_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 
 			hclFile := hclwrite.NewEmptyFile()
 			inputVars := generateAsgVars(asgProfile, varFullPrefix)

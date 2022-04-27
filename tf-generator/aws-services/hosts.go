@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -36,7 +37,7 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			if isPartOfAsg(host) {
 				continue
 			}
-			varFullPrefix := HOST_VAR_PREFIX + shortName + "_"
+			varFullPrefix := HOST_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 			inputVars := generateHostVars(host, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object

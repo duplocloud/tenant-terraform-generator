@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -40,7 +41,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				fmt.Println(clientErr)
 				return nil, clientErr
 			}
-			varFullPrefix := KAFKA_VAR_PREFIX + shortName + "_"
+			varFullPrefix := KAFKA_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 			inputVars := generateKafkaVars(clusterInfo, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
