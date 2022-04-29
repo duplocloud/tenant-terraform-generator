@@ -165,6 +165,23 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 							},
 						})
 				}
+
+				if len(service.Template.Volumes) > 0 {
+					volConfigMap := make(map[string]interface{})
+					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMap)
+					if err != nil {
+						panic(err)
+					}
+					volConfigMapStr, err := duplosdk.PrettyStruct(volConfigMap)
+					if err != nil {
+						panic(err)
+					}
+					svcBody.SetAttributeTraversal("volumes", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "jsonencode(" + volConfigMapStr + ")",
+						},
+					})
+				}
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo service : %s", service.Name)
 			rootBody.AppendNewline()
