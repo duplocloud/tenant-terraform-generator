@@ -11,6 +11,7 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -68,8 +69,15 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			})
 			// rdsBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
-			rdsBody.SetAttributeValue("name",
-				cty.StringVal(shortName+"-"+config.TenantName))
+			name := shortName + "-${local.tenant_name}"
+			rdsNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			rdsBody.SetAttributeRaw("name", rdsNameTokens)
+			// rdsBody.SetAttributeValue("name",
+			// 	cty.StringVal(shortName+"-"+config.TenantName))
 			rdsBody.SetAttributeValue("engine",
 				cty.NumberIntVal(int64(rds.Engine)))
 			rdsBody.SetAttributeTraversal("engine_version", hcl.Traversal{

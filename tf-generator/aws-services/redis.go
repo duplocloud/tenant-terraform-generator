@@ -11,6 +11,7 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -68,8 +69,16 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			})
 			// redisBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
-			redisBody.SetAttributeValue("name",
-				cty.StringVal(shortName+"-"+config.TenantName))
+			name := shortName + "-${local.tenant_name}"
+			redisNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			// redisBody.SetAttributeValue("name",
+			// 	cty.StringVal(shortName+"-"+config.TenantName))
+			redisBody.SetAttributeRaw("name", redisNameTokens)
+
 			redisBody.SetAttributeValue("cache_type",
 				cty.NumberIntVal(int64(0)))
 			redisBody.SetAttributeTraversal("replicas", hcl.Traversal{
