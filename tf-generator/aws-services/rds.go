@@ -69,7 +69,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// rdsBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
 			rdsBody.SetAttributeValue("name",
-				cty.StringVal(shortName))
+				cty.StringVal(shortName+"-"+config.TenantName))
 			rdsBody.SetAttributeValue("engine",
 				cty.NumberIntVal(int64(rds.Engine)))
 			rdsBody.SetAttributeTraversal("engine_version", hcl.Traversal{

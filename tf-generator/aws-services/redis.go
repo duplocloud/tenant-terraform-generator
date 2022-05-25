@@ -69,7 +69,7 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// redisBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
 			redisBody.SetAttributeValue("name",
-				cty.StringVal(shortName))
+				cty.StringVal(shortName+"-"+config.TenantName))
 			redisBody.SetAttributeValue("cache_type",
 				cty.NumberIntVal(int64(0)))
 			redisBody.SetAttributeTraversal("replicas", hcl.Traversal{
