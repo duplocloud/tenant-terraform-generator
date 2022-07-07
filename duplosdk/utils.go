@@ -1,6 +1,7 @@
 package duplosdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -101,6 +102,15 @@ func UnmarshalEscapedJson(escapedString string) (string, error) {
 		return "", err
 	}
 	return s, nil
+}
+
+func JSONMarshal(t interface{}) (string, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+	err := encoder.Encode(t)
+	return buffer.String(), err
 }
 
 func SelectKeyValues(metadata *[]DuploKeyStringValue, keys []string) *[]DuploKeyStringValue {

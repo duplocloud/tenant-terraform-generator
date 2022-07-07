@@ -82,7 +82,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.ListVal(vals))
 			}
 			if taskDefObj.Volumes != nil && len(taskDefObj.Volumes) > 0 {
-				volString, err := duplosdk.PrettyStruct(taskDefObj.Volumes)
+				volString, err := duplosdk.JSONMarshal(taskDefObj.Volumes)
 				if err != nil {
 					panic(err)
 				}
@@ -93,7 +93,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				})
 			}
 			if taskDefObj.ContainerDefinitions != nil && len(taskDefObj.ContainerDefinitions) > 0 {
-				containerString, err := duplosdk.PrettyStruct(taskDefObj.ContainerDefinitions)
+				containerString, err := duplosdk.JSONMarshal(taskDefObj.ContainerDefinitions)
 				if err != nil {
 					panic(err)
 				}

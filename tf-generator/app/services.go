@@ -101,7 +101,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
-					OtherDockerConfigStr, err := duplosdk.PrettyStruct(OtherDockerConfigMap)
+					OtherDockerConfigStr, err := duplosdk.JSONMarshal(OtherDockerConfigMap)
 					if err != nil {
 						panic(err)
 					}
@@ -117,7 +117,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
-					extraConfigStr, err := duplosdk.PrettyStruct(extraConfigMap)
+					extraConfigStr, err := duplosdk.JSONMarshal(extraConfigMap)
 					if err != nil {
 						panic(err)
 					}
@@ -133,7 +133,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
-					OtherDockerHostConfigStr, err := duplosdk.PrettyStruct(OtherDockerHostConfigMap)
+					OtherDockerHostConfigStr, err := duplosdk.JSONMarshal(OtherDockerHostConfigMap)
 					if err != nil {
 						panic(err)
 					}
@@ -172,7 +172,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
-					volConfigMapStr, err := duplosdk.PrettyStruct(volConfigMap)
+					volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMap)
 					if err != nil {
 						panic(err)
 					}
