@@ -32,7 +32,7 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	tfContext := common.TFContext{}
 	if list != nil {
 		for _, host := range *list {
-			shortName := host.FriendlyName[len("duploservices-"+host.UserAccount+"-"):len(host.FriendlyName)]
+			shortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo host : %s", host.FriendlyName)
 			if isPartOfAsg(host) {
 				continue
@@ -182,9 +182,11 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 func isPartOfAsg(host duplosdk.DuploNativeHost) bool {
 	asgTagKey := []string{"aws:autoscaling:groupName"}
-	asgTag := duplosdk.SelectKeyValues(host.Tags, asgTagKey)
-	if asgTag != nil && len(*asgTag) > 0 {
-		return true
+	if host.Tags != nil && len(*host.Tags) > 0 {
+		asgTag := duplosdk.SelectKeyValues(host.Tags, asgTagKey)
+		if asgTag != nil && len(*asgTag) > 0 {
+			return true
+		}
 	}
 	return false
 }
