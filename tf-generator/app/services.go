@@ -37,6 +37,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			log.Printf("[TRACE] Generating terraform config for duplo service : %s", service.Name)
 
 			if strings.Contains(service.Name, EXCLUDE_SVC_STR) {
+				log.Printf("[TRACE] Generating terraform config for duplo service : %s skipped.", service.Name)
 				continue
 			}
 			varFullPrefix := SVC_VAR_PREFIX + strings.ReplaceAll(service.Name, "-", "_") + "_"
@@ -167,12 +168,14 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				}
 
 				if len(service.Template.Volumes) > 0 {
-					volConfigMap := make(map[string]interface{})
-					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMap)
+					//log.Printf("[TRACE] Volume : %s", service.Template.Volumes)
+					//volConfigMap := make(map[string]interface{})
+					var volConfigMapList []interface{}
+					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMapList)
 					if err != nil {
 						panic(err)
 					}
-					volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMap)
+					volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMapList)
 					if err != nil {
 						panic(err)
 					}

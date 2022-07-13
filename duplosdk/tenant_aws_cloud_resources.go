@@ -21,6 +21,10 @@ const (
 
 	// ResourceTypeApiGatewayRestAPI represents an AWS Api gateway REST API
 	ResourceTypeApiGatewayRestAPI int = 8
+
+	ResourceTypeSQSQueue int = 3
+
+	ResourceTypeSNSTopic int = 4
 )
 
 type CustomComponentType int
@@ -243,6 +247,11 @@ type DuploApiGatewayRequest struct {
 type DuploApiGatewayResource struct {
 	Name         string `json:"Name"`
 	MetaData     string `json:"MetaData,omitempty"`
+	ResourceType int    `json:"ResourceType,omitempty"`
+}
+
+type DuploAwsResource struct {
+	Name         string `json:"Name"`
 	ResourceType int    `json:"ResourceType,omitempty"`
 }
 
@@ -603,4 +612,35 @@ func (c *Client) TenantListS3Buckets(tenantID string) (*[]DuploS3Bucket, ClientE
 		buckets = append(buckets, v)
 	}
 	return &buckets, nil
+}
+
+func (c *Client) TenantListSQS(tenantID string) (*[]DuploAwsResource, ClientError) {
+	allResources, err := c.TenantListAwsCloudResources(tenantID)
+	m := make(map[string]DuploAwsResource)
+	if err != nil {
+		return nil, err
+	}
+	for _, resource := range *allResources {
+		if resource.Type == ResourceTypeSQSQueue {
+			m[resource.Name] = DuploAwsResource{
+				Name:         resource.Name,
+				ResourceType: ResourceTypeSQSQueue,
+			}
+		}
+	}
+	sqsList := make([]DuploAwsResource, 0, len(m))
+	for _, i := range m {
+		sqsList = append(sqsList, i)
+	}
+	return &sqsList, nil
+}
+
+func (c *Client) TenantListSnsTopic(tenantID string) (*[]DuploAwsResource, ClientError) {
+	rp := []DuploAwsResource{}
+	err := c.getAPI(
+		fmt.Sprintf("TenantListSnsTopic(%s)", tenantID),
+		fmt.Sprintf("v3/subscriptions/%s/aws/snsTopic", tenantID),
+		&rp,
+	)
+	return &rp, err
 }

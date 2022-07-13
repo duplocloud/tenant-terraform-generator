@@ -29,8 +29,15 @@ func main() {
 	config := validateAndGetConfig()
 	log.Println("[TRACE] <====== Initialized duplo client and config. =====>")
 
+	tenantConfig, err := client.TenantGet(config.TenantId)
+	if err != nil {
+		log.Fatalf("error getting tenant from duplo: %s", err)
+	}
+	config.TenantName = tenantConfig.AccountName
+
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
 	initTargetDir(config)
+	log.Printf("[TRACE] Config ==> %+v\n", config)
 	log.Println("[TRACE] <====== Initialized target directory with customer name and tenant id. =====>")
 	// Chain of responsiblity started.
 	// Provider --> Tenant --> Hosts --> Services --> ...
@@ -161,7 +168,7 @@ func validateAndGetConfig() *common.Config {
 }
 
 func initTargetDir(config *common.Config) {
-	config.TFCodePath = filepath.Join("target", config.CustomerName, "terraform")
+	config.TFCodePath = filepath.Join("target", config.CustomerName, config.TenantName, "terraform")
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
 	err := os.RemoveAll(tenantProject)
 	if err != nil {
@@ -195,7 +202,7 @@ func initTargetDir(config *common.Config) {
 	}
 	config.AppDir = appProject
 
-	scriptsPath := filepath.Join("target", config.CustomerName, "scripts")
+	scriptsPath := filepath.Join("target", config.CustomerName, config.TenantName, "scripts")
 	err = os.RemoveAll(scriptsPath)
 	if err != nil {
 		log.Fatal(err)
@@ -208,11 +215,11 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, ".gitignore"))
+	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, config.TenantName, ".gitignore"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = duplosdk.Copy(".envrc", filepath.Join("target", config.CustomerName, ".envrc"))
+	err = duplosdk.Copy(".envrc", filepath.Join("target", config.CustomerName, config.TenantName, ".envrc"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -224,11 +231,6 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	providerGen := &common.Provider{}
 	providerGen.Generate(config, client)
 
-	tenantConfig, err := client.TenantGet(config.TenantId)
-	if err != nil {
-		log.Fatalf("error getting tenant from duplo: %s", err)
-	}
-	config.TenantName = tenantConfig.AccountName
 	// if config.GenerateTfState {
 	// 	tf := tfInit(config, config.AdminTenantDir)
 	// 	tfNewWorkspace(config, tf)
@@ -254,6 +256,8 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.Redis{},
 		&awsservices.Kafka{},
 		&awsservices.S3Bucket{},
+		&awsservices.SQS{},
+		&awsservices.SNS{},
 	}
 	if config.S3Backend {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})

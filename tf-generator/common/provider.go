@@ -53,7 +53,7 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		nil)
 	tfBlockBody := tfBlock.Body()
 	tfBlockBody.SetAttributeValue("required_version",
-		cty.StringVal("> 0.14.11"))
+		cty.StringVal(">= 0.14.11"))
 
 	reqProvsBlock := tfBlockBody.AppendNewBlock("required_providers",
 		nil)
