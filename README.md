@@ -53,3 +53,17 @@ export AWS_PROFILE="duplo-msp"
   - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Elastic Search inside duplo.
   - **Project : app** This project manages duplo services like eks and ecs etc.
 
+## Following duplo resources are supported.
+   - `duplocloud_tenant`
+   - `duplocloud_asg_profile`
+   - `duplocloud_aws_host`
+   - `duplocloud_aws_kafka_cluster`
+   - `duplocloud_rds_instance`
+   - `duplocloud_ecache_instance`
+   - `duplocloud_s3_bucket`
+   - `duplocloud_aws_sns_topic`
+   - `duplocloud_aws_sqs_queue`
+   - `duplocloud_duplo_service`
+   - `duplocloud_duplo_service_lbconfigs`
+   - `duplocloud_ecs_task_definition`
+   - `duplocloud_ecs_service`
