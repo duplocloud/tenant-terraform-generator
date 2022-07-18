@@ -94,16 +94,6 @@ type DuploMwaaAirflowCreateResponse struct {
 	Arn  string `json:"Arn,omitempty"`
 }
 
-func (c *Client) MwaaAirflowCreate(tenantID string, name string, rq *DuploMwaaAirflowCreateRequest) ClientError {
-	resp := DuploMwaaAirflowCreateResponse{}
-	return c.postAPI(
-		fmt.Sprintf("MwaaAirflowCreate(%s, %s)", tenantID, name),
-		fmt.Sprintf("v3/subscriptions/%s/aws/mwaaAirflow", tenantID),
-		&rq,
-		&resp,
-	)
-}
-
 func (c *Client) MwaaAirflowGet(tenantID string, name string) (*DuploMwaaAirflowSummary, ClientError) {
 	list, err := c.MwaaAirflowList(tenantID)
 	if err != nil {
@@ -137,24 +127,4 @@ func (c *Client) MwaaAirflowList(tenantID string) (*[]DuploMwaaAirflowSummary, C
 		&rp,
 	)
 	return &rp, err
-}
-
-func (c *Client) MwaaAirflowDelete(tenantID string, id string) ClientError {
-	return c.deleteAPI(
-		fmt.Sprintf("MwaaAirflowDelete(%s, %s)", tenantID, id),
-		fmt.Sprintf("v3/subscriptions/%s/aws/mwaaairflow/%s", tenantID, id),
-		nil,
-	)
-}
-
-func (c *Client) MwaaAirflowUpdate(tenantID string, id string, rq *DuploMwaaAirflowCreateRequest) ClientError {
-	verb := "PUT"
-	msg := fmt.Sprintf("MwaaAirflowScale(%s, %s)", tenantID, id)
-	api := fmt.Sprintf("v3/subscriptions/%s/aws/mwaaairflow/%s", tenantID, id)
-	rp := DuploMwaaAirflowCreateResponse{}
-	err := c.doAPIWithRequestBody(verb, msg, api, &rq, &rp)
-	if err != nil {
-		return err
-	}
-	return nil
 }

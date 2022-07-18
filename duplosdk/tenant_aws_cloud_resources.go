@@ -157,10 +157,11 @@ type DuploAwsLbListenerDeleteRequest struct {
 
 // DuploAwsLbSettings represents an AWS application load balancer's settings
 type DuploAwsLbSettings struct {
-	LoadBalancerArn    string `json:"LoadBalancerArn"`
-	EnableAccessLogs   bool   `json:"EnableAccessLogs,omitempty"`
-	DropInvalidHeaders bool   `json:"DropInvalidHeaders,omitempty"`
-	WebACLID           string `json:"WebACLId,omitempty"`
+	LoadBalancerArn     string `json:"LoadBalancerArn"`
+	EnableAccessLogs    bool   `json:"EnableAccessLogs,omitempty"`
+	DropInvalidHeaders  bool   `json:"DropInvalidHeaders,omitempty"`
+	WebACLID            string `json:"WebACLId,omitempty"`
+	HttpToHttpsRedirect bool   `json:"HttpToHttpsRedirect,omitempty"`
 }
 
 // DuploAwsLbListener represents an AWS application load balancer listener

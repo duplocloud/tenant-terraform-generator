@@ -27,7 +27,7 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return nil, clientErr
+		return nil, nil
 	}
 	prefix, clientErr := client.GetDuploServicesPrefix(config.TenantId)
 	if clientErr != nil {

@@ -211,3 +211,13 @@ func (c *Client) ReplicationControllerLbConfigurationList(tenantID string, name 
 
 	return &rpcLbs, nil
 }
+
+func (c *Client) ReplicationControllerLbWafGet(tenantID, name string) (string, ClientError) {
+	wafAclId := ""
+	err := c.getAPI(
+		fmt.Sprintf("ReplicationControllerLbGetWaf(%s, %s)", tenantID, name),
+		fmt.Sprintf("subscriptions/%s/GetWafInLb/%s", tenantID, name),
+		&wafAclId,
+	)
+	return wafAclId, err
+}

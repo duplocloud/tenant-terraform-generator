@@ -17,7 +17,7 @@ import (
 )
 
 const SVC_VAR_PREFIX = "svc_"
-const EXCLUDE_SVC_STR = "duploinfrasvc"
+const EXCLUDE_SVC_STR = "duploinfrasvc,dockerservices-shell,system-svc-"
 
 type Services struct {
 }
@@ -26,7 +26,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 	log.Println("[TRACE] <====== Duplo Services TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.ReplicationControllerList(config.TenantId)
-
+	exclude_svc_list := strings.Split(EXCLUDE_SVC_STR, ",")
 	if clientErr != nil {
 		fmt.Println(clientErr)
 		return nil, clientErr
@@ -35,9 +35,15 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 	if list != nil {
 		for _, service := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo service : %s", service.Name)
-
-			if strings.Contains(service.Name, EXCLUDE_SVC_STR) {
-				log.Printf("[TRACE] Generating terraform config for duplo service : %s skipped.", service.Name)
+			skip := false
+			for _, element := range exclude_svc_list {
+				if strings.Contains(service.Name, element) {
+					log.Printf("[TRACE] Generating terraform config for duplo service : %s skipped.", service.Name)
+					skip = true
+					break
+				}
+			}
+			if skip {
 				continue
 			}
 			varFullPrefix := SVC_VAR_PREFIX + strings.ReplaceAll(service.Name, "-", "_") + "_"
@@ -113,7 +119,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					})
 				}
 				if len(service.Template.ExtraConfig) > 0 {
-					extraConfigMap := make(map[string]interface{})
+					var extraConfigMap interface{}
+					log.Printf("[TRACE] ExtraConfig *** : %s", service.Template.ExtraConfig)
 					err := json.Unmarshal([]byte(service.Template.ExtraConfig), &extraConfigMap)
 					if err != nil {
 						panic(err)
@@ -170,7 +177,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				if len(service.Template.Volumes) > 0 {
 					//log.Printf("[TRACE] Volume : %s", service.Template.Volumes)
 					//volConfigMap := make(map[string]interface{})
-					var volConfigMapList []interface{}
+					var volConfigMapList interface{}
+					// log.Printf("[TRACE] Vol *** : %s", service.Template.Volumes)
 					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMapList)
 					if err != nil {
 						panic(err)
@@ -243,6 +251,70 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						cty.StringVal(serviceConfig.CertificateArn))
 					svcConfigBody.AppendNewline()
 				}
+
+				// TODO Add duplocloud_duplo_service_params resource here.
+
+				svcParamBlock := rootBody.AppendNewBlock("resource",
+					[]string{"duplocloud_duplo_service_params",
+						service.Name + "-params"})
+				svcParamBody := svcParamBlock.Body()
+				svcParamBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+					},
+					hcl.TraverseAttr{
+						Name: "tenant_id",
+					},
+				})
+				svcParamBody.SetAttributeTraversal("replication_controller_name", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+					},
+					hcl.TraverseAttr{
+						Name: "replication_controller_name",
+					},
+				})
+				svcParamBody.SetAttributeValue("dns_prfx",
+					cty.StringVal(service.DnsPrfx))
+				if doesReplicationControllerHaveAlb(&service) {
+					webAclId, clientError := client.ReplicationControllerLbWafGet(config.TenantId, service.Name)
+					if clientError != nil {
+						if clientError.Status() == 500 && service.Template.Cloud != 0 {
+							log.Printf("[TRACE] Ignoring error %s for non AWS cloud.", clientError)
+						}
+						webAclId = ""
+					}
+					if len(webAclId) > 0 {
+						svcParamBody.SetAttributeValue("webaclid",
+							cty.StringVal(webAclId))
+					}
+				}
+				isError := false
+				if doesReplicationControllerHaveAlbOrNlb(&service) {
+					details, err := getDuploServiceAwsLbSettings(config.TenantId, &service, client)
+					if details == nil || err != nil {
+						isError = true
+					}
+					settings, err := client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
+					if err != nil {
+						isError = true
+					}
+					if settings != nil && settings.LoadBalancerArn != "" {
+						svcParamBody.SetAttributeValue("enable_access_logs",
+							cty.BoolVal(settings.EnableAccessLogs))
+						svcParamBody.SetAttributeValue("drop_invalid_headers",
+							cty.BoolVal(settings.DropInvalidHeaders))
+						svcParamBody.SetAttributeValue("http_to_https_redirect",
+							cty.BoolVal(settings.HttpToHttpsRedirect))
+					} else if isError {
+						svcParamBody.SetAttributeValue("enable_access_logs",
+							cty.BoolVal(false))
+						svcParamBody.SetAttributeValue("drop_invalid_headers",
+							cty.BoolVal(false))
+						svcParamBody.SetAttributeValue("http_to_https_redirect",
+							cty.BoolVal(false))
+					}
+				}
 			}
 
 			_, err = tfFile.Write(hclFile.Bytes())
@@ -266,6 +338,12 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ServiceLBConfigsV2/" + service.Name,
 						WorkingDir:      workingDir,
 					})
+					importConfigs = append(importConfigs, common.ImportConfig{
+						ResourceAddress: "duplocloud_duplo_service_params." + service.Name + "-params",
+						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerParamsV2/" + service.Name,
+						WorkingDir:      workingDir,
+					})
+
 				}
 				tfContext.ImportConfigs = importConfigs
 			}
@@ -292,4 +370,44 @@ func generateSvcVars(duplo duplosdk.DuploReplicationController, prefix string) [
 		vars = append(vars, v)
 	}
 	return vars
+}
+
+func doesReplicationControllerHaveAlb(duplo *duplosdk.DuploReplicationController) bool {
+	if duplo != nil && duplo.Template != nil {
+		for _, lb := range duplo.Template.LBConfigurations {
+			if lb.LbType == 1 || lb.LbType == 2 { // ALB or Healthcheck only
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func getDuploServiceAwsLbSettings(tenantID string, rpc *duplosdk.DuploReplicationController, c *duplosdk.Client) (*duplosdk.DuploAwsLbDetailsInService, error) {
+
+	if rpc.Template != nil && rpc.Template.Cloud == 0 {
+
+		// Look for load balancer settings.
+		details, err := c.TenantGetLbDetailsInService(tenantID, rpc.Name)
+		if err != nil {
+			return nil, err
+		}
+		if details != nil && details.LoadBalancerArn != "" {
+			return details, nil
+		}
+	}
+
+	// Nothing found.
+	return nil, nil
+}
+
+func doesReplicationControllerHaveAlbOrNlb(duplo *duplosdk.DuploReplicationController) bool {
+	if duplo != nil && duplo.Template != nil {
+		for _, lb := range duplo.Template.LBConfigurations {
+			if lb.LbType == 1 || lb.LbType == 2 || lb.LbType == 6 { // ALB, Healthcheck only or NLB
+				return true
+			}
+		}
+	}
+	return false
 }
