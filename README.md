@@ -68,3 +68,5 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_ecs_task_definition`
    - `duplocloud_ecs_service`
    - `duplocloud_aws_mwaa_environment`
+   - `duplocloud_k8_secret`
+   - `duplocloud_k8_config_map`
