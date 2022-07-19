@@ -111,14 +111,16 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			if host.MinionTags != nil {
 				for _, duploObject := range *host.MinionTags {
-					minionTagsBlock := hostBody.AppendNewBlock("minion_tags",
-						nil)
-					minionTagsBody := minionTagsBlock.Body()
-					minionTagsBody.SetAttributeValue("key",
-						cty.StringVal(duploObject.Key))
-					minionTagsBody.SetAttributeValue("value",
-						cty.StringVal(duploObject.Value))
-					rootBody.AppendNewline()
+					if len(duploObject.Value) > 0 {
+						minionTagsBlock := hostBody.AppendNewBlock("minion_tags",
+							nil)
+						minionTagsBody := minionTagsBlock.Body()
+						minionTagsBody.SetAttributeValue("key",
+							cty.StringVal(duploObject.Key))
+						minionTagsBody.SetAttributeValue("value",
+							cty.StringVal(duploObject.Value))
+						rootBody.AppendNewline()
+					}
 				}
 			}
 			//TODO - Duplo provider doesn't handle this yet.
