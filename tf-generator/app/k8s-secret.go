@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -44,7 +45,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 			// Add duplocloud_aws_host resource
 			k8sSecretBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_k8_secret",
-					k8sSecret.SecretName})
+					strings.ReplaceAll(k8sSecret.SecretName, ".", "_")})
 			k8sSecretBody := k8sSecretBlock.Body()
 			k8sSecretBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
