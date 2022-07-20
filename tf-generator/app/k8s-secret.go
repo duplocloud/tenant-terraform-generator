@@ -23,7 +23,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 	list, clientErr := client.K8SecretGetList(config.TenantId)
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return nil, clientErr
+		return nil, nil
 	}
 	tfContext := common.TFContext{}
 	if list != nil {

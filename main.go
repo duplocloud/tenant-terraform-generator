@@ -39,6 +39,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("error getting tenant from duplo: %s", err)
 	}
+	if tenantConfig == nil {
+		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
+	}
 	config.TenantName = tenantConfig.AccountName
 
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
@@ -355,6 +358,7 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 }
 
 func validateAndFormatTfCode(tfDir string) {
+	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is started.", tfDir)
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
 		Version: version.Must(version.NewVersion("0.14.11")),
@@ -380,4 +384,5 @@ func validateAndFormatTfCode(tfDir string) {
 		log.Fatalf("error running terraform format: %s", err)
 	}
 	log.Printf("[TRACE] Formatting of terraform code generated at %s is done.", tfDir)
+	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is done.", tfDir)
 }
