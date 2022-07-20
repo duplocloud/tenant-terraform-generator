@@ -31,6 +31,10 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 		fmt.Println(clientErr)
 		return nil, clientErr
 	}
+	k8sSecretList, clientErr := client.K8SecretGetList(config.TenantId)
+	if clientErr != nil {
+		k8sSecretList = nil
+	}
 	tfContext := common.TFContext{}
 	if list != nil {
 		for _, service := range *list {
@@ -187,6 +191,15 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
+					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
+						for _, k8sSecret := range *k8sSecretList {
+							if strings.Contains(volConfigMapStr, k8sSecret.SecretName) {
+								volConfigMapStr = strings.Replace(volConfigMapStr, "\"SecretName\": \""+k8sSecret.SecretName+"\"", "\"SecretName\":duplocloud_k8_secret."+strings.ReplaceAll(k8sSecret.SecretName, ".", "_")+"."+"secret_name", 1)
+								break
+							}
+						}
+					}
+
 					svcBody.SetAttributeTraversal("volumes", hcl.Traversal{
 						hcl.TraverseRoot{
 							Name: "jsonencode(" + volConfigMapStr + ")",

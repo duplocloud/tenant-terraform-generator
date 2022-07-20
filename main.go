@@ -2,6 +2,7 @@ package main
 
 //ReadMe : https://dev.to/pdcommunity/write-terraform-files-in-go-with-hclwrite-2e1j
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -15,6 +16,11 @@ import (
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
 	"tenant-terraform-generator/tf-generator/tenant"
+
+	"github.com/hashicorp/go-version"
+	"github.com/hashicorp/hc-install/product"
+	"github.com/hashicorp/hc-install/releases"
+	"github.com/hashicorp/terraform-exec/tfexec"
 )
 
 func init() {
@@ -32,6 +38,9 @@ func main() {
 	tenantConfig, err := client.TenantGet(config.TenantId)
 	if err != nil {
 		log.Fatalf("error getting tenant from duplo: %s", err)
+	}
+	if tenantConfig == nil {
+		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
 	}
 	config.TenantName = tenantConfig.AccountName
 
@@ -245,6 +254,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	}
 
 	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
+	validateAndFormatTfCode(config.AdminTenantDir)
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
@@ -264,6 +274,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
 	}
 	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
+	validateAndFormatTfCode(config.AwsServicesDir)
 	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
@@ -278,6 +289,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
 	}
 	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
+	validateAndFormatTfCode(config.AppDir)
 	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
 	// if config.GenerateTfState && config.S3Backend {
@@ -343,4 +355,34 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 		}
 		//tfInitializer.DeleteWorkspace(config, tf)
 	}
+}
+
+func validateAndFormatTfCode(tfDir string) {
+	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is started.", tfDir)
+	installer := &releases.ExactVersion{
+		Product: product.Terraform,
+		Version: version.Must(version.NewVersion("0.14.11")),
+	}
+
+	execPath, err := installer.Install(context.Background())
+	if err != nil {
+		log.Fatalf("error installing Terraform: %s", err)
+	}
+	tf, err := tfexec.NewTerraform(tfDir, execPath)
+	if err != nil {
+		log.Fatalf("error running NewTerraform: %s", err)
+	}
+	log.Printf("[TRACE] Validation of terraform code generated at %s is started.", tfDir)
+	_, err = tf.Validate(context.Background())
+	if err != nil {
+		log.Fatalf("error running terraform validate: %s", err)
+	}
+	log.Printf("[TRACE] Validation of terraform code generated at %s is done.", tfDir)
+	log.Printf("[TRACE] Formatting of terraform code generated at %s is started.", tfDir)
+	err = tf.FormatWrite(context.Background())
+	if err != nil {
+		log.Fatalf("error running terraform format: %s", err)
+	}
+	log.Printf("[TRACE] Formatting of terraform code generated at %s is done.", tfDir)
+	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is done.", tfDir)
 }
