@@ -251,7 +251,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	}
 
 	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
-	formatTfCode(config.AdminTenantDir)
+	validateAndFormatTfCode(config.AdminTenantDir)
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
@@ -271,7 +271,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
 	}
 	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
-	formatTfCode(config.AwsServicesDir)
+	validateAndFormatTfCode(config.AwsServicesDir)
 	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
@@ -286,7 +286,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
 	}
 	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
-	formatTfCode(config.AppDir)
+	validateAndFormatTfCode(config.AppDir)
 	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
 	// if config.GenerateTfState && config.S3Backend {
@@ -354,8 +354,7 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 	}
 }
 
-func formatTfCode(tfDir string) {
-	log.Printf("[TRACE] Formatting terraform code generated at %s.", tfDir)
+func validateAndFormatTfCode(tfDir string) {
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
 		Version: version.Must(version.NewVersion("0.14.11")),
@@ -369,6 +368,13 @@ func formatTfCode(tfDir string) {
 	if err != nil {
 		log.Fatalf("error running NewTerraform: %s", err)
 	}
+	log.Printf("[TRACE] Validation of terraform code generated at %s is started.", tfDir)
+	_, err = tf.Validate(context.Background())
+	if err != nil {
+		log.Fatalf("error running terraform validate: %s", err)
+	}
+	log.Printf("[TRACE] Validation of terraform code generated at %s is done.", tfDir)
+	log.Printf("[TRACE] Formatting of terraform code generated at %s is started.", tfDir)
 	err = tf.FormatWrite(context.Background())
 	if err != nil {
 		log.Fatalf("error running terraform format: %s", err)
