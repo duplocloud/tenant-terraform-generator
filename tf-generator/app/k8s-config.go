@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -39,12 +40,13 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 				fmt.Println(err)
 				return nil, err
 			}
+			resourceName := strings.ReplaceAll(k8sConfig.Name, ".", "_")
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 			// Add duplocloud_aws_host resource
 			k8sConfigBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_k8_config_map",
-					k8sConfig.Name})
+					resourceName})
 			k8sConfigBody := k8sConfigBlock.Body()
 			k8sConfigBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -79,7 +81,7 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 				importConfigs := []common.ImportConfig{}
 
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_k8_config_map." + k8sConfig.Name,
+					ResourceAddress: "duplocloud_k8_config_map." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/K8ConfigMapApiV2/" + k8sConfig.Name,
 					WorkingDir:      workingDir,
 				})
