@@ -72,3 +72,4 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_aws_elasticsearch`
    - `duplocloud_k8_secret`
    - `duplocloud_k8_config_map`
+   - `duplocloud_aws_ssm_parameter`

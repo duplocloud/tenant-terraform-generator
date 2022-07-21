@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -42,6 +43,11 @@ func (c *Client) GetResourceName(prefix, tenantID, name string, withAccountSuffi
 		return strings.Join([]string{prefix, tenant.AccountName, name, accountID}, "-"), nil
 	}
 	return strings.Join([]string{prefix, tenant.AccountName, name}, "-"), nil
+}
+
+// handle path parameter encoding when it might contain slashes
+func EncodePathParam(param string) string {
+	return url.PathEscape(url.PathEscape(param))
 }
 
 // GetDuploServicesPrefix builds a duplo resource name, given a tenant ID.
