@@ -40,12 +40,13 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 				fmt.Println(err)
 				return nil, err
 			}
+			resourceName := strings.ReplaceAll(k8sSecret.SecretName, ".", "_")
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 			// Add duplocloud_aws_host resource
 			k8sSecretBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_k8_secret",
-					strings.ReplaceAll(k8sSecret.SecretName, ".", "_")})
+					resourceName})
 			k8sSecretBody := k8sSecretBlock.Body()
 			k8sSecretBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -90,7 +91,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 				importConfigs := []common.ImportConfig{}
 
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_k8_secret." + k8sSecret.SecretName,
+					ResourceAddress: "duplocloud_k8_secret." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/K8SecretApiV2/" + k8sSecret.SecretName,
 					WorkingDir:      workingDir,
 				})
