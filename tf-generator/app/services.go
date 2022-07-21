@@ -193,6 +193,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					}
 					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
 						for _, k8sSecret := range *k8sSecretList {
+							// TODO - Recheck this code, find out better approach to wire k8s secret inside service.
 							if strings.Contains(volConfigMapStr, k8sSecret.SecretName) {
 								volConfigMapStr = strings.Replace(volConfigMapStr, "\"SecretName\": \""+k8sSecret.SecretName+"\"", "\"SecretName\":duplocloud_k8_secret."+strings.ReplaceAll(k8sSecret.SecretName, ".", "_")+"."+"secret_name", 1)
 								break
