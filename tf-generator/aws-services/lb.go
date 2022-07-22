@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -43,6 +44,8 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 				settings = nil
 			}
 			log.Printf("[TRACE] Generating terraform config for duplo aws load balancer : %s", shortName)
+
+			varFullPrefix := LB_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -146,6 +149,9 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo aws load balancer : %s", shortName)
 
+			outVars := generateLBOutputVars(varFullPrefix, shortName)
+			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
+
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
@@ -170,4 +176,38 @@ func extractLbShortName(client *duplosdk.Client, tenantID string, fullName strin
 	}
 	name, _ := duplosdk.UnprefixName(prefix, fullName)
 	return name, nil
+}
+
+func generateLBOutputVars(prefix, shortName string) []common.OutputVarConfig {
+	outVarConfigs := make(map[string]common.OutputVarConfig)
+
+	var1 := common.OutputVarConfig{
+		Name:          prefix + "fullname",
+		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".fullname",
+		DescVal:       "The full name of the load balancer.",
+		RootTraversal: true,
+	}
+	outVarConfigs["fullname"] = var1
+
+	var2 := common.OutputVarConfig{
+		Name:          prefix + "arn",
+		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".arn",
+		DescVal:       "The ARN of the load balancer.",
+		RootTraversal: true,
+	}
+	outVarConfigs["arn"] = var2
+
+	var3 := common.OutputVarConfig{
+		Name:          prefix + "dns_name",
+		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".dns_name",
+		DescVal:       "The DNS name of the load balancer.",
+		RootTraversal: true,
+	}
+	outVarConfigs["dns_name"] = var3
+
+	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
+	for _, v := range outVarConfigs {
+		outVars = append(outVars, v)
+	}
+	return outVars
 }
