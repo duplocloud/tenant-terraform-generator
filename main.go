@@ -272,6 +272,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.ES{},
 		&awsservices.SsmParams{},
 		&awsservices.LoadBalancer{},
+		&awsservices.ApiGatewayIntegration{},
 	}
 	if config.S3Backend {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
