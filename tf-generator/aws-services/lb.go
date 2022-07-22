@@ -126,7 +126,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 
 					listenerBody.SetAttributeValue("protocol",
 						cty.StringVal(listener.Protocol.Value))
-					listenerBody.SetAttributeValue("protocol",
+					listenerBody.SetAttributeValue("port",
 						cty.NumberIntVal(int64(listener.Port)))
 
 					if len(listener.DefaultActions) > 0 {
