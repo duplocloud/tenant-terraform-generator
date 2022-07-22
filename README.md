@@ -76,3 +76,4 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_aws_load_balancer`
    - `duplocloud_aws_load_balancer_listener`
    - `duplocloud_aws_api_gateway_integration`
+   - `duplocloud_aws_ecr_repository`
