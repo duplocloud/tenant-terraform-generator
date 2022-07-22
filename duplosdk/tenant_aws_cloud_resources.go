@@ -66,8 +66,9 @@ type DuploAwsCloudResource struct {
 	Policies          []string `json:"Policies,omitempty"`
 
 	// Only Load balancer
-	IsInternal bool   `json:"IsInternal,omitempty"`
-	WebACLID   string `json:"WebACLID,omitempty"`
+	IsInternal bool              `json:"IsInternal,omitempty"`
+	WebACLID   string            `json:"WebACLID,omitempty"`
+	LbType     *DuploStringValue `json:"LbType,omitempty"`
 }
 
 // DuploS3Bucket represents an S3 bucket resource for a Duplo tenant
@@ -97,6 +98,7 @@ type DuploApplicationLB struct {
 	EnableAccessLogs bool                   `json:"EnableAccessLogs,omitempty"`
 	IsInternal       bool                   `json:"IsInternal,omitempty"`
 	WebACLID         string                 `json:"WebACLID,omitempty"`
+	LbType           *DuploStringValue      `json:"LbType,omitempty"`
 	Tags             *[]DuploKeyStringValue `json:"Tags,omitempty"`
 }
 
@@ -644,4 +646,31 @@ func (c *Client) TenantListSnsTopic(tenantID string) (*[]DuploAwsResource, Clien
 		&rp,
 	)
 	return &rp, err
+}
+
+func (c *Client) TenantGetApplicationLBList(tenantID string) (*[]DuploApplicationLB, ClientError) {
+	allResources, err := c.TenantListAwsCloudResources(tenantID)
+	m := make(map[string]DuploApplicationLB)
+	if err != nil {
+		return nil, err
+	}
+	for _, resource := range *allResources {
+		if resource.Type == ResourceTypeApplicationLB {
+			m[resource.Name] = DuploApplicationLB{
+				TenantID:         tenantID,
+				Name:             resource.Name,
+				Arn:              resource.Arn,
+				DNSName:          resource.MetaData,
+				IsInternal:       resource.IsInternal,
+				EnableAccessLogs: resource.EnableAccessLogs,
+				Tags:             resource.Tags,
+				LbType:           resource.LbType,
+			}
+		}
+	}
+	lbList := make([]DuploApplicationLB, 0, len(m))
+	for _, i := range m {
+		lbList = append(lbList, i)
+	}
+	return &lbList, nil
 }

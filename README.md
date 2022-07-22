@@ -73,3 +73,5 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_k8_secret`
    - `duplocloud_k8_config_map`
    - `duplocloud_aws_ssm_parameter`
+   - `duplocloud_aws_load_balancer`
+   - `duplocloud_aws_load_balancer_listener`
