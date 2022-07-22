@@ -674,3 +674,25 @@ func (c *Client) TenantGetApplicationLBList(tenantID string) (*[]DuploApplicatio
 	}
 	return &lbList, nil
 }
+
+func (c *Client) TenantGetApplicationApiGatewayList(tenantID string) (*[]DuploApiGatewayResource, ClientError) {
+	allResources, err := c.TenantListAwsCloudResources(tenantID)
+	m := make(map[string]DuploApiGatewayResource)
+	if err != nil {
+		return nil, err
+	}
+	for _, resource := range *allResources {
+		if resource.Type == ResourceTypeApiGatewayRestAPI {
+			m[resource.Name] = DuploApiGatewayResource{
+				Name:         resource.Name,
+				MetaData:     resource.MetaData,
+				ResourceType: resource.Type,
+			}
+		}
+	}
+	list := make([]DuploApiGatewayResource, 0, len(m))
+	for _, i := range m {
+		list = append(list, i)
+	}
+	return &list, nil
+}
