@@ -111,13 +111,13 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cerBody.SetAttributeValue("error_code", cty.NumberIntVal(int64(cer.ErrorCode)))
 					if len(cer.ResponseCode) > 0 {
 						val, _ := strconv.Atoi(cer.ResponseCode)
-						cfdBody.SetAttributeValue("response_code", cty.NumberIntVal(int64(val)))
+						cerBody.SetAttributeValue("response_code", cty.NumberIntVal(int64(val)))
 					}
 					if len(cer.ResponsePagePath) > 0 {
-						cfdBody.SetAttributeValue("response_page_path", cty.StringVal(cer.ResponsePagePath))
+						cerBody.SetAttributeValue("response_page_path", cty.StringVal(cer.ResponsePagePath))
 					}
 					if cer.ErrorCachingMinTTL > 0 {
-						cfdBody.SetAttributeValue("error_caching_min_ttl", cty.NumberIntVal(int64(cer.ErrorCachingMinTTL)))
+						cerBody.SetAttributeValue("error_caching_min_ttl", cty.NumberIntVal(int64(cer.ErrorCachingMinTTL)))
 					}
 				}
 			}
@@ -216,7 +216,7 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 							headerBody.SetAttributeValue("value", cty.StringVal(header.HeaderValue))
 						}
 					}
-					if origin.OriginShield != nil {
+					if origin.OriginShield != nil && origin.OriginShield.Enabled {
 						originShieldBlock := originBody.AppendNewBlock("origin_shield", nil)
 						originShieldBody := originShieldBlock.Body()
 						originShieldBody.SetAttributeValue("enabled", cty.BoolVal(origin.OriginShield.Enabled))
