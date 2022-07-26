@@ -44,15 +44,17 @@ func (tsgrule *TenantSGRule) Generate(config *common.Config, client *duplosdk.Cl
 		var rootBody *hclwrite.Body
 		rootBodyCreated := false
 		importConfigs := []common.ImportConfig{}
-		for i, sgRule := range *list {
+		counter := 0
+		for _, sgRule := range *list {
 			if !rootBodyCreated {
 				rootBody = hclFile.Body()
 			}
 			rootBodyCreated = true
-			for j, source := range *sgRule.Sources {
+			for _, source := range *sgRule.Sources {
+				counter++
 				tenantSgRule := rootBody.AppendNewBlock("resource",
 					[]string{"duplocloud_tenant_network_security_rule",
-						"tenant-sg-rule" + strconv.Itoa(i+1+j)})
+						"tenant-sg-rule" + strconv.Itoa(counter)})
 				tenantSgRuleBody := tenantSgRule.Body()
 				tenantSgRuleBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 					hcl.TraverseRoot{
@@ -84,7 +86,7 @@ func (tsgrule *TenantSGRule) Generate(config *common.Config, client *duplosdk.Cl
 
 				if config.GenerateTfState {
 					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_tenant_network_security_rule.tenant-sg-rule" + strconv.Itoa(i+1+j),
+						ResourceAddress: "duplocloud_tenant_network_security_rule.tenant-sg-rule" + strconv.Itoa(counter),
 						ResourceId:      config.TenantId + "/" + strconv.Itoa(sgRule.Type) + "/" + sourceType + "/" + sgRule.Protocol + "/" + strconv.Itoa(sgRule.FromPort) + "/" + strconv.Itoa(sgRule.ToPort),
 						WorkingDir:      workingDir,
 					})
