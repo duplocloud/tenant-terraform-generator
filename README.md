@@ -55,6 +55,7 @@ export AWS_PROFILE="duplo-msp"
 
 ## Following duplo resources are supported.
    - `duplocloud_tenant`
+   - `duplocloud_tenant_network_security_rule`
    - `duplocloud_asg_profile`
    - `duplocloud_aws_host`
    - `duplocloud_aws_kafka_cluster`
