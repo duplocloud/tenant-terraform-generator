@@ -246,6 +246,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// }
 
 	log.Println("[TRACE] <====== Start TF generation for tenant project. =====>")
+	// Register New TF generator for Tenant Project
 	tenantGeneratorList := []tfgenerator.Generator{
 		&tenant.Tenant{},
 	}
@@ -258,6 +259,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
+	// Register New TF generator for AWS Services project
 	awsServcesGeneratorList := []tfgenerator.Generator{
 		&awsservices.AwsServicesMain{},
 		&awsservices.Hosts{},
@@ -273,6 +275,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.SsmParams{},
 		&awsservices.LoadBalancer{},
 		&awsservices.ApiGatewayIntegration{},
+		&awsservices.CFD{},
 	}
 	if config.S3Backend {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
@@ -282,6 +285,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
+	// Register New TF generator for App Services project
 	appGeneratorList := []tfgenerator.Generator{
 		&app.AppMain{},
 		&app.Services{},
