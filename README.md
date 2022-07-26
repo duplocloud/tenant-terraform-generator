@@ -79,3 +79,5 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_aws_api_gateway_integration`
    - `duplocloud_aws_ecr_repository`
    - `duplocloud_aws_cloudfront_distribution`
+   - `duplocloud_aws_lambda_function`
+   - `duplocloud_aws_lambda_permission`
