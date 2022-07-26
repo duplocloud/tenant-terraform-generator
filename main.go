@@ -249,6 +249,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// Register New TF generator for Tenant Project
 	tenantGeneratorList := []tfgenerator.Generator{
 		&tenant.Tenant{},
+		&tenant.TenantSGRule{},
 	}
 	if config.S3Backend {
 		tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
