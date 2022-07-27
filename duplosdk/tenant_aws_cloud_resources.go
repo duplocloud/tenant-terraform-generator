@@ -696,3 +696,24 @@ func (c *Client) TenantGetApplicationApiGatewayList(tenantID string) (*[]DuploAp
 	}
 	return &list, nil
 }
+
+func (c *Client) TenantDynamoDBList(tenantID string) (*[]DuploAwsResource, ClientError) {
+	allResources, err := c.TenantListAwsCloudResources(tenantID)
+	m := make(map[string]DuploAwsResource)
+	if err != nil {
+		return nil, err
+	}
+	for _, resource := range *allResources {
+		if resource.Type == ResourceTypeDynamoDBTable {
+			m[resource.Name] = DuploAwsResource{
+				Name:         resource.Name,
+				ResourceType: resource.Type,
+			}
+		}
+	}
+	list := make([]DuploAwsResource, 0, len(m))
+	for _, i := range m {
+		list = append(list, i)
+	}
+	return &list, nil
+}
