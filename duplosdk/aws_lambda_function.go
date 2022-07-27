@@ -137,49 +137,6 @@ type DuploLambdaPermissionRequest struct {
  * API CALLS to duplo
  */
 
-// LambdaFunctionCreate creates a lambda function via the Duplo API.
-func (c *Client) LambdaFunctionCreate(tenantID string, rq *DuploLambdaCreateRequest) (*DuploLambdaConfiguration, ClientError) {
-	rp := DuploLambdaConfiguration{}
-	err := c.postAPI(
-		fmt.Sprintf("LambdaFunctionCreate(%s, %s)", tenantID, rq.FunctionName),
-		fmt.Sprintf("v3/subscriptions/%s/serverless/lambda", tenantID),
-		&rq,
-		&rp,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &rp, err
-}
-
-// LambdaFunctionUpdate updates a lambda function via the Duplo API.
-func (c *Client) LambdaFunctionUpdate(tenantID string, rq *DuploLambdaUpdateRequest) ClientError {
-	return c.postAPI(
-		fmt.Sprintf("LambdaFunctionUpdate(%s, %s)", tenantID, rq.FunctionName),
-		fmt.Sprintf("subscriptions/%s/UpdateLambdaFunction", tenantID),
-		&rq,
-		nil,
-	)
-}
-
-// LambdaFunctionUpdateConfiguration updates a lambda function's configuration via the Duplo API.
-func (c *Client) LambdaFunctionUpdateConfiguration(tenantID string, rq *DuploLambdaConfigurationRequest) ClientError {
-	return c.postAPI(
-		fmt.Sprintf("LambdaFunctionUpdateConfigurationg(%s, %s)", tenantID, rq.FunctionName),
-		fmt.Sprintf("subscriptions/%s/UpdateLambdaFunctionConfiguration", tenantID),
-		&rq,
-		nil,
-	)
-}
-
-// LambdaFunctionDelete deletes a lambda function via the Duplo API.
-func (c *Client) LambdaFunctionDelete(tenantID, name string) ClientError {
-	return c.deleteAPI(
-		fmt.Sprintf("LambdaFunctionDelete(%s, %s)", tenantID, name),
-		fmt.Sprintf("v3/subscriptions/%s/serverless/lambda/%s", tenantID, name),
-		nil)
-}
-
 // LambdaFunctionGetList gets a list of lambda functions via the Duplo API.
 func (c *Client) LambdaFunctionGetList(tenantID string) (*[]DuploLambdaConfiguration, ClientError) {
 	prefix, err := c.GetDuploServicesPrefix(tenantID)
@@ -223,26 +180,6 @@ func (c *Client) LambdaFunctionGet(tenantID string, name string) (*DuploLambdaFu
 	rp.Configuration.TenantID = tenantID
 	rp.Configuration.Name = name
 	return &rp, err
-}
-
-func (c *Client) LambdaPermissionCreate(tenantID string, rq *DuploLambdaPermissionRequest) (*DuploLambdaPermissionRequest, ClientError) {
-	rp := DuploLambdaPermissionRequest{}
-	err := c.postAPI(
-		fmt.Sprintf("LambdaPermissionCreate(%s, %s)", tenantID, rq.FunctionName),
-		fmt.Sprintf("v3/subscriptions/%s/serverless/lambdapermission", tenantID),
-		&rq,
-		&rp,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &rp, err
-}
-
-func (c *Client) LambdaPermissionDelete(tenantID, functionName, statementId string) ClientError {
-	return c.deleteAPI(
-		fmt.Sprintf("LambdaPermissionDelete(%s, %s, %s)", tenantID, functionName, statementId),
-		fmt.Sprintf("v3/subscriptions/%s/serverless/lambdapermission/%s/%s", tenantID, functionName, statementId), nil)
 }
 
 func (c *Client) LambdaPermissionGet(tenantID string, functionName string) (*[]DuploLambdaPermissionStatement, ClientError) {
