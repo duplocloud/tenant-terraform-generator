@@ -55,7 +55,9 @@ func main() {
 	// Chain of responsiblity started.
 	// Provider --> Tenant --> Hosts --> Services --> ...
 	startTFGeneration(config, client)
-
+	log.Printf("[TRACE] |==========================================================================|")
+	log.Printf("[TRACE] Terraform projects are generated at - %s", filepath.Join("./target", config.CustomerName, config.TenantName))
+	log.Printf("[TRACE] |==========================================================================|")
 }
 
 func validateAndGetDuploClient() *duplosdk.Client {
@@ -111,7 +113,7 @@ func validateAndGetConfig() *common.Config {
 	}
 
 	duploProviderVersion := os.Getenv("duplo_provider_version")
-	if len(custName) == 0 {
+	if len(duploProviderVersion) == 0 {
 		duploProviderVersion = "0.7.0"
 	}
 
@@ -145,10 +147,10 @@ func validateAndGetConfig() *common.Config {
 		generateTfState = generateTfStateBool
 	}
 
-	s3Backend := false
+	s3Backend := true
 	s3BackendStr := os.Getenv("s3_backend")
 	if len(s3BackendStr) == 0 {
-		s3Backend = false
+		s3Backend = true
 	} else {
 		s3BackendBool, err := strconv.ParseBool(s3BackendStr)
 		if err != nil {

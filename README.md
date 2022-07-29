@@ -15,6 +15,7 @@ export cert_arn="arn:aws:acm:us-west-2:128329325849:certificate/1234567890-aaaa-
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="xxx-xxxxx-xxxxxxxx"
 export AWS_RUNNER="duplo-admin"
+export aws_account_id="1234567890"
 ```
 
 ## How to run this project to generate duplo native terraform code ?
@@ -86,6 +87,7 @@ export AWS_RUNNER="duplo-admin"
 export AWS_RUNNER=duplo-admin
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="<duplo-auth-token>"
+export aws_account_id="1234567890"
 ```
 2. To run terraform projects you must be in `tenant-name` directory.
 ```shell
