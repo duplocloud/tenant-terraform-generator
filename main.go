@@ -43,7 +43,11 @@ func main() {
 		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
 	}
 	config.TenantName = tenantConfig.AccountName
-
+	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
+	if err != nil {
+		log.Fatalf("error getting aws account id from duplo: %s", err)
+	}
+	config.AccountID = accountID
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
 	initTargetDir(config)
 	log.Printf("[TRACE] Config ==> %+v\n", config)
@@ -92,13 +96,6 @@ func validateAndGetConfig() *common.Config {
 		os.Exit(1)
 	}
 
-	awsAccountId := os.Getenv("aws_account_id")
-	if len(tenantId) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "aws_account_id")
-		log.Printf("[TRACE] - %s", err)
-		os.Exit(1)
-	}
-
 	custName := os.Getenv("customer_name")
 	if len(custName) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "customer_name")
@@ -107,7 +104,7 @@ func validateAndGetConfig() *common.Config {
 	}
 
 	certArn := os.Getenv("cert_arn")
-	if len(custName) == 0 {
+	if len(certArn) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "cert_arn")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
@@ -170,7 +167,6 @@ func validateAndGetConfig() *common.Config {
 		AwsServicesProject:   awsServicesProject,
 		AppProject:           appProject,
 		GenerateTfState:      generateTfState,
-		AccountID:            awsAccountId,
 		S3Backend:            s3Backend,
 		CertArn:              certArn,
 	}
