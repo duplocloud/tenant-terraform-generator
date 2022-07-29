@@ -101,8 +101,8 @@ There are scripts to manage terraform infrastructure. Which will helps to create
 
 #### Arguments to run the scripts.
 
-- 1st Argument: Name of the new tenant to be created.
-- 2nd Argument: Terraform project name. Valid values are - `admin-tenant`, `aws-services` and `app`.
+- **1st Argument:** Name of the new tenant to be created.
+- **2nd Argument:** Terraform project name. Valid values are - `admin-tenant`, `aws-services` and `app`.
 
 ### Terraform Projects
 
