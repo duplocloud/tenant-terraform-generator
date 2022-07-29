@@ -79,7 +79,7 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
 
 ## How to run generated terraform projects to create duplo tenant and other resources ?
 
-## Prerequisite
+### Prerequisite
 1. Following environment variables to be exported in the shell while running this terraform projects.
 ```shell
 export AWS_RUNNER=duplo-admin
@@ -91,7 +91,7 @@ export duplo_token="<duplo-auth-token>"
 cd target/customer-name/tenant-name
 ```
 
-## Wrapper Scripts
+### Wrapper Scripts
 
 There are scripts to manage terraform infrastructure. Which will helps to create Duplo infrastructure based on tenant.
 
@@ -99,9 +99,14 @@ There are scripts to manage terraform infrastructure. Which will helps to create
 - scripts/apply.sh
 - scripts/destroy.sh
 
-## Terraform Projects
+#### Arguments to run the scripts.
 
-This infrastructure is divided into terraform sub projects which manages different duplo resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and Duplo application services which are containerized.
+- 1st Argument: Name of the new tenant to be created.
+- 2nd Argument: Terraform project name. Valid values are - `admin-tenant`, `aws-services` and `app`.
+
+### Terraform Projects
+
+This infrastructure is divided into terraform sub projects which manages different duplo resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and Duplo services which are containerized.
 
 - **Project - admin-tenant**
 
