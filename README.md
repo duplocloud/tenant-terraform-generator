@@ -29,7 +29,8 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
   ```
 
 - **Output** : target folder is created along with customer name and tenant name as mentioned in the environment variables. This folder will contain all terraform projects as mentioned below.
-    .
+  
+    ```
     ├── target                   # Target folder for terraform code
     │   ├── customer-name        # Folder with customer name
     │     ├── tenant-name        # Folder with tenant name
@@ -38,6 +39,7 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
     │          ├── admin-tenant  # Terraform code for tenant and tenant related resources.
     │          ├── aws-services  # Terraform code for AWS services.
     │          ├── app           # Terraform code for duplo services and ecs.
+    ```
 
   - **Project : admin-tenant** This projects manages creation of duplo tenant and tenant related resources.
   - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside duplo.
