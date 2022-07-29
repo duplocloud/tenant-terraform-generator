@@ -77,7 +77,7 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
    - `duplocloud_byoh`
    - `duplocloud_emr_cluster`
 
-## How to run generated terraform projects to create duplo tenant and resource ?
+## How to run generated terraform projects to create duplo tenant and other resources ?
 
 ## Prerequisite
 1. Following environment variables to be exported in the shell while running this terraform projects.
