@@ -2,10 +2,10 @@
 
 ## Prerequisite
 
-1. Terraform version greater than or equals to `v0.14.11`
-2. Create named profiles for the AWS CLI, [Refer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
-   Lets say `duplo-msp` aws profile is created.
-3. Following environment variables to be exported in the shell while running this projects.
+1. Install [Go](https://go.dev/doc/install)
+2. Install [make](https://www.gnu.org/software/make) tool.
+3. Install [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) version greater than or equals to `v0.14.11`
+4. Following environment variables to be exported in the shell while running this projects.
 
 ```shell
 # Required Vars
@@ -14,32 +14,15 @@ export tenant_id="7d1b0f7e-fcc0-4118-ad5a-b448bf0eac41"
 export cert_arn="arn:aws:acm:us-west-2:128329325849:certificate/1234567890-aaaa-bbbb-ccc-66e7dcd609e1"
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="xxx-xxxxx-xxxxxxxx"
-export aws_account_id="128329325849"
-# Optional Vars
-export duplo_provider_version="0.7.0"
-export tenant_project="admin-tenant"
-export aws_services_project="aws-services"
-export app_project="app"
-export generate_tf_state="false" # if true, State files will be generated
-export s3_backend="false" # if true, State files are stored in s3 bucket named "duplo-tfstate-<account-id>"
-
-# Needed for S3 backend
-export AWS_ACCESS_KEY_ID="xxx-xxxxx-xxxxxxxx"
-export AWS_SECRET_ACCESS_KEY="xxx-xxxxx-xxxxxxxx"
-export AWS_DEFAULT_REGION="us-west-2"
-#Or
-export AWS_PROFILE="duplo-msp"
+export AWS_RUNNER="duplo-admin"
+export aws_account_id="1234567890"
 ```
 
-4. S3 Bucket for terraform remote state which is created by duplo automatically with the name `duplo-tfstate-128329325849`
-
-   
-
-## How to run ?
+## How to run this project to generate duplo native terraform code ?
 
 - Clone this repository.
 
-- Prepare environment variables as mentioned above.
+- Prepare environment variables and export within the shell as mentioned above.
 
 - Run using  following command
 
@@ -47,10 +30,21 @@ export AWS_PROFILE="duplo-msp"
   make run
   ```
 
-- **Output** : target folder is created along with customer name as mentioned in the environment variables. This folder will contain all terraform projects as mentioned below.
+- **Output** : target folder is created along with customer name and tenant name as mentioned in the environment variables. This folder will contain all terraform projects as mentioned below.
+  
+    ```
+    ├── target                   # Target folder for terraform code
+    │   ├── customer-name        # Folder with customer name
+    │     ├── tenant-name        # Folder with tenant name
+    │       ├── scripts          # Wrapper scripts to plan, apply and destroy terarform infrastructure.
+    │       ├── terraform        # Terraform code generated using this utility.
+    │          ├── admin-tenant  # Terraform code for tenant and tenant related resources.
+    │          ├── aws-services  # Terraform code for AWS services.
+    │          ├── app           # Terraform code for duplo services and ecs.
+    ```
 
-  - **Project : admin-tenant** This projects manages creation of duplo tenant.
-  - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Elastic Search inside duplo.
+  - **Project : admin-tenant** This projects manages creation of duplo tenant and tenant related resources.
+  - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside duplo.
   - **Project : app** This project manages duplo services like eks and ecs etc.
 
 ## Following duplo resources are supported.
@@ -84,3 +78,99 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_aws_dynamodb_table_v2`
    - `duplocloud_byoh`
    - `duplocloud_emr_cluster`
+
+## How to run generated terraform projects to create duplo tenant and other resources ?
+
+### Prerequisite
+1. Following environment variables to be exported in the shell while running this terraform projects.
+```shell
+export AWS_RUNNER=duplo-admin
+export duplo_host="https://msp.duplocloud.net"
+export duplo_token="<duplo-auth-token>"
+export aws_account_id="1234567890"
+```
+2. To run terraform projects you must be in `tenant-name` directory.
+```shell
+cd target/customer-name/tenant-name
+```
+
+### Wrapper Scripts
+
+There are scripts to manage terraform infrastructure. Which will helps to create Duplo infrastructure based on tenant.
+
+- scripts/plan.sh
+- scripts/apply.sh
+- scripts/destroy.sh
+
+#### Arguments to run the scripts.
+
+- **First Argument:** Name of the new tenant to be created.
+- **Second Argument:** Terraform project name. Valid values are - `admin-tenant`, `aws-services` and `app`.
+
+### Terraform Projects
+
+This infrastructure is divided into terraform sub projects which manages different duplo resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and Duplo services which are containerized.
+
+- **Project - admin-tenant**
+
+  This projects manages duplo infrastructure and tenant, Run this project using following command using tenant-name and project name.
+
+  - Dry-run
+
+    - ```shell
+       scripts/plan.sh <tenant-name> admin-tenant
+      ```
+
+  - Actual Deployment
+
+    - ```shell
+      scripts/apply.sh <tenant-name> admin-tenant
+      ```
+
+  - Destroy created infrastructure
+
+    - ```shell
+      scripts/destroy.sh <tenant-name> admin-tenant
+      ```
+
+- **Project - aws-services**
+
+  This project manages AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search, etc. inside duplo.
+
+  - Dry-run
+
+    - ```shell
+       scripts/plan.sh <tenant-name> aws-services
+      ```
+  - Actual Deployment
+
+    - ```shell
+      scripts/apply.sh <tenant-name> aws-services
+      ```
+  - Destroy created infrastructure
+
+    - ```shell
+      scripts/destroy.sh <tenant-name> aws-services
+      ```
+
+- **Project - app**
+
+  This project manages containerized applications inside duplo liek eks services, ecs, docker native service etc.
+
+  - Dry-run
+
+    - ```shell
+       scripts/plan.sh <tenant-name> app
+      ```
+
+  - Actual Deployment
+
+    - ```shell
+      scripts/apply.sh <tenant-name> app
+      ```
+
+  - Destroy created infrastructure
+
+    - ```shell
+      scripts/destroy.sh <tenant-name> app
+      ```

@@ -43,7 +43,11 @@ func main() {
 		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
 	}
 	config.TenantName = tenantConfig.AccountName
-
+	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
+	if err != nil {
+		log.Fatalf("error getting aws account id from duplo: %s", err)
+	}
+	config.AccountID = accountID
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
 	initTargetDir(config)
 	log.Printf("[TRACE] Config ==> %+v\n", config)
@@ -51,7 +55,9 @@ func main() {
 	// Chain of responsiblity started.
 	// Provider --> Tenant --> Hosts --> Services --> ...
 	startTFGeneration(config, client)
-
+	log.Printf("[TRACE] |==========================================================================|")
+	log.Printf("[TRACE] Terraform projects are generated at - %s", filepath.Join("./target", config.CustomerName, config.TenantName))
+	log.Printf("[TRACE] |==========================================================================|")
 }
 
 func validateAndGetDuploClient() *duplosdk.Client {
@@ -92,13 +98,6 @@ func validateAndGetConfig() *common.Config {
 		os.Exit(1)
 	}
 
-	awsAccountId := os.Getenv("aws_account_id")
-	if len(tenantId) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "aws_account_id")
-		log.Printf("[TRACE] - %s", err)
-		os.Exit(1)
-	}
-
 	custName := os.Getenv("customer_name")
 	if len(custName) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "customer_name")
@@ -107,14 +106,14 @@ func validateAndGetConfig() *common.Config {
 	}
 
 	certArn := os.Getenv("cert_arn")
-	if len(custName) == 0 {
+	if len(certArn) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "cert_arn")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
 
 	duploProviderVersion := os.Getenv("duplo_provider_version")
-	if len(custName) == 0 {
+	if len(duploProviderVersion) == 0 {
 		duploProviderVersion = "0.7.0"
 	}
 
@@ -148,10 +147,10 @@ func validateAndGetConfig() *common.Config {
 		generateTfState = generateTfStateBool
 	}
 
-	s3Backend := false
+	s3Backend := true
 	s3BackendStr := os.Getenv("s3_backend")
 	if len(s3BackendStr) == 0 {
-		s3Backend = false
+		s3Backend = true
 	} else {
 		s3BackendBool, err := strconv.ParseBool(s3BackendStr)
 		if err != nil {
@@ -170,7 +169,6 @@ func validateAndGetConfig() *common.Config {
 		AwsServicesProject:   awsServicesProject,
 		AppProject:           appProject,
 		GenerateTfState:      generateTfState,
-		AccountID:            awsAccountId,
 		S3Backend:            s3Backend,
 		CertArn:              certArn,
 	}
