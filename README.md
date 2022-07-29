@@ -83,3 +83,4 @@ export AWS_PROFILE="duplo-msp"
    - `duplocloud_aws_lambda_permission`
    - `duplocloud_aws_dynamodb_table_v2`
    - `duplocloud_byoh`
+   - `duplocloud_emr_cluster`

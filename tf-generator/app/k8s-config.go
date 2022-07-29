@@ -14,6 +14,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+const EXCLUDE_K8S_CONFIG_STR = "kube-root-ca.crt"
+
 type K8sConfig struct {
 }
 
@@ -21,6 +23,7 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 	log.Println("[TRACE] <====== Duplo K8S Config Map TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.K8ConfigMapGetList(config.TenantId)
+	exclude_k8s_config_list := strings.Split(EXCLUDE_K8S_CONFIG_STR, ",")
 	if clientErr != nil {
 		fmt.Println(clientErr)
 		return nil, nil
@@ -29,7 +32,17 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 	if list != nil {
 		for _, k8sConfig := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo k8s config map : %s", k8sConfig.Name)
-
+			skip := false
+			for _, element := range exclude_k8s_config_list {
+				if strings.Contains(k8sConfig.Name, element) {
+					log.Printf("[TRACE] Generating terraform config for duplo k8s config map : %s skipped.", k8sConfig.Name)
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 

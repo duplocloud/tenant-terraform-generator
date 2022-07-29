@@ -14,6 +14,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+const EXCLUDE_K8S_SECRET_STR = "default-token,duploservices-"
+
 type K8sSecret struct {
 }
 
@@ -21,6 +23,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 	log.Println("[TRACE] <====== Duplo K8S Secret TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.K8SecretGetList(config.TenantId)
+	exclude_k8s_secret_list := strings.Split(EXCLUDE_K8S_SECRET_STR, ",")
 	if clientErr != nil {
 		fmt.Println(clientErr)
 		return nil, nil
@@ -29,7 +32,17 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 	if list != nil {
 		for _, k8sSecret := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo k8s secret : %s", k8sSecret.SecretName)
-
+			skip := false
+			for _, element := range exclude_k8s_secret_list {
+				if strings.Contains(k8sSecret.SecretName, element) {
+					log.Printf("[TRACE] Generating terraform config for duplo k8s secret : %s skipped.", k8sSecret.SecretName)
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
