@@ -280,6 +280,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		&awsservices.LambdaFunction{},
 		&awsservices.DynamoDB{},
 		&awsservices.BYOH{},
+		&awsservices.EMR{},
 	}
 	if config.S3Backend {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
