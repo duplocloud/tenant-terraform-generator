@@ -86,6 +86,10 @@ export AWS_RUNNER=duplo-admin
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="<duplo-auth-token>"
 ```
+2. To run terraform projects you must be in `tenant-name` directory.
+```shell
+cd target/customer-name/tenant-name
+```
 
 ## Wrapper Scripts
 
