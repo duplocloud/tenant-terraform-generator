@@ -14,6 +14,7 @@ export tenant_id="7d1b0f7e-fcc0-4118-ad5a-b448bf0eac41"
 export cert_arn="arn:aws:acm:us-west-2:128329325849:certificate/1234567890-aaaa-bbbb-ccc-66e7dcd609e1"
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="xxx-xxxxx-xxxxxxxx"
+export AWS_RUNNER="duplo-admin"
 ```
 
 ## How to run this project to generate duplo native terraform code ?
