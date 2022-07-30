@@ -1,4 +1,8 @@
-# Terraform code generation from Duplo Tenant
+# Terraform code generation for a DuploCloud Tenant
+
+This utility provides a way to export the terraform code that represents the infrastructure deployed in a DuploCloud Tenant. This is often very useful in order to:
+- Generate and persist DuploCloud Terraform IaC which can be version controlled in the future.
+- Clone a new Tenant based on an already existing Tenant. 
 
 ## Prerequisite
 
@@ -18,7 +22,7 @@ export AWS_RUNNER="duplo-admin"
 export aws_account_id="1234567890"
 ```
 
-## How to run this project to generate duplo native terraform code ?
+## How to run this project to export DuploCloud Provider terraform code?
 
 - Clone this repository.
 
@@ -47,7 +51,7 @@ export aws_account_id="1234567890"
   - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside duplo.
   - **Project : app** This project manages duplo services like eks and ecs etc.
 
-## Following duplo resources are supported.
+## Following DuploCloud resources are supported.
    - `duplocloud_tenant`
    - `duplocloud_tenant_network_security_rule`
    - `duplocloud_asg_profile`
@@ -79,7 +83,7 @@ export aws_account_id="1234567890"
    - `duplocloud_byoh`
    - `duplocloud_emr_cluster`
 
-## How to run generated terraform projects to create duplo tenant and other resources ?
+## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
 ### Prerequisite
 1. Following environment variables to be exported in the shell while running this terraform projects.
