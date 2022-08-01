@@ -39,6 +39,7 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 	}
 	tfContext := common.TFContext{}
 	if list != nil {
+		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, es := range *list {
 			shortName := es.Name
 			log.Printf("[TRACE] Generating terraform config for duplo Elastic Search : %s", shortName)
@@ -128,12 +129,19 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 					nil)
 				encryptBody := encryptBlock.Body()
 				if es.EncryptionAtRestOptions.KmsKeyID != "" {
-					encryptBody.SetAttributeValue("kms_key_id",
-						cty.StringVal(es.EncryptionAtRestOptions.KmsKeyID))
-					// if kmsKeyName, err := client.TenantGetKmsKeyByID(config.TenantId, es.EncryptionAtRestOptions.KmsKeyID); err == nil {
-					// 	encryptBody.SetAttributeValue("kms_key_name",
-					// 		cty.StringVal(kmsKeyName.KeyName))
-					// }
+					if kms != nil && kmsClientErr == nil && (es.EncryptionAtRestOptions.KmsKeyID == kms.KeyArn || es.EncryptionAtRestOptions.KmsKeyID == kms.KeyID) {
+						encryptBody.SetAttributeTraversal("kms_key_id", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "data.duplocloud_tenant_aws_kms_key.tenant_kms",
+							},
+							hcl.TraverseAttr{
+								Name: "key_id",
+							},
+						})
+					} else {
+						encryptBody.SetAttributeValue("kms_key_id",
+							cty.StringVal(es.EncryptionAtRestOptions.KmsKeyID))
+					}
 				}
 			}
 

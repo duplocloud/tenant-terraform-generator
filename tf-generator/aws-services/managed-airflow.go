@@ -35,6 +35,7 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 	}
 	tfContext := common.TFContext{}
 	if list != nil {
+		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, mwaa := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, mwaa.Name)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS Apache Airflow : %s", mwaa.Name)
@@ -75,7 +76,27 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 			mwaaBody.SetAttributeValue("name", cty.StringVal(shortName))
 
 			if len(mwaaDetails.SourceBucketArn) > 0 {
-				mwaaBody.SetAttributeValue("source_bucket_arn", cty.StringVal(mwaaDetails.SourceBucketArn))
+				resourceName := duplosdk.UnwrapResoureNameFromAwsArn(mwaaDetails.SourceBucketArn)
+				s3, clientErr := client.TenantGetS3BucketSettings(config.TenantId, resourceName)
+				if s3 != nil && clientErr == nil && s3.Arn == mwaaDetails.SourceBucketArn {
+					s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+					parts := strings.Split(s3ShortName, "-")
+					if len(parts) > 0 {
+						parts = parts[:len(parts)-1]
+					}
+					s3ShortName = strings.Join(parts, "-")
+					mwaaBody.SetAttributeTraversal("source_bucket_arn", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "duplocloud_s3_bucket." + s3ShortName,
+						},
+						hcl.TraverseAttr{
+							Name: "arn",
+						},
+					})
+				} else {
+					mwaaBody.SetAttributeValue("source_bucket_arn", cty.StringVal(mwaaDetails.SourceBucketArn))
+				}
+
 			}
 
 			if len(mwaaDetails.DagS3Path) > 0 {
@@ -83,7 +104,18 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 			}
 
 			if len(mwaaDetails.KmsKey) > 0 {
-				mwaaBody.SetAttributeValue("kms_key", cty.StringVal(mwaaDetails.KmsKey))
+				if kms != nil && kmsClientErr == nil && (mwaaDetails.KmsKey == kms.KeyArn || mwaaDetails.KmsKey == kms.KeyID) {
+					mwaaBody.SetAttributeTraversal("kms_key", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "data.duplocloud_tenant_aws_kms_key.tenant_kms",
+						},
+						hcl.TraverseAttr{
+							Name: "key_arn",
+						},
+					})
+				} else {
+					mwaaBody.SetAttributeValue("kms_key", cty.StringVal(mwaaDetails.KmsKey))
+				}
 			}
 
 			mwaaBody.SetAttributeValue("schedulers",

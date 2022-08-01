@@ -10,6 +10,8 @@ import (
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
@@ -36,6 +38,7 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	tfContext := common.TFContext{}
 	if list != nil {
+		s3List, _ := client.TenantListS3Buckets(config.TenantId)
 		for _, cfd := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, cfd.Comment)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS Cloudfront Distribution : %s", shortName)
@@ -189,8 +192,32 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					originBody := originBlock.Body()
 					originBody.SetAttributeValue("connection_attempts", cty.NumberIntVal(int64(origin.ConnectionAttempts)))
 					originBody.SetAttributeValue("connection_timeout", cty.NumberIntVal(int64(origin.ConnectionTimeout)))
-					originBody.SetAttributeValue("domain_name", cty.StringVal(origin.DomainName))
-					originBody.SetAttributeValue("origin_id", cty.StringVal(origin.Id))
+					orginAdded := false
+					for _, s3 := range *s3List {
+						if strings.HasPrefix(origin.DomainName, s3.Name) {
+							s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+							parts := strings.Split(s3ShortName, "-")
+							if len(parts) > 0 {
+								parts = parts[:len(parts)-1]
+							}
+							s3ShortName = strings.Join(parts, "-")
+							str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+							tokens := hclwrite.Tokens{
+								{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+								{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
+								{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+							}
+							originBody.SetAttributeRaw("domain_name", tokens)
+							originBody.SetAttributeRaw("origin_id", tokens)
+							orginAdded = true
+							break
+						}
+					}
+					if !orginAdded {
+						originBody.SetAttributeValue("domain_name", cty.StringVal(origin.DomainName))
+						originBody.SetAttributeValue("origin_id", cty.StringVal(origin.Id))
+					}
+
 					if len(origin.OriginPath) > 0 {
 						originBody.SetAttributeValue("origin_path", cty.StringVal(origin.OriginPath))
 					}
@@ -229,7 +256,30 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			if cfd.DefaultCacheBehavior != nil {
 				dcbBlock := cfdBody.AppendNewBlock("default_cache_behavior", nil)
 				dcbBody := dcbBlock.Body()
-				dcbBody.SetAttributeValue("target_origin_id", cty.StringVal(cfd.DefaultCacheBehavior.TargetOriginId))
+				targetOrginAdded := false
+				for _, s3 := range *s3List {
+					if strings.HasPrefix(cfd.DefaultCacheBehavior.TargetOriginId, s3.Name) {
+						s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+						parts := strings.Split(s3ShortName, "-")
+						if len(parts) > 0 {
+							parts = parts[:len(parts)-1]
+						}
+						s3ShortName = strings.Join(parts, "-")
+						str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+						tokens := hclwrite.Tokens{
+							{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+							{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
+							{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+						}
+						dcbBody.SetAttributeRaw("target_origin_id", tokens)
+						targetOrginAdded = true
+						break
+					}
+				}
+				if !targetOrginAdded {
+					dcbBody.SetAttributeValue("target_origin_id", cty.StringVal(cfd.DefaultCacheBehavior.TargetOriginId))
+				}
+
 				var allowedMethods []cty.Value
 				for _, s := range cfd.DefaultCacheBehavior.AllowedMethods.Items {
 					allowedMethods = append(allowedMethods, cty.StringVal(s))
@@ -275,9 +325,31 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			if cfd.CacheBehaviors != nil && cfd.CacheBehaviors.Quantity > 0 {
 				for _, ocb := range *cfd.CacheBehaviors.Items {
+					targetOrginAdded := false
 					ocbBlock := cfdBody.AppendNewBlock("ordered_cache_behavior", nil)
 					ocbBody := ocbBlock.Body()
-					ocbBody.SetAttributeValue("target_origin_id", cty.StringVal(ocb.TargetOriginId))
+					for _, s3 := range *s3List {
+						if strings.HasPrefix(ocb.TargetOriginId, s3.Name) {
+							s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+							parts := strings.Split(s3ShortName, "-")
+							if len(parts) > 0 {
+								parts = parts[:len(parts)-1]
+							}
+							s3ShortName = strings.Join(parts, "-")
+							str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+							tokens := hclwrite.Tokens{
+								{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+								{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
+								{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+							}
+							ocbBody.SetAttributeRaw("target_origin_id", tokens)
+							targetOrginAdded = true
+							break
+						}
+					}
+					if !targetOrginAdded {
+						ocbBody.SetAttributeValue("target_origin_id", cty.StringVal(ocb.TargetOriginId))
+					}
 					var allowedMethods []cty.Value
 					for _, s := range ocb.AllowedMethods.Items {
 						allowedMethods = append(allowedMethods, cty.StringVal(s))

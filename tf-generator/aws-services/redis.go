@@ -33,6 +33,7 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	tfContext := common.TFContext{}
 	if list != nil {
+		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, redis := range *list {
 			shortName := redis.Identifier[len("duplo-"):len(redis.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo Redis Instance : %s", redis.Identifier)
@@ -106,8 +107,19 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.StringVal(redis.AuthToken))
 			}
 			if len(redis.KMSKeyID) > 0 {
-				redisBody.SetAttributeValue("kms_key_id",
-					cty.StringVal(redis.KMSKeyID))
+				if kms != nil && kmsClientErr == nil && (redis.KMSKeyID == kms.KeyArn || redis.KMSKeyID == kms.KeyID) {
+					redisBody.SetAttributeTraversal("kms_key_id", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "data.duplocloud_tenant_aws_kms_key.tenant_kms",
+						},
+						hcl.TraverseAttr{
+							Name: "key_id",
+						},
+					})
+				} else {
+					redisBody.SetAttributeValue("kms_key_id",
+						cty.StringVal(redis.KMSKeyID))
+				}
 			}
 
 			//fmt.Printf("%s", hclFile.Bytes())
