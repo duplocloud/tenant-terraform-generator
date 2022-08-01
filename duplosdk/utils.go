@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -248,4 +249,9 @@ func Contains(slice []string, item string) bool {
 
 	_, ok := set[item]
 	return ok
+}
+
+func UnwrapResoureNameFromAwsArn(arn string) string {
+	var validID = regexp.MustCompile(`[^:/]*$`)
+	return validID.FindString(arn)
 }

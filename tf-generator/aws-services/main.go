@@ -97,6 +97,20 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 	})
 	rootBody.AppendNewline()
 
+	tenantKmsBlock := rootBody.AppendNewBlock("data",
+		[]string{"duplocloud_tenant_aws_kms_key",
+			"tenant_kms"})
+	tenantKmsBody := tenantKmsBlock.Body()
+	tenantKmsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "local",
+		},
+		hcl.TraverseAttr{
+			Name: "tenant_id",
+		},
+	})
+	rootBody.AppendNewline()
+
 	remoteStateBlock := rootBody.AppendNewBlock("data",
 		[]string{"terraform_remote_state",
 			"tenant"})
