@@ -14,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-const EXCLUDE_K8S_SECRET_STR = "default-token,duploservices-"
+const EXCLUDE_K8S_SECRET_STR = "default-token,duploservices-,filebeat-token-"
 
 type K8sSecret struct {
 }

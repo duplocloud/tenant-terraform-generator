@@ -31,12 +31,16 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 		fmt.Println(clientErr)
 		return nil, clientErr
 	}
-	k8sSecretList, clientErr := client.K8SecretGetList(config.TenantId)
-	if clientErr != nil {
-		k8sSecretList = nil
-	}
 	tfContext := common.TFContext{}
 	if list != nil {
+		k8sSecretList, clientErr := client.K8SecretGetList(config.TenantId)
+		if clientErr != nil {
+			k8sSecretList = nil
+		}
+		configMapList, clientErr := client.K8ConfigMapGetList(config.TenantId)
+		if clientErr != nil {
+			configMapList = nil
+		}
 		for _, service := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo service : %s", service.Name)
 			skip := false
@@ -107,18 +111,55 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						cty.StringVal(service.Template.AllocationTags))
 				}
 				if len(service.Template.OtherDockerConfig) > 0 {
-					OtherDockerConfigMap := make(map[string]interface{})
-					err := json.Unmarshal([]byte(service.Template.OtherDockerConfig), &OtherDockerConfigMap)
+					otherDockerConfigMap := make(map[string]interface{})
+					err := json.Unmarshal([]byte(service.Template.OtherDockerConfig), &otherDockerConfigMap)
 					if err != nil {
 						panic(err)
 					}
-					OtherDockerConfigStr, err := duplosdk.JSONMarshal(OtherDockerConfigMap)
+					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
+						for _, k8sSecret := range *k8sSecretList {
+							envFrom := otherDockerConfigMap["EnvFrom"]
+							if envFrom != nil {
+								envFromList := envFrom.([]interface{})
+								for _, result := range envFromList {
+									resultMap := result.(map[string]interface{})
+									if resultMap["SecretRef"] != nil {
+										secretRef := resultMap["SecretRef"].(map[string]interface{})
+										if secretRef["name"] == k8sSecret.SecretName {
+											secretRef["name"] = "${duplocloud_k8_secret." + strings.ReplaceAll(k8sSecret.SecretName, ".", "_") + ".secret_name}"
+											break
+										}
+									}
+								}
+							}
+						}
+					}
+					if service.Template.AgentPlatform == 7 && configMapList != nil {
+						for _, k8sConfigMap := range *configMapList {
+							envFrom := otherDockerConfigMap["EnvFrom"]
+							if envFrom != nil {
+								envFromList := envFrom.([]interface{})
+								for _, result := range envFromList {
+									resultMap := result.(map[string]interface{})
+									if resultMap["ConfigMapRef"] != nil {
+										configMapRef := resultMap["ConfigMapRef"].(map[string]interface{})
+										if configMapRef["name"] == k8sConfigMap.Name {
+											configMapRef["name"] = "${duplocloud_k8_config_map." + strings.ReplaceAll(k8sConfigMap.Name, ".", "_") + ".name}"
+											break
+										}
+									}
+								}
+							}
+						}
+					}
+
+					otherDockerConfigStr, err := duplosdk.JSONMarshal(otherDockerConfigMap)
 					if err != nil {
 						panic(err)
 					}
 					svcBody.SetAttributeTraversal("other_docker_config", hcl.Traversal{
 						hcl.TraverseRoot{
-							Name: "jsonencode(" + OtherDockerConfigStr + ")",
+							Name: "jsonencode(" + otherDockerConfigStr + ")",
 						},
 					})
 				}
@@ -181,24 +222,49 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				if len(service.Template.Volumes) > 0 {
 					//log.Printf("[TRACE] Volume : %s", service.Template.Volumes)
 					//volConfigMap := make(map[string]interface{})
-					var volConfigMapList interface{}
+					var volConfigMapList []interface{}
 					// log.Printf("[TRACE] Vol *** : %s", service.Template.Volumes)
 					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMapList)
 					if err != nil {
 						panic(err)
 					}
+					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
+						for _, k8sSecret := range *k8sSecretList {
+							for _, result := range volConfigMapList {
+								volMap := result.(map[string]interface{})
+								if volMap["Spec"] != nil {
+									spec := volMap["Spec"].(map[string]interface{})
+									if spec["Secret"] != nil {
+										secretMap := spec["Secret"].(map[string]interface{})
+										if secretMap["SecretName"] == k8sSecret.SecretName {
+											secretMap["SecretName"] = "${duplocloud_k8_secret." + strings.ReplaceAll(k8sSecret.SecretName, ".", "_") + ".secret_name}"
+											break
+										}
+									}
+								}
+							}
+						}
+					}
+					if service.Template.AgentPlatform == 7 && configMapList != nil {
+						for _, k8sConfigMap := range *configMapList {
+							for _, result := range volConfigMapList {
+								volMap := result.(map[string]interface{})
+								if volMap["Spec"] != nil {
+									spec := volMap["Spec"].(map[string]interface{})
+									if spec["ConfigMap"] != nil {
+										configMap := spec["ConfigMap"].(map[string]interface{})
+										if configMap["Name"] == k8sConfigMap.Name {
+											configMap["Name"] = "${duplocloud_k8_config_map." + strings.ReplaceAll(k8sConfigMap.Name, ".", "_") + ".name}"
+											break
+										}
+									}
+								}
+							}
+						}
+					}
 					volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMapList)
 					if err != nil {
 						panic(err)
-					}
-					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
-						for _, k8sSecret := range *k8sSecretList {
-							// TODO - Recheck this code, find out better approach to wire k8s secret inside service.
-							if strings.Contains(volConfigMapStr, k8sSecret.SecretName) {
-								volConfigMapStr = strings.Replace(volConfigMapStr, "\"SecretName\": \""+k8sSecret.SecretName+"\"", "\"SecretName\":duplocloud_k8_secret."+strings.ReplaceAll(k8sSecret.SecretName, ".", "_")+"."+"secret_name", 1)
-								break
-							}
-						}
 					}
 
 					svcBody.SetAttributeTraversal("volumes", hcl.Traversal{
