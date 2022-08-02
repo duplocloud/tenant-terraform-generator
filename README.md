@@ -82,6 +82,7 @@ export aws_account_id="1234567890"
    - `duplocloud_aws_dynamodb_table_v2`
    - `duplocloud_byoh`
    - `duplocloud_emr_cluster`
+   - `duplocloud_aws_cloudwatch_metric_alarm`
 
 ## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
