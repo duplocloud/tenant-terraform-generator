@@ -29,6 +29,7 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		log.Println("[TRACE] <====== Cloudwatch metrics TF generation started. =====>")
 		for i, cwm := range *list {
@@ -109,7 +110,6 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_cloudwatch_metric_alarm." + resourceName,
 					ResourceId:      config.TenantId + "/" + strings.Join(friendlyNames, "-"),

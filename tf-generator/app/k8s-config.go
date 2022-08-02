@@ -20,7 +20,6 @@ type K8sConfig struct {
 }
 
 func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Duplo K8S Config Map TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.K8ConfigMapGetList(config.TenantId)
 	exclude_k8s_config_list := strings.Split(EXCLUDE_K8S_CONFIG_STR, ",")
@@ -29,7 +28,9 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 		return nil, nil
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Duplo K8S Config Map TF generation started. =====>")
 		for _, k8sConfig := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo k8s config map : %s", k8sConfig.Name)
 			skip := false
@@ -91,7 +92,6 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 			}
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_k8_config_map." + resourceName,
@@ -102,9 +102,8 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
-
+		log.Println("[TRACE] <====== Duplo K8S Config Map TF generation done. =====>")
 	}
 
-	log.Println("[TRACE] <====== Duplo K8S Config Map TF generation done. =====>")
 	return &tfContext, nil
 }

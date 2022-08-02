@@ -21,7 +21,6 @@ type Kafka struct {
 }
 
 func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== kafka TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListKafkaCluster(config.TenantId)
 	//Get tenant from duplo
@@ -31,7 +30,9 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== kafka TF generation started. =====>")
 		for _, kafka := range *list {
 			shortName := kafka.Name[len("duploservices-"+config.TenantName+"-"):len(kafka.Name)]
 			log.Printf("[TRACE] Generating terraform config for duplo kafka Instance : %s", shortName)
@@ -121,7 +122,6 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_kafka_cluster." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
@@ -130,8 +130,9 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== kafka TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== kafka TF generation done. =====>")
+
 	return &tfContext, nil
 }
 

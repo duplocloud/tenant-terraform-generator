@@ -29,6 +29,7 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		log.Println("[TRACE] <====== BYOH TF generation started. =====>")
 		for _, byoh := range *list {
@@ -114,7 +115,6 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_byoh." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,

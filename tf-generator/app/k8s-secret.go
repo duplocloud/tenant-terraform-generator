@@ -20,7 +20,6 @@ type K8sSecret struct {
 }
 
 func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Duplo K8S Secret TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.K8SecretGetList(config.TenantId)
 	exclude_k8s_secret_list := strings.Split(EXCLUDE_K8S_SECRET_STR, ",")
@@ -29,7 +28,9 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 		return nil, nil
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Duplo K8S Secret TF generation started. =====>")
 		for _, k8sSecret := range *list {
 			log.Printf("[TRACE] Generating terraform config for duplo k8s secret : %s", k8sSecret.SecretName)
 			skip := false
@@ -101,8 +102,6 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 			}
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
-
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_k8_secret." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/K8SecretApiV2/" + k8sSecret.SecretName,
@@ -112,9 +111,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
-
+		log.Println("[TRACE] <====== Duplo K8S Secret TF generation done. =====>")
 	}
-
-	log.Println("[TRACE] <====== Duplo K8S Secret TF generation done. =====>")
 	return &tfContext, nil
 }

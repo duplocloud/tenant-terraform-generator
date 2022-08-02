@@ -21,7 +21,6 @@ type LoadBalancer struct {
 }
 
 func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Load balancer TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantGetApplicationLBList(config.TenantId)
 	//Get tenant from duplo
@@ -31,7 +30,9 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Load balancer TF generation started. =====>")
 		for _, lb := range *list {
 			shortName, err := extractLbShortName(client, config.TenantId, lb.Name)
 			if err != nil {
@@ -154,7 +155,6 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_load_balancer." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,
@@ -163,8 +163,8 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Load balancer TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== Load balancer TF generation done. =====>")
 
 	return &tfContext, nil
 }
