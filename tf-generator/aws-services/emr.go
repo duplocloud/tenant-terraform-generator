@@ -28,6 +28,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		log.Println("[TRACE] <====== EMR TF generation started. =====>")
 		for _, emr := range *list {
@@ -241,7 +242,6 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_emr_cluster." + shortName,
 					ResourceId:      config.TenantId + "/" + emr.JobFlowId,
@@ -250,8 +250,9 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== EMR TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== EMR TF generation done. =====>")
+
 	return &tfContext, nil
 }
 

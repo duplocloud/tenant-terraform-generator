@@ -20,7 +20,6 @@ type Hosts struct {
 }
 
 func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Hosts TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.NativeHostGetList(config.TenantId)
 	//Get tenant from duplo
@@ -30,7 +29,9 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Hosts TF generation started. =====>")
 		for _, host := range *list {
 			shortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo host : %s", host.FriendlyName)
@@ -168,7 +169,6 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_host." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/NativeHostV2/" + host.InstanceID,
@@ -177,8 +177,8 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Hosts TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== Hosts TF generation done. =====>")
 	return &tfContext, nil
 }
 

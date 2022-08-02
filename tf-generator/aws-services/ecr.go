@@ -20,7 +20,6 @@ type ECR struct {
 }
 
 func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== ECR TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.AwsEcrRepositoryList(config.TenantId)
 	//Get tenant from duplo
@@ -30,7 +29,9 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== ECR TF generation started. =====>")
 		for _, ecr := range *list {
 			shortName := ecr.Name
 			resourceName := strings.ReplaceAll(shortName, ".", "_")
@@ -90,7 +91,6 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_ecr_repository." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
@@ -99,9 +99,8 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== ECR TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== ECR TF generation done. =====>")
-
 	return &tfContext, nil
 }
 

@@ -18,7 +18,6 @@ type ApiGatewayIntegration struct {
 }
 
 func (agi *ApiGatewayIntegration) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Api Gateway Integration TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantGetApplicationApiGatewayList(config.TenantId)
 	//Get tenant from duplo
@@ -28,7 +27,9 @@ func (agi *ApiGatewayIntegration) Generate(config *common.Config, client *duplos
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Api Gateway Integration TF generation started. =====>")
 		for _, agi := range *list {
 			shortName, _ := extractAGIName(client, config.TenantId, agi.Name)
 			resourceName := strings.ReplaceAll(shortName, ".", "_")
@@ -77,7 +78,6 @@ func (agi *ApiGatewayIntegration) Generate(config *common.Config, client *duplos
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_api_gateway_integration." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
@@ -86,8 +86,8 @@ func (agi *ApiGatewayIntegration) Generate(config *common.Config, client *duplos
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Api Gateway Integration TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== Api Gateway Integration TF generation done. =====>")
 
 	return &tfContext, nil
 }

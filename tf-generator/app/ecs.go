@@ -18,7 +18,6 @@ type ECS struct {
 }
 
 func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Duplo ECS TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 
 	list, clientErr := client.EcsServiceList(config.TenantId)
@@ -28,7 +27,9 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Duplo ECS TF generation started. =====>")
 		for _, ecs := range *list {
 
 			taskDefObj, clientErr := client.EcsTaskDefinitionGet(config.TenantId, ecs.TaskDefinition)
@@ -211,7 +212,6 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_ecs_task_definition." + ecs.Name,
 					ResourceId:      "subscriptions/" + config.TenantId + "/EcsTaskDefinition/" + ecs.TaskDefinition,
@@ -225,8 +225,8 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Duplo ECS TF generation done. =====>")
 	}
 
-	log.Println("[TRACE] <====== Duplo ECS TF generation done. =====>")
 	return &tfContext, nil
 }

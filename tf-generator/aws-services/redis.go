@@ -22,7 +22,6 @@ type Redis struct {
 }
 
 func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Redis TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.EcacheInstanceList(config.TenantId)
 	//Get tenant from duplo
@@ -32,7 +31,9 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Redis TF generation started. =====>")
 		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, redis := range *list {
 			shortName := redis.Identifier[len("duplo-"):len(redis.Identifier)]
@@ -135,7 +136,6 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_ecache_instance." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
@@ -144,8 +144,9 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== redis TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== redis TF generation done. =====>")
+
 	return &tfContext, nil
 }
 

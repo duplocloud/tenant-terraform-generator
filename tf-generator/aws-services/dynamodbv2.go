@@ -29,6 +29,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		for _, dynamodb := range *list {
 			shortName, _ := extraDynamoDBName(client, config.TenantId, dynamodb.Name)
@@ -195,7 +196,6 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_dynamodb_table_v2." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,

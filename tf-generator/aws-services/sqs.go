@@ -128,6 +128,6 @@ func extractSqsName(client *duplosdk.Client, tenantID string, sqsUrl string) (st
 	if strings.HasSuffix(fullname, ".fifo") {
 		fullname = strings.TrimSuffix(fullname, ".fifo")
 	}
-	name, _ := duplosdk.UnprefixName(prefix, fullname)
+	name, _ := duplosdk.UnwrapName(prefix, accountID, fullname, true)
 	return name, nil
 }

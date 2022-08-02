@@ -28,7 +28,6 @@ type ES struct {
 }
 
 func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Elastic Search TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.TenantListElasticSearchDomains(config.TenantId)
 	//Get tenant from duplo
@@ -38,7 +37,9 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Elastic Search TF generation started. =====>")
 		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, es := range *list {
 			shortName := es.Name
@@ -161,7 +162,6 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_elasticsearch." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,
@@ -170,8 +170,8 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Elastic Search TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== Elastic Search TF generation done. =====>")
 	return &tfContext, nil
 }
 

@@ -30,6 +30,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		log.Println("[TRACE] <====== Lambda Function TF generation started. =====>")
 		for _, lf := range *list {
@@ -170,7 +171,6 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_lambda_function." + shortName,
 					ResourceId:      config.TenantId + "/" + shortName,
@@ -179,8 +179,8 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== Lambda Function TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== Lambda Function TF generation done. =====>")
 	return &tfContext, nil
 }
 

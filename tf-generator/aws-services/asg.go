@@ -21,7 +21,6 @@ type ASG struct {
 }
 
 func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== ASG TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.AsgProfileGetList(config.TenantId)
 	//Get tenant from duplo
@@ -31,7 +30,9 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== ASG TF generation started. =====>")
 		for _, asgProfile := range *list {
 			shortName := asgProfile.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(asgProfile.FriendlyName)]
 			log.Printf("[TRACE] Generating terraform config for duplo ASG : %s", asgProfile.FriendlyName)
@@ -183,7 +184,6 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_asg_profile." + shortName,
 					ResourceId:      config.TenantId + "/" + asgProfile.FriendlyName,
@@ -192,8 +192,8 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== ASG TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== ASG TF generation done. =====>")
 	return &tfContext, nil
 }
 

@@ -33,8 +33,10 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		for _, sns := range *list {
+			// shortName, err := extractSnsTopicName(client, config.TenantId, sns.Name)
 			shortName, err := extractSnsTopicName(client, config.TenantId, sns.Name)
 			if err != nil {
 				return nil, err
@@ -84,7 +86,6 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_sns_topic." + shortName,
 					ResourceId:      config.TenantId + "/" + sns.Name,
@@ -127,6 +128,6 @@ func extractSnsTopicName(client *duplosdk.Client, tenantID string, topicName str
 	}
 	parts := strings.Split(topicName, ":"+accountID+":")
 	fullname := parts[1]
-	name, _ := duplosdk.UnprefixName(prefix, fullname)
+	name, _ := duplosdk.UnwrapName(prefix, accountID, fullname, true)
 	return name, nil
 }

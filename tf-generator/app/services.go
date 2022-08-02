@@ -23,7 +23,6 @@ type Services struct {
 }
 
 func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== Duplo Services TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 	list, clientErr := client.ReplicationControllerList(config.TenantId)
 	exclude_svc_list := strings.Split(EXCLUDE_SVC_STR, ",")
@@ -32,7 +31,9 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== Duplo Services TF generation started. =====>")
 		k8sSecretList, clientErr := client.K8SecretGetList(config.TenantId)
 		if clientErr != nil {
 			k8sSecretList = nil
@@ -404,7 +405,6 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			}
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_duplo_service." + service.Name,
@@ -428,10 +428,9 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
-
+		log.Println("[TRACE] <====== Duplo Services TF generation done. =====>")
 	}
 
-	log.Println("[TRACE] <====== Duplo Services TF generation done. =====>")
 	return &tfContext, nil
 }
 

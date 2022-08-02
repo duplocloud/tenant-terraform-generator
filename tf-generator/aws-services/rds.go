@@ -22,7 +22,6 @@ type Rds struct {
 }
 
 func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== RDS TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.RdsInstanceList(config.TenantId)
 	//Get tenant from duplo
@@ -32,7 +31,9 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== RDS TF generation started. =====>")
 		for _, rds := range *list {
 			shortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
 			log.Printf("[TRACE] Generating terraform config for duplo RDS Instance : %s", rds.Identifier)
@@ -137,7 +138,6 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_rds_instance." + shortName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/RDSDBInstance/" + shortName,
@@ -146,8 +146,8 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== RDS TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== RDS TF generation done. =====>")
 
 	return &tfContext, nil
 }

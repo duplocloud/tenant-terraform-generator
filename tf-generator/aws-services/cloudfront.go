@@ -23,7 +23,6 @@ type CFD struct {
 }
 
 func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== AWS Cloudfront Distribution TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.AwsCloudfrontDistributionList(config.TenantId)
 	//Get tenant from duplo
@@ -37,7 +36,9 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== AWS Cloudfront Distribution TF generation started. =====>")
 		s3List, _ := client.TenantListS3Buckets(config.TenantId)
 		for _, cfd := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, cfd.Comment)
@@ -408,7 +409,6 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_cloudfront_distribution." + shortName,
 					ResourceId:      config.TenantId + "/" + cfd.Id,
@@ -417,8 +417,8 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== AWS Cloudfront Distribution TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== AWS Cloudfront Distribution TF generation done. =====>")
 
 	return &tfContext, nil
 }

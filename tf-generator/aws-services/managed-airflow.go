@@ -20,7 +20,6 @@ type MWAA struct {
 }
 
 func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
-	log.Println("[TRACE] <====== AWS Apache Airflow TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.MwaaAirflowList(config.TenantId)
 	//Get tenant from duplo
@@ -34,7 +33,9 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
+	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		log.Println("[TRACE] <====== AWS Apache Airflow TF generation started. =====>")
 		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, mwaa := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, mwaa.Name)
@@ -238,7 +239,6 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
-				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
 					ResourceAddress: "duplocloud_aws_mwaa_environment." + shortName,
 					ResourceId:      config.TenantId + "/" + mwaa.Name,
@@ -247,8 +247,8 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		log.Println("[TRACE] <====== AWS Apache Airflow TF generation done. =====>")
 	}
-	log.Println("[TRACE] <====== AWS Apache Airflow TF generation done. =====>")
 
 	return &tfContext, nil
 }
