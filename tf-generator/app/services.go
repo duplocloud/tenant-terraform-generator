@@ -333,8 +333,6 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					svcConfigBody.AppendNewline()
 				}
 
-				// TODO Add duplocloud_duplo_service_params resource here.
-
 				svcParamBlock := rootBody.AppendNewBlock("resource",
 					[]string{"duplocloud_duplo_service_params",
 						service.Name + "-params"})

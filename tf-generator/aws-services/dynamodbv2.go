@@ -32,7 +32,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 	importConfigs := []common.ImportConfig{}
 	if list != nil {
 		for _, dynamodb := range *list {
-			shortName, _ := extraDynamoDBName(client, config.TenantId, dynamodb.Name)
+			shortName, _ := extractDynamoDBName(client, config.TenantId, dynamodb.Name)
 			log.Printf("[TRACE] Generating terraform config for DynamoDB : %s", shortName)
 
 			dynamodbInfo, clientErr := client.DynamoDBTableGetV2(config.TenantId, shortName)
@@ -235,7 +235,7 @@ func generateDynamoDBOutputVars(prefix, shortName string) []common.OutputVarConf
 	return outVars
 }
 
-func extraDynamoDBName(client *duplosdk.Client, tenantID string, fullname string) (string, error) {
+func extractDynamoDBName(client *duplosdk.Client, tenantID string, fullname string) (string, error) {
 	prefix, err := client.GetDuploServicesPrefix(tenantID)
 	if err != nil {
 		return "", err

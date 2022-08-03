@@ -31,10 +31,17 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 	tfContext := common.TFContext{}
 	importConfigs := []common.ImportConfig{}
 	if list != nil {
+		hostList, _ := client.NativeHostGetList(config.TenantId)
+		rdsList, _ := client.RdsInstanceList(config.TenantId)
+		dynamoDBList, _ := client.TenantDynamoDBList(config.TenantId)
 		log.Println("[TRACE] <====== Cloudwatch metrics TF generation started. =====>")
 		for i, cwm := range *list {
 			friendlyNames := []string{}
-			shortName := cwm.MetricName + "-" + strings.Split(cwm.Namespace, "/")[1] + "-" + strconv.Itoa(i+1)
+			namespace := strings.Split(cwm.Namespace, "/")[0]
+			if len(strings.Split(cwm.Namespace, "/")) > 1 {
+				namespace = strings.Split(cwm.Namespace, "/")[1]
+			}
+			shortName := cwm.MetricName + "-" + namespace + "-" + strconv.Itoa(i+1)
 			resourceName := strings.ToLower(strings.ReplaceAll(shortName, ".", "_"))
 			log.Printf("[TRACE] Generating terraform config for duplo Cloudwatch metrics : %s", shortName)
 
@@ -92,12 +99,66 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 			}
 			if cwm.Dimensions != nil && len(*cwm.Dimensions) > 0 {
 				for _, dim := range *cwm.Dimensions {
+					valAssigned := false
 					friendlyNames = append(friendlyNames, dim.Value)
 					dimBlock := cwmBody.AppendNewBlock("dimension",
 						nil)
 					dimBody := dimBlock.Body()
 					dimBody.SetAttributeValue("key", cty.StringVal(dim.Name))
-					dimBody.SetAttributeValue("value", cty.StringVal(dim.Value))
+					if hostList != nil && dim.Name == "InstanceId" {
+						for _, host := range *hostList {
+							if dim.Value == host.InstanceID {
+								valAssigned = true
+								hostShortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
+								dimBody.SetAttributeTraversal("value", hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "duplocloud_aws_host." + hostShortName,
+									},
+									hcl.TraverseAttr{
+										Name: "instance_id",
+									},
+								})
+								break
+							}
+						}
+					}
+					if rdsList != nil && dim.Name == "DBInstanceIdentifier" {
+						for _, rds := range *rdsList {
+							if dim.Value == rds.Identifier {
+								valAssigned = true
+								rdsShortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
+								dimBody.SetAttributeTraversal("value", hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "duplocloud_rds_instance." + rdsShortName,
+									},
+									hcl.TraverseAttr{
+										Name: "fullname	",
+									},
+								})
+								break
+							}
+						}
+					}
+					if dynamoDBList != nil && dim.Name == "TableName" {
+						for _, dynamodb := range *dynamoDBList {
+							if dim.Value == dynamodb.Name {
+								valAssigned = true
+								dynamoDBShortName, _ := extractDynamoDBName(client, config.TenantId, dynamodb.Name)
+								dimBody.SetAttributeTraversal("value", hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "duplocloud_aws_dynamodb_table_v2." + dynamoDBShortName,
+									},
+									hcl.TraverseAttr{
+										Name: "name	",
+									},
+								})
+								break
+							}
+						}
+					}
+					if !valAssigned {
+						dimBody.SetAttributeValue("value", cty.StringVal(dim.Value))
+					}
 				}
 			}
 			friendlyNames = append(friendlyNames, cwm.MetricName)
