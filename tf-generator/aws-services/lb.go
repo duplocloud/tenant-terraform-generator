@@ -138,6 +138,53 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							cty.StringVal(listener.DefaultActions[0].TargetGroupArn))
 					}
 					rootBody.AppendNewline()
+
+					importConfigs = append(importConfigs, common.ImportConfig{
+						ResourceAddress: "duplocloud_aws_load_balancer_listener." + shortName + "-listener-" + strconv.Itoa(listener.Port),
+						ResourceId:      config.TenantId + "/" + shortName + "/" + listener.ListenerArn,
+						WorkingDir:      workingDir,
+					})
+
+					getReq := duplosdk.DuploTargetGroupAttributesGetReq{
+						TargetGroupArn: listener.DefaultActions[0].TargetGroupArn,
+					}
+					targetGrpAttrs, _ := client.DuploAwsTargetGroupAttributesGet(config.TenantId, getReq)
+					if targetGrpAttrs != nil && len(*targetGrpAttrs) > 0 {
+						tgAttrBlock := rootBody.AppendNewBlock("resource",
+							[]string{"duplocloud_aws_target_group_attributes",
+								shortName + "-listener-" + strconv.Itoa(listener.Port) + "-tg-attributes"})
+						tgAttrBody := tgAttrBlock.Body()
+						tgAttrBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "local",
+							},
+							hcl.TraverseAttr{
+								Name: "tenant_id",
+							},
+						})
+						tgAttrBody.SetAttributeTraversal("target_group_arn", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "duplocloud_aws_load_balancer_listener." + shortName + "-listener-" + strconv.Itoa(listener.Port),
+							},
+							hcl.TraverseAttr{
+								Name: "target_group_arn",
+							},
+						})
+						for _, tgAttr := range *targetGrpAttrs {
+							if len(tgAttr.Key) > 0 && len(tgAttr.Value) > 0 {
+								attrBlock := tgAttrBody.AppendNewBlock("dimension",
+									nil)
+								attrBody := attrBlock.Body()
+								attrBody.SetAttributeValue("key", cty.StringVal(tgAttr.Key))
+								attrBody.SetAttributeValue("value", cty.StringVal(tgAttr.Value))
+							}
+						}
+						importConfigs = append(importConfigs, common.ImportConfig{
+							ResourceAddress: "duplocloud_aws_target_group_attributes." + shortName + "-listener-" + strconv.Itoa(listener.Port) + "-tg-attributes",
+							ResourceId:      config.TenantId + "/" + listener.DefaultActions[0].TargetGroupArn,
+							WorkingDir:      workingDir,
+						})
+					}
 				}
 			}
 
@@ -160,9 +207,9 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
-				tfContext.ImportConfigs = importConfigs
 			}
 		}
+		tfContext.ImportConfigs = importConfigs
 		log.Println("[TRACE] <====== Load balancer TF generation done. =====>")
 	}
 
