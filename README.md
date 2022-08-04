@@ -85,6 +85,7 @@ export aws_account_id="1234567890"
    - `duplocloud_aws_cloudwatch_metric_alarm`
    - `duplocloud_aws_cloudwatch_event_rule`
    - `duplocloud_aws_cloudwatch_event_target`
+   - `duplocloud_aws_target_group_attributes`
 
 ## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
