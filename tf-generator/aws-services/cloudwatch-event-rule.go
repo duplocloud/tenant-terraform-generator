@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -31,7 +30,7 @@ func (cwer *CloudwatchEventRule) Generate(config *common.Config, client *duplosd
 		log.Println("[TRACE] <====== Cloudwatch event rules TF generation started. =====>")
 		for _, cwer := range *list {
 			shortName := cwer.Name[len("duploservices-"+config.TenantName+"-"):len(cwer.Name)]
-			resourceName := strings.ToLower(strings.ReplaceAll(shortName, ".", "_"))
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo Cloudwatch event rules : %s", shortName)
 
 			// create new empty hcl file object

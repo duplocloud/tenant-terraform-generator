@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -36,9 +35,10 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 		log.Println("[TRACE] <====== RDS TF generation started. =====>")
 		for _, rds := range *list {
 			shortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo RDS Instance : %s", rds.Identifier)
 
-			varFullPrefix := RDS_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
 			inputVars := generateRdsVars(rds, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
@@ -58,7 +58,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// Add duplocloud_rds_instance resource
 			rdsBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_rds_instance",
-					shortName})
+					resourceName})
 			rdsBody := rdsBlock.Body()
 			rdsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -102,9 +102,14 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				rdsBody.SetAttributeValue("snapshot_id",
 					cty.StringVal(rds.SnapshotID))
 			} else {
-				rdsBody.SetAttributeValue("master_username",
-					cty.StringVal(rds.MasterUsername))
-
+				rdsBody.SetAttributeTraversal("master_username", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "master_username",
+					},
+				})
 			}
 			rdsBody.SetAttributeValue("master_password",
 				cty.StringVal(rds.MasterPassword))
@@ -134,12 +139,12 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo RDS instance : %s", rds.Identifier)
 
-			outVars := generateRdsOutputVars(varFullPrefix, shortName)
+			outVars := generateRdsOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_rds_instance." + shortName,
+					ResourceAddress: "duplocloud_rds_instance." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/RDSDBInstance/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -176,6 +181,13 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 	}
 	varConfigs["encrypt_storage"] = var3
 
+	var4 := common.VarConfig{
+		Name:       prefix + "master_password",
+		DefaultVal: duplo.MasterPassword,
+		TypeVal:    "string",
+	}
+	varConfigs["master_password"] = var4
+
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
@@ -183,12 +195,12 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 	return vars
 }
 
-func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateRdsOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_rds_instance." + shortName + ".identifier",
+		ActualVal:     "duplocloud_rds_instance." + resourceName + ".identifier",
 		DescVal:       "The full name of the RDS instance.",
 		RootTraversal: true,
 	}
@@ -196,7 +208,7 @@ func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_rds_instance." + shortName + ".arn",
+		ActualVal:     "duplocloud_rds_instance." + resourceName + ".arn",
 		DescVal:       "The ARN of the RDS instance.",
 		RootTraversal: true,
 	}
@@ -204,7 +216,7 @@ func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "endpoint",
-		ActualVal:     "duplocloud_rds_instance." + shortName + ".endpoint",
+		ActualVal:     "duplocloud_rds_instance." + resourceName + ".endpoint",
 		DescVal:       "The endpoint of the RDS instance.",
 		RootTraversal: true,
 	}
@@ -212,7 +224,7 @@ func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var4 := common.OutputVarConfig{
 		Name:          prefix + "host",
-		ActualVal:     "duplocloud_rds_instance." + shortName + ".host",
+		ActualVal:     "duplocloud_rds_instance." + resourceName + ".host",
 		DescVal:       "The DNS hostname of the RDS instance.",
 		RootTraversal: true,
 	}
@@ -220,7 +232,7 @@ func generateRdsOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var5 := common.OutputVarConfig{
 		Name:          prefix + "port",
-		ActualVal:     "duplocloud_rds_instance." + shortName + ".port",
+		ActualVal:     "duplocloud_rds_instance." + resourceName + ".port",
 		DescVal:       "The listening port of the RDS instance.",
 		RootTraversal: true,
 	}

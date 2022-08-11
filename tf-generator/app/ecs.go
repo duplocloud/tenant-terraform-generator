@@ -47,13 +47,14 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				fmt.Println(err)
 				return nil, err
 			}
+			resourceName := common.GetResourceName(ecs.Name)
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 			log.Printf("[TRACE] Generating terraform config for duplo task definition : %s", taskDefObj.Family)
 			// Add duplocloud_aws_host resource
 			tdBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_ecs_task_definition",
-					ecs.Name})
+					resourceName})
 			tdBody := tdBlock.Body()
 			tdBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -111,7 +112,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			ecsBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_ecs_service",
-					ecs.Name})
+					resourceName})
 			ecsBody := ecsBlock.Body()
 			// svcBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 			// 	hcl.TraverseRoot{
@@ -127,7 +128,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.StringVal(ecs.Name))
 			ecsBody.SetAttributeTraversal("task_definition", hcl.Traversal{
 				hcl.TraverseRoot{
-					Name: "duplocloud_ecs_task_definition." + ecs.Name,
+					Name: "duplocloud_ecs_task_definition." + resourceName,
 				},
 				hcl.TraverseAttr{
 					Name: "arn",
@@ -213,11 +214,11 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_ecs_task_definition." + ecs.Name,
+					ResourceAddress: "duplocloud_ecs_task_definition." + resourceName,
 					ResourceId:      "subscriptions/" + config.TenantId + "/EcsTaskDefinition/" + ecs.TaskDefinition,
 					WorkingDir:      workingDir,
 				}, common.ImportConfig{
-					ResourceAddress: "duplocloud_ecs_service." + ecs.Name,
+					ResourceAddress: "duplocloud_ecs_service." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/EcsServiceApiV2/" + ecs.Name,
 					WorkingDir:      workingDir,
 				},

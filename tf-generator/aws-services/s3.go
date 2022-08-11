@@ -33,14 +33,18 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 	if list != nil {
 		log.Println("[TRACE] <====== S3 bucket TF generation started. =====>")
 		for _, s3 := range *list {
-			shortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
-			parts := strings.Split(shortName, "-")
-			if len(parts) > 0 {
-				parts = parts[:len(parts)-1]
+			shortName := s3.Name
+			if strings.HasPrefix(s3.Name, "duploservices-") {
+				shortName = s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+				parts := strings.Split(shortName, "-")
+				if len(parts) > 0 {
+					parts = parts[:len(parts)-1]
+				}
+				shortName = strings.Join(parts, "-")
 			}
-			shortName = strings.Join(parts, "-")
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo s3 bucket : %s", shortName)
-			varFullPrefix := S3_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := S3_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -60,7 +64,7 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 			// Add duplocloud_s3_bucket resource
 			s3Block := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_s3_bucket",
-					shortName})
+					resourceName})
 			s3Body := s3Block.Body()
 			s3Body.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -121,13 +125,13 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo s3 bucket : %s", shortName)
 
-			outVars := generateS3OutputVars(s3, varFullPrefix, shortName)
+			outVars := generateS3OutputVars(s3, varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_s3_bucket." + shortName,
+					ResourceAddress: "duplocloud_s3_bucket." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -170,12 +174,12 @@ func generateS3Vars(duplo duplosdk.DuploS3Bucket, prefix string) []common.VarCon
 	return vars
 }
 
-func generateS3OutputVars(duplo duplosdk.DuploS3Bucket, prefix, shortName string) []common.OutputVarConfig {
+func generateS3OutputVars(duplo duplosdk.DuploS3Bucket, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	fullNameVar := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_s3_bucket." + shortName + ".fullname",
+		ActualVal:     "duplocloud_s3_bucket." + resourceName + ".fullname",
 		DescVal:       "The full name of the S3 bucket.",
 		RootTraversal: true,
 	}
@@ -183,7 +187,7 @@ func generateS3OutputVars(duplo duplosdk.DuploS3Bucket, prefix, shortName string
 
 	arnVar := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_s3_bucket." + shortName + ".arn",
+		ActualVal:     "duplocloud_s3_bucket." + resourceName + ".arn",
 		DescVal:       "The ARN of the S3 bucket.",
 		RootTraversal: true,
 	}

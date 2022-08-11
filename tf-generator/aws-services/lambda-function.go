@@ -35,6 +35,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 		log.Println("[TRACE] <====== Lambda Function TF generation started. =====>")
 		for _, lf := range *list {
 			shortName := lf.Name
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for lammbda funtion : %s", shortName)
 
 			lfDetails, clientErr := client.LambdaFunctionGet(config.TenantId, lf.FunctionName)
@@ -42,7 +43,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 				fmt.Println(clientErr)
 				continue
 			}
-			varFullPrefix := LF_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := LF_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -59,7 +60,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 			// Add duplocloud_ecache_instance resource
 			lfBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_lambda_function",
-					shortName})
+					resourceName})
 			lfBody := lfBlock.Body()
 			lfBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -144,7 +145,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 					})
 					lfPermBody.SetAttributeTraversal("function_name", hcl.Traversal{
 						hcl.TraverseRoot{
-							Name: "duplocloud_aws_lambda_function." + shortName,
+							Name: "duplocloud_aws_lambda_function." + resourceName,
 						},
 						hcl.TraverseAttr{
 							Name: "name",
@@ -166,13 +167,13 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 
 			log.Printf("[TRACE] Terraform config is generated for lambda function : %s", shortName)
 
-			outVars := generateLFOutputVars(varFullPrefix, shortName)
+			outVars := generateLFOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_lambda_function." + shortName,
+					ResourceAddress: "duplocloud_aws_lambda_function." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -184,12 +185,12 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 	return &tfContext, nil
 }
 
-func generateLFOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateLFOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_aws_lambda_function." + shortName + ".fullname",
+		ActualVal:     "duplocloud_aws_lambda_function." + resourceName + ".fullname",
 		DescVal:       "The full name of the lambda function.",
 		RootTraversal: true,
 	}
@@ -197,7 +198,7 @@ func generateLFOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_lambda_function." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_lambda_function." + resourceName + ".arn",
 		DescVal:       "The ARN of the lambda function.",
 		RootTraversal: true,
 	}
@@ -205,7 +206,7 @@ func generateLFOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "version",
-		ActualVal:     "duplocloud_aws_lambda_function." + shortName + ".version",
+		ActualVal:     "duplocloud_aws_lambda_function." + resourceName + ".version",
 		DescVal:       "The version of the lambda function.",
 		RootTraversal: true,
 	}

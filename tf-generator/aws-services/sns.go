@@ -38,11 +38,12 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		for _, sns := range *list {
 			// shortName, err := extractSnsTopicName(client, config.TenantId, sns.Name)
 			shortName, err := extractSnsTopicName(client, config.TenantId, sns.Name)
+			resourceName := common.GetResourceName(shortName)
 			if err != nil {
 				return nil, err
 			}
 			log.Printf("[TRACE] Generating terraform config for duplo SNS Topic : %s", shortName)
-			varFullPrefix := SNS_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := SNS_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -59,7 +60,7 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_aws_sns_topic resource
 			snsBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_sns_topic",
-					shortName})
+					resourceName})
 			snsBody := snsBlock.Body()
 			snsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -81,13 +82,13 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo SNS Topic : %s", shortName)
 
-			outVars := generateSnsOutputVars(sns, varFullPrefix, shortName)
+			outVars := generateSnsOutputVars(sns, varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_sns_topic." + shortName,
+					ResourceAddress: "duplocloud_aws_sns_topic." + resourceName,
 					ResourceId:      config.TenantId + "/" + sns.Name,
 					WorkingDir:      workingDir,
 				})
@@ -99,12 +100,12 @@ func (sns *SNS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateSnsOutputVars(duplo duplosdk.DuploAwsResource, prefix, shortName string) []common.OutputVarConfig {
+func generateSnsOutputVars(duplo duplosdk.DuploAwsResource, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	arnVar := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_sns_topic." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_sns_topic." + resourceName + ".arn",
 		DescVal:       "The ARN of the SNS topic.",
 		RootTraversal: true,
 	}

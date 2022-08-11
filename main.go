@@ -35,14 +35,14 @@ func main() {
 	config := validateAndGetConfig()
 	log.Println("[TRACE] <====== Initialized duplo client and config. =====>")
 
-	tenantConfig, err := client.TenantGet(config.TenantId)
+	tenantConfig, err := client.GetTenantByNameForUser(config.TenantName)
 	if err != nil {
 		log.Fatalf("error getting tenant from duplo: %s", err)
 	}
 	if tenantConfig == nil {
 		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
 	}
-	config.TenantName = tenantConfig.AccountName
+	config.TenantId = tenantConfig.TenantID
 	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
 	if err != nil {
 		log.Fatalf("error getting aws account id from duplo: %s", err)
@@ -91,13 +91,18 @@ func validateAndGetDuploClient() *duplosdk.Client {
 
 func validateAndGetConfig() *common.Config {
 
-	tenantId := os.Getenv("tenant_id")
-	if len(tenantId) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "tenant_id")
+	// tenantId := os.Getenv("tenant_id")
+	// if len(tenantId) == 0 {
+	// 	err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "tenant_id")
+	// 	log.Printf("[TRACE] - %s", err)
+	// 	os.Exit(1)
+	// }
+	tenantName := os.Getenv("tenant_name")
+	if len(tenantName) == 0 {
+		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "tenant_name")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
-
 	custName := os.Getenv("customer_name")
 	if len(custName) == 0 {
 		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "customer_name")
@@ -162,7 +167,7 @@ func validateAndGetConfig() *common.Config {
 	}
 
 	return &common.Config{
-		TenantId:             tenantId,
+		TenantName:           tenantName,
 		CustomerName:         custName,
 		DuploProviderVersion: duploProviderVersion,
 		TenantProject:        tenantProject,

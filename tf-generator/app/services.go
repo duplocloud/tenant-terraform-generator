@@ -12,6 +12,7 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -55,7 +56,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			if skip {
 				continue
 			}
-			varFullPrefix := SVC_VAR_PREFIX + strings.ReplaceAll(service.Name, "-", "_") + "_"
+			resourceName := common.GetResourceName(service.Name)
+			varFullPrefix := SVC_VAR_PREFIX + resourceName + "_"
 			inputVars := generateSvcVars(service, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
@@ -74,7 +76,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			// Add duplocloud_aws_host resource
 			svcBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_duplo_service",
-					service.Name})
+					resourceName})
 			svcBody := svcBlock.Body()
 			svcBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -126,9 +128,50 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 									resultMap := result.(map[string]interface{})
 									if resultMap["SecretRef"] != nil {
 										secretRef := resultMap["SecretRef"].(map[string]interface{})
-										if secretRef["name"] == k8sSecret.SecretName {
-											secretRef["name"] = "${duplocloud_k8_secret." + strings.ReplaceAll(k8sSecret.SecretName, ".", "_") + ".secret_name}"
-											break
+										if secretRef["Name"] == k8sSecret.SecretName {
+											secretRef["Name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+											//break
+										} else if secretRef["name"] == k8sSecret.SecretName {
+											secretRef["name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+											//break
+										}
+									} else if resultMap["secretRef"] != nil {
+										secretRef := resultMap["secretRef"].(map[string]interface{})
+										if secretRef["Name"] == k8sSecret.SecretName {
+											secretRef["Name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+											//break
+										} else if secretRef["name"] == k8sSecret.SecretName {
+											secretRef["name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+											//break
+										}
+									}
+								}
+							}
+							env := otherDockerConfigMap["Env"]
+							if env != nil {
+								envList := env.([]interface{})
+								for _, result := range envList {
+									resultMap := result.(map[string]interface{})
+									if resultMap["ValueFrom"] != nil {
+										valueFrom := resultMap["ValueFrom"].(map[string]interface{})
+										if valueFrom["SecretKeyRef"] != nil {
+											secretKeyRef := valueFrom["SecretKeyRef"].(map[string]interface{})
+											if secretKeyRef["Name"] == k8sSecret.SecretName {
+												secretKeyRef["Name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+												//break
+											} else if secretKeyRef["name"] == k8sSecret.SecretName {
+												secretKeyRef["name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+												//break
+											}
+										} else if valueFrom["secretKeyRef"] != nil {
+											secretKeyRef := valueFrom["secretKeyRef"].(map[string]interface{})
+											if secretKeyRef["Name"] == k8sSecret.SecretName {
+												secretKeyRef["Name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+												//break
+											} else if secretKeyRef["name"] == k8sSecret.SecretName {
+												secretKeyRef["name"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+												//break
+											}
 										}
 									}
 								}
@@ -144,9 +187,38 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 									resultMap := result.(map[string]interface{})
 									if resultMap["ConfigMapRef"] != nil {
 										configMapRef := resultMap["ConfigMapRef"].(map[string]interface{})
-										if configMapRef["name"] == k8sConfigMap.Name {
-											configMapRef["name"] = "${duplocloud_k8_config_map." + strings.ReplaceAll(k8sConfigMap.Name, ".", "_") + ".name}"
-											break
+										if configMapRef["Name"] == k8sConfigMap.Name {
+											configMapRef["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+											//break
+										} else if configMapRef["name"] == k8sConfigMap.Name {
+											configMapRef["name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+											//break
+										}
+									} else if resultMap["configMapRef"] != nil {
+										configMapRef := resultMap["configMapRef"].(map[string]interface{})
+										if configMapRef["Name"] == k8sConfigMap.Name {
+											configMapRef["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+											//break
+										} else if configMapRef["name"] == k8sConfigMap.Name {
+											configMapRef["name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+											//break
+										}
+									}
+								}
+							}
+							env := otherDockerConfigMap["Env"]
+							if env != nil {
+								envList := env.([]interface{})
+								for _, result := range envList {
+									resultMap := result.(map[string]interface{})
+									if resultMap["ValueFrom"] != nil {
+										valueFrom := resultMap["ValueFrom"].(map[string]interface{})
+										if valueFrom["ConfigMapKeyRef"] != nil {
+											configMapKeyRef := valueFrom["ConfigMapKeyRef"].(map[string]interface{})
+											if configMapKeyRef["Name"] == k8sConfigMap.Name {
+												configMapKeyRef["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+												//break
+											}
 										}
 									}
 								}
@@ -238,8 +310,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 									if spec["Secret"] != nil {
 										secretMap := spec["Secret"].(map[string]interface{})
 										if secretMap["SecretName"] == k8sSecret.SecretName {
-											secretMap["SecretName"] = "${duplocloud_k8_secret." + strings.ReplaceAll(k8sSecret.SecretName, ".", "_") + ".secret_name}"
-											break
+											secretMap["SecretName"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+											// break
 										}
 									}
 								}
@@ -255,8 +327,8 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 									if spec["ConfigMap"] != nil {
 										configMap := spec["ConfigMap"].(map[string]interface{})
 										if configMap["Name"] == k8sConfigMap.Name {
-											configMap["Name"] = "${duplocloud_k8_config_map." + strings.ReplaceAll(k8sConfigMap.Name, ".", "_") + ".name}"
-											break
+											configMap["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+											// break
 										}
 									}
 								}
@@ -287,11 +359,11 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				configPresent = true
 				svcConfigBlock := rootBody.AppendNewBlock("resource",
 					[]string{"duplocloud_duplo_service_lbconfigs",
-						service.Name + "-config"})
+						resourceName + "_config"})
 				svcConfigBody := svcConfigBlock.Body()
 				svcConfigBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service." + service.Name,
+						Name: "duplocloud_duplo_service." + resourceName,
 					},
 					hcl.TraverseAttr{
 						Name: "tenant_id",
@@ -299,7 +371,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				})
 				svcConfigBody.SetAttributeTraversal("replication_controller_name", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service." + service.Name,
+						Name: "duplocloud_duplo_service." + resourceName,
 					},
 					hcl.TraverseAttr{
 						Name: "name",
@@ -326,20 +398,24 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						cty.NumberIntVal(int64(serviceConfig.ExternalPort)))
 					lbConfigBlockBody.SetAttributeValue("protocol",
 						cty.StringVal(serviceConfig.Protocol))
-					lbConfigBlockBody.SetAttributeValue("health_check_url",
-						cty.StringVal(serviceConfig.HealthCheckURL))
-					lbConfigBlockBody.SetAttributeValue("certificate_arn",
-						cty.StringVal(serviceConfig.CertificateArn))
+					if len(serviceConfig.HealthCheckURL) > 0 {
+						lbConfigBlockBody.SetAttributeValue("health_check_url",
+							cty.StringVal(serviceConfig.HealthCheckURL))
+					}
+					if len(serviceConfig.CertificateArn) > 0 {
+						lbConfigBlockBody.SetAttributeValue("certificate_arn",
+							cty.StringVal(serviceConfig.CertificateArn))
+					}
 					svcConfigBody.AppendNewline()
 				}
 
 				svcParamBlock := rootBody.AppendNewBlock("resource",
 					[]string{"duplocloud_duplo_service_params",
-						service.Name + "-params"})
+						resourceName + "_params"})
 				svcParamBody := svcParamBlock.Body()
 				svcParamBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+						Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
 					},
 					hcl.TraverseAttr{
 						Name: "tenant_id",
@@ -347,14 +423,23 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				})
 				svcParamBody.SetAttributeTraversal("replication_controller_name", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+						Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
 					},
 					hcl.TraverseAttr{
 						Name: "replication_controller_name",
 					},
 				})
-				svcParamBody.SetAttributeValue("dns_prfx",
-					cty.StringVal(service.DnsPrfx))
+				if len(service.DnsPrfx) > 0 {
+					dnsPrefix := strings.Replace(service.DnsPrfx, "-"+config.TenantName, "", -1)
+					dnsPrefix = dnsPrefix + "-${local.tenant_name}"
+					dnsPrefixTokens := hclwrite.Tokens{
+						{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+						{Type: hclsyntax.TokenIdent, Bytes: []byte(dnsPrefix)},
+						{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+					}
+					svcParamBody.SetAttributeRaw("dns_prfx", dnsPrefixTokens)
+				}
+
 				if doesReplicationControllerHaveAlb(&service) {
 					webAclId, clientError := client.ReplicationControllerLbWafGet(config.TenantId, service.Name)
 					if clientError != nil {
@@ -405,19 +490,19 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			if config.GenerateTfState {
 
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_duplo_service." + service.Name,
+					ResourceAddress: "duplocloud_duplo_service." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerApiV2/" + service.Name,
 					WorkingDir:      workingDir,
 				})
 
 				if configPresent {
 					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_duplo_service_lbconfigs." + service.Name + "-config",
+						ResourceAddress: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
 						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ServiceLBConfigsV2/" + service.Name,
 						WorkingDir:      workingDir,
 					})
 					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_duplo_service_params." + service.Name + "-params",
+						ResourceAddress: "duplocloud_duplo_service_params." + resourceName + "_params",
 						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerParamsV2/" + service.Name,
 						WorkingDir:      workingDir,
 					})

@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -43,9 +42,10 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, es := range *list {
 			shortName := es.Name
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo Elastic Search : %s", shortName)
 
-			varFullPrefix := ES_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := ES_VAR_PREFIX + resourceName + "_"
 			inputVars := generateESVars(es, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
@@ -65,7 +65,7 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// Add duplocloud_aws_elasticsearch resource
 			esBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_elasticsearch",
-					shortName})
+					resourceName})
 			esBody := esBlock.Body()
 			esBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -157,13 +157,13 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo elastic search instance : %s", shortName)
 
-			outVars := generateESOutputVars(varFullPrefix, shortName)
+			outVars := generateESOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_elasticsearch." + shortName,
+					ResourceAddress: "duplocloud_aws_elasticsearch." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -199,12 +199,12 @@ func generateESVars(duplo duplosdk.DuploElasticSearchDomain, prefix string) []co
 	return vars
 }
 
-func generateESOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateESOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "es_vpc_endpoint",
-		ActualVal:     "duplocloud_aws_elasticsearch." + shortName + ".endpoints[\"vpc\"]",
+		ActualVal:     "duplocloud_aws_elasticsearch." + resourceName + ".endpoints[\"vpc\"]",
 		DescVal:       "ES VPC endpoint.",
 		RootTraversal: true,
 	}
@@ -212,7 +212,7 @@ func generateESOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_elasticsearch." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_elasticsearch." + resourceName + ".arn",
 		DescVal:       "The ARN of the ElasticSearch instance.",
 		RootTraversal: true,
 	}
@@ -220,7 +220,7 @@ func generateESOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "domain_id",
-		ActualVal:     "duplocloud_aws_elasticsearch." + shortName + ".domain_id",
+		ActualVal:     "duplocloud_aws_elasticsearch." + resourceName + ".domain_id",
 		DescVal:       "The domain ID of the ElasticSearch instance.",
 		RootTraversal: true,
 	}
@@ -228,7 +228,7 @@ func generateESOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var4 := common.OutputVarConfig{
 		Name:          prefix + "domain_name",
-		ActualVal:     "duplocloud_aws_elasticsearch." + shortName + ".domain_name",
+		ActualVal:     "duplocloud_aws_elasticsearch." + resourceName + ".domain_name",
 		DescVal:       "The full name of the ElasticSearch instance.",
 		RootTraversal: true,
 	}
@@ -236,7 +236,7 @@ func generateESOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var5 := common.OutputVarConfig{
 		Name:          prefix + "endpoints",
-		ActualVal:     "duplocloud_aws_elasticsearch." + shortName + ".endpoints",
+		ActualVal:     "duplocloud_aws_elasticsearch." + resourceName + ".endpoints",
 		DescVal:       "The endpoints to use when connecting to the ElasticSearch instance.",
 		RootTraversal: true,
 	}

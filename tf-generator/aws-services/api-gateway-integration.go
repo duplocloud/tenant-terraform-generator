@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -32,7 +31,7 @@ func (agi *ApiGatewayIntegration) Generate(config *common.Config, client *duplos
 		log.Println("[TRACE] <====== Api Gateway Integration TF generation started. =====>")
 		for _, agi := range *list {
 			shortName, _ := extractAGIName(client, config.TenantId, agi.Name)
-			resourceName := strings.ReplaceAll(shortName, ".", "_")
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo Api Gateway Integration : %s", shortName)
 
 			// create new empty hcl file object
