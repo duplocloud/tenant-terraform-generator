@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -33,14 +32,14 @@ func (ssmParams *SsmParams) Generate(config *common.Config, client *duplosdk.Cli
 	if list != nil {
 		for _, ssmParam := range *list {
 			shortName := ssmParam.Name
-			resourceName := strings.ReplaceAll(shortName, ".", "_")
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo SSM Parameter : %s", shortName)
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
 			// create new file on system
-			path := filepath.Join(workingDir, "ssm-param-"+shortName+".tf")
+			path := filepath.Join(workingDir, "ssm-param-"+resourceName+".tf")
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)

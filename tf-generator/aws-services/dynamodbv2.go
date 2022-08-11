@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -33,6 +32,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 	if list != nil {
 		for _, dynamodb := range *list {
 			shortName, _ := extractDynamoDBName(client, config.TenantId, dynamodb.Name)
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for DynamoDB : %s", shortName)
 
 			dynamodbInfo, clientErr := client.DynamoDBTableGetV2(config.TenantId, shortName)
@@ -40,7 +40,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 				fmt.Println(clientErr)
 				return nil, nil
 			}
-			varFullPrefix := DYN_DB_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := DYN_DB_VAR_PREFIX + resourceName + "_"
 			// inputVars := generateKafkaVars(clusterInfo, varFullPrefix)
 			// tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
@@ -59,7 +59,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 			// Add duplocloud_ecache_instance resource
 			dynamodbBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_dynamodb_table_v2",
-					shortName})
+					resourceName})
 			dynamodbBody := dynamodbBlock.Body()
 			dynamodbBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -191,13 +191,13 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 
 			log.Printf("[TRACE] Terraform config is generated for duplo DynamoDB instance : %s", shortName)
 
-			outVars := generateDynamoDBOutputVars(varFullPrefix, shortName)
+			outVars := generateDynamoDBOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_dynamodb_table_v2." + shortName,
+					ResourceAddress: "duplocloud_aws_dynamodb_table_v2." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -209,12 +209,12 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 	return &tfContext, nil
 }
 
-func generateDynamoDBOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateDynamoDBOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "stream_arn",
-		ActualVal:     "duplocloud_aws_dynamodb_table_v2." + shortName + ".stream_arn",
+		ActualVal:     "duplocloud_aws_dynamodb_table_v2." + resourceName + ".stream_arn",
 		DescVal:       "The Stream ARN of the dynamodb table.",
 		RootTraversal: true,
 	}
@@ -222,7 +222,7 @@ func generateDynamoDBOutputVars(prefix, shortName string) []common.OutputVarConf
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_dynamodb_table_v2." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_dynamodb_table_v2." + resourceName + ".arn",
 		DescVal:       "The ARN of the dynamodb table.",
 		RootTraversal: true,
 	}

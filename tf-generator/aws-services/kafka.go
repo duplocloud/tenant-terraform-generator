@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -35,6 +34,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== kafka TF generation started. =====>")
 		for _, kafka := range *list {
 			shortName := kafka.Name[len("duploservices-"+config.TenantName+"-"):len(kafka.Name)]
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo kafka Instance : %s", shortName)
 
 			clusterInfo, clientErr := client.TenantGetKafkaClusterInfo(config.TenantId, kafka.Arn)
@@ -42,7 +42,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				fmt.Println(clientErr)
 				return nil, clientErr
 			}
-			varFullPrefix := KAFKA_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := KAFKA_VAR_PREFIX + resourceName + "_"
 			inputVars := generateKafkaVars(clusterInfo, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
@@ -61,7 +61,7 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_ecache_instance resource
 			kafkaBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_kafka_cluster",
-					shortName})
+					resourceName})
 			kafkaBody := kafkaBlock.Body()
 			kafkaBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -117,13 +117,13 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			log.Printf("[TRACE] Terraform config is generated for duplo kafka instance : %s", shortName)
 
-			outVars := generateKafkaOutputVars(varFullPrefix, shortName)
+			outVars := generateKafkaOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_kafka_cluster." + shortName,
+					ResourceAddress: "duplocloud_aws_kafka_cluster." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/ECacheDBInstance/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -167,12 +167,12 @@ func generateKafkaVars(duplo *duplosdk.DuploKafkaClusterInfo, prefix string) []c
 	return vars
 }
 
-func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateKafkaOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".fullname",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".fullname",
 		DescVal:       "The full name of the Kakfa cluster.",
 		RootTraversal: true,
 	}
@@ -180,7 +180,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".arn",
 		DescVal:       "The ARN of the Kafka cluster.",
 		RootTraversal: true,
 	}
@@ -188,7 +188,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "number_of_broker_nodes",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".number_of_broker_nodes",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".number_of_broker_nodes",
 		DescVal:       "The desired total number of broker nodes in the kafka cluster.",
 		RootTraversal: true,
 	}
@@ -196,7 +196,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var4 := common.OutputVarConfig{
 		Name:          prefix + "plaintext_bootstrap_broker_string",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".plaintext_bootstrap_broker_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".plaintext_bootstrap_broker_string",
 		DescVal:       "The bootstrap broker connect string for plaintext (unencrypted) connections.",
 		RootTraversal: true,
 	}
@@ -204,7 +204,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var5 := common.OutputVarConfig{
 		Name:          prefix + "plaintext_zookeeper_connect_string",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".plaintext_zookeeper_connect_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".plaintext_zookeeper_connect_string",
 		DescVal:       "The bootstrap broker connect string for plaintext (unencrypted) connections.",
 		RootTraversal: true,
 	}
@@ -212,7 +212,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var6 := common.OutputVarConfig{
 		Name:          prefix + "tls_bootstrap_broker_string",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".tls_bootstrap_broker_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".tls_bootstrap_broker_string",
 		DescVal:       "The bootstrap broker connect string for TLS (encrypted) connections.",
 		RootTraversal: true,
 	}
@@ -220,7 +220,7 @@ func generateKafkaOutputVars(prefix, shortName string) []common.OutputVarConfig 
 
 	var7 := common.OutputVarConfig{
 		Name:          prefix + "tls_zookeeper_connect_string",
-		ActualVal:     "duplocloud_aws_kafka_cluster." + shortName + ".tls_zookeeper_connect_string",
+		ActualVal:     "duplocloud_aws_kafka_cluster." + resourceName + ".tls_zookeeper_connect_string",
 		DescVal:       "he bootstrap broker connect string for plaintext (unencrypted) connections.",
 		RootTraversal: true,
 	}

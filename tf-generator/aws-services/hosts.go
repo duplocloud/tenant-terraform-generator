@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -34,11 +33,12 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== Hosts TF generation started. =====>")
 		for _, host := range *list {
 			shortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo host : %s", host.FriendlyName)
 			if isPartOfAsg(host) {
 				continue
 			}
-			varFullPrefix := HOST_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := HOST_VAR_PREFIX + resourceName + "_"
 			inputVars := generateHostVars(host, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			// create new empty hcl file object
@@ -57,7 +57,7 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_aws_host resource
 			hostBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_host",
-					shortName})
+					resourceName})
 			hostBody := hostBlock.Body()
 			hostBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -165,12 +165,12 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo host : %s", host.FriendlyName)
 
-			outVars := generateHostOutputVars(host, varFullPrefix, shortName)
+			outVars := generateHostOutputVars(host, varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_host." + shortName,
+					ResourceAddress: "duplocloud_aws_host." + resourceName,
 					ResourceId:      "v2/subscriptions/" + config.TenantId + "/NativeHostV2/" + host.InstanceID,
 					WorkingDir:      workingDir,
 				})
@@ -217,19 +217,19 @@ func generateHostVars(duplo duplosdk.DuploNativeHost, prefix string) []common.Va
 	return vars
 }
 
-func generateHostOutputVars(duplo duplosdk.DuploNativeHost, prefix, shortName string) []common.OutputVarConfig {
+func generateHostOutputVars(duplo duplosdk.DuploNativeHost, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "instance_id",
-		ActualVal:     "duplocloud_aws_host." + shortName + ".instance_id",
+		ActualVal:     "duplocloud_aws_host." + resourceName + ".instance_id",
 		DescVal:       "The AWS EC2 instance ID of the host.",
 		RootTraversal: true,
 	}
 	outVarConfigs["instance_id"] = var1
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "private_ip_address",
-		ActualVal:     "duplocloud_aws_host." + shortName + ".private_ip_address",
+		ActualVal:     "duplocloud_aws_host." + resourceName + ".private_ip_address",
 		DescVal:       "The primary private IP address assigned to the host.",
 		RootTraversal: true,
 	}

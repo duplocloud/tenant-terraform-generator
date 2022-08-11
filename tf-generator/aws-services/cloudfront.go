@@ -42,9 +42,10 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		s3List, _ := client.TenantListS3Buckets(config.TenantId)
 		for _, cfd := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, cfd.Comment)
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS Cloudfront Distribution : %s", shortName)
 
-			varFullPrefix := CFD_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := CFD_VAR_PREFIX + resourceName + "_"
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -62,7 +63,7 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_aws_cloudfront_distribution resource
 			cfdBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_cloudfront_distribution",
-					shortName})
+					resourceName})
 			cfdBody := cfdBlock.Body()
 			cfdBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -196,13 +197,18 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					orginAdded := false
 					for _, s3 := range *s3List {
 						if strings.HasPrefix(origin.DomainName, s3.Name) {
-							s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
-							parts := strings.Split(s3ShortName, "-")
-							if len(parts) > 0 {
-								parts = parts[:len(parts)-1]
+							prefix := "duploservices-" + config.TenantName + "-"
+							s3ShortName := s3.Name
+							if strings.HasPrefix(s3.Name, prefix) {
+								s3ShortName = s3.Name[len(prefix):len(s3.Name)]
+								parts := strings.Split(s3ShortName, "-")
+								if len(parts) > 0 {
+									parts = parts[:len(parts)-1]
+								}
+								s3ShortName = strings.Join(parts, "-")
 							}
-							s3ShortName = strings.Join(parts, "-")
-							str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+
+							str := "${duplocloud_s3_bucket." + common.GetResourceName(s3ShortName) + ".fullname}.s3.${local.region}.amazonaws.com"
 							tokens := hclwrite.Tokens{
 								{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 								{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
@@ -260,13 +266,17 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				targetOrginAdded := false
 				for _, s3 := range *s3List {
 					if strings.HasPrefix(cfd.DefaultCacheBehavior.TargetOriginId, s3.Name) {
-						s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
-						parts := strings.Split(s3ShortName, "-")
-						if len(parts) > 0 {
-							parts = parts[:len(parts)-1]
+						prefix := "duploservices-" + config.TenantName + "-"
+						s3ShortName := s3.Name
+						if strings.HasPrefix(s3.Name, prefix) {
+							s3ShortName = s3.Name[len(prefix):len(s3.Name)]
+							parts := strings.Split(s3ShortName, "-")
+							if len(parts) > 0 {
+								parts = parts[:len(parts)-1]
+							}
+							s3ShortName = strings.Join(parts, "-")
 						}
-						s3ShortName = strings.Join(parts, "-")
-						str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+						str := "${duplocloud_s3_bucket." + common.GetResourceName(s3ShortName) + ".fullname}.s3.${local.region}.amazonaws.com"
 						tokens := hclwrite.Tokens{
 							{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 							{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
@@ -331,13 +341,17 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					ocbBody := ocbBlock.Body()
 					for _, s3 := range *s3List {
 						if strings.HasPrefix(ocb.TargetOriginId, s3.Name) {
-							s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
-							parts := strings.Split(s3ShortName, "-")
-							if len(parts) > 0 {
-								parts = parts[:len(parts)-1]
+							prefix := "duploservices-" + config.TenantName + "-"
+							s3ShortName := s3.Name
+							if strings.HasPrefix(s3.Name, prefix) {
+								s3ShortName = s3.Name[len(prefix):len(s3.Name)]
+								parts := strings.Split(s3ShortName, "-")
+								if len(parts) > 0 {
+									parts = parts[:len(parts)-1]
+								}
+								s3ShortName = strings.Join(parts, "-")
 							}
-							s3ShortName = strings.Join(parts, "-")
-							str := "${duplocloud_s3_bucket." + s3ShortName + ".fullname}.s3.${local.region}.amazonaws.com"
+							str := "${duplocloud_s3_bucket." + common.GetResourceName(s3ShortName) + ".fullname}.s3.${local.region}.amazonaws.com"
 							tokens := hclwrite.Tokens{
 								{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 								{Type: hclsyntax.TokenIdent, Bytes: []byte(str)},
@@ -405,12 +419,12 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo AWS Cloudfront Distribution : %s", shortName)
 
-			outVars := generateCFDOutputVars(varFullPrefix, shortName)
+			outVars := generateCFDOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_cloudfront_distribution." + shortName,
+					ResourceAddress: "duplocloud_aws_cloudfront_distribution." + resourceName,
 					ResourceId:      config.TenantId + "/" + cfd.Id,
 					WorkingDir:      workingDir,
 				})
@@ -423,12 +437,12 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateCFDOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateCFDOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_cloudfront_distribution." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_cloudfront_distribution." + resourceName + ".arn",
 		DescVal:       "The ARN for the distribution.",
 		RootTraversal: true,
 	}
@@ -436,7 +450,7 @@ func generateCFDOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "id",
-		ActualVal:     "duplocloud_aws_cloudfront_distribution." + shortName + ".id",
+		ActualVal:     "duplocloud_aws_cloudfront_distribution." + resourceName + ".id",
 		DescVal:       "The identifier for the distribution.",
 		RootTraversal: true,
 	}
@@ -444,7 +458,7 @@ func generateCFDOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "domain_name",
-		ActualVal:     "duplocloud_aws_cloudfront_distribution." + shortName + ".domain_name",
+		ActualVal:     "duplocloud_aws_cloudfront_distribution." + resourceName + ".domain_name",
 		DescVal:       "The domain name corresponding to the distribution.",
 		RootTraversal: true,
 	}

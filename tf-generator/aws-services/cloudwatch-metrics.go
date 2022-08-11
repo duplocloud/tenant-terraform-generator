@@ -42,7 +42,7 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 				namespace = strings.Split(cwm.Namespace, "/")[1]
 			}
 			shortName := cwm.MetricName + "-" + namespace + "-" + strconv.Itoa(i+1)
-			resourceName := strings.ToLower(strings.ReplaceAll(shortName, ".", "_"))
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo Cloudwatch metrics : %s", shortName)
 
 			// create new empty hcl file object

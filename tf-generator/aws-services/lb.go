@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -35,6 +34,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 		log.Println("[TRACE] <====== Load balancer TF generation started. =====>")
 		for _, lb := range *list {
 			shortName, err := extractLbShortName(client, config.TenantId, lb.Name)
+			resourceName := common.GetResourceName(shortName)
 			if err != nil {
 				fmt.Println(err)
 				return nil, err
@@ -46,7 +46,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 			}
 			log.Printf("[TRACE] Generating terraform config for duplo aws load balancer : %s", shortName)
 
-			varFullPrefix := LB_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := LB_VAR_PREFIX + resourceName + "_"
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -63,7 +63,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 
 			lbBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_load_balancer",
-					shortName})
+					resourceName})
 			lbBody := lbBlock.Body()
 			lbBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -108,7 +108,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 				for _, listener := range *listeners {
 					listenerBlock := rootBody.AppendNewBlock("resource",
 						[]string{"duplocloud_aws_load_balancer_listener",
-							shortName + "-listener-" + strconv.Itoa(listener.Port)})
+							resourceName + "_listener_" + strconv.Itoa(listener.Port)})
 					listenerBody := listenerBlock.Body()
 
 					listenerBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
@@ -124,7 +124,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							Name: "duplocloud_aws_load_balancer",
 						},
 						hcl.TraverseAttr{
-							Name: shortName + ".name",
+							Name: resourceName + ".name",
 						},
 					})
 
@@ -140,7 +140,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 					rootBody.AppendNewline()
 
 					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_aws_load_balancer_listener." + shortName + "-listener-" + strconv.Itoa(listener.Port),
+						ResourceAddress: "duplocloud_aws_load_balancer_listener." + resourceName + "_listener_" + strconv.Itoa(listener.Port),
 						ResourceId:      config.TenantId + "/" + shortName + "/" + listener.ListenerArn,
 						WorkingDir:      workingDir,
 					})
@@ -152,7 +152,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 					if targetGrpAttrs != nil && len(*targetGrpAttrs) > 0 {
 						tgAttrBlock := rootBody.AppendNewBlock("resource",
 							[]string{"duplocloud_aws_target_group_attributes",
-								shortName + "-listener-" + strconv.Itoa(listener.Port) + "-tg-attributes"})
+								resourceName + "_listener_" + strconv.Itoa(listener.Port) + "_tg_attributes"})
 						tgAttrBody := tgAttrBlock.Body()
 						tgAttrBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 							hcl.TraverseRoot{
@@ -164,7 +164,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 						})
 						tgAttrBody.SetAttributeTraversal("target_group_arn", hcl.Traversal{
 							hcl.TraverseRoot{
-								Name: "duplocloud_aws_load_balancer_listener." + shortName + "-listener-" + strconv.Itoa(listener.Port),
+								Name: "duplocloud_aws_load_balancer_listener." + resourceName + "_listener_" + strconv.Itoa(listener.Port),
 							},
 							hcl.TraverseAttr{
 								Name: "target_group_arn",
@@ -180,7 +180,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							}
 						}
 						importConfigs = append(importConfigs, common.ImportConfig{
-							ResourceAddress: "duplocloud_aws_target_group_attributes." + shortName + "-listener-" + strconv.Itoa(listener.Port) + "-tg-attributes",
+							ResourceAddress: "duplocloud_aws_target_group_attributes." + resourceName + "_listener_" + strconv.Itoa(listener.Port) + "_tg_attributes",
 							ResourceId:      config.TenantId + "/" + listener.DefaultActions[0].TargetGroupArn,
 							WorkingDir:      workingDir,
 						})
@@ -197,13 +197,13 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo aws load balancer : %s", shortName)
 
-			outVars := generateLBOutputVars(varFullPrefix, shortName)
+			outVars := generateLBOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_load_balancer." + shortName,
+					ResourceAddress: "duplocloud_aws_load_balancer." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -225,12 +225,12 @@ func extractLbShortName(client *duplosdk.Client, tenantID string, fullName strin
 	return name, nil
 }
 
-func generateLBOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateLBOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".fullname",
+		ActualVal:     "duplocloud_aws_load_balancer." + resourceName + ".fullname",
 		DescVal:       "The full name of the load balancer.",
 		RootTraversal: true,
 	}
@@ -238,7 +238,7 @@ func generateLBOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_load_balancer." + resourceName + ".arn",
 		DescVal:       "The ARN of the load balancer.",
 		RootTraversal: true,
 	}
@@ -246,7 +246,7 @@ func generateLBOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "dns_name",
-		ActualVal:     "duplocloud_aws_load_balancer." + shortName + ".dns_name",
+		ActualVal:     "duplocloud_aws_load_balancer." + resourceName + ".dns_name",
 		DescVal:       "The DNS name of the load balancer.",
 		RootTraversal: true,
 	}

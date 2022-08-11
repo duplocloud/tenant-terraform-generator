@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -34,10 +33,10 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== ECR TF generation started. =====>")
 		for _, ecr := range *list {
 			shortName := ecr.Name
-			resourceName := strings.ReplaceAll(shortName, ".", "_")
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS ECR : %s", shortName)
 
-			varFullPrefix := ECR_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := ECR_VAR_PREFIX + resourceName + "_"
 
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
@@ -86,7 +85,7 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo AWS ECR : %s", shortName)
 
-			outVars := generateECROutputVars(varFullPrefix, shortName)
+			outVars := generateECROutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
@@ -104,12 +103,12 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateECROutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateECROutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "registry_id",
-		ActualVal:     "duplocloud_aws_ecr_repository." + shortName + ".registry_id",
+		ActualVal:     "duplocloud_aws_ecr_repository." + resourceName + ".registry_id",
 		DescVal:       "The registry ID where the repository was created.",
 		RootTraversal: true,
 	}
@@ -117,7 +116,7 @@ func generateECROutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_ecr_repository." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_ecr_repository." + resourceName + ".arn",
 		DescVal:       "Full ARN of the repository.",
 		RootTraversal: true,
 	}
@@ -125,7 +124,7 @@ func generateECROutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "repository_url",
-		ActualVal:     "duplocloud_aws_ecr_repository." + shortName + ".repository_url",
+		ActualVal:     "duplocloud_aws_ecr_repository." + resourceName + ".repository_url",
 		DescVal:       "The DNS name of the load balancer.",
 		RootTraversal: true,
 	}

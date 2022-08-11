@@ -54,7 +54,7 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 				fmt.Println(err)
 				return nil, err
 			}
-			resourceName := strings.ReplaceAll(k8sSecret.SecretName, ".", "_")
+			resourceName := common.GetResourceName(k8sSecret.SecretName)
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 			// Add duplocloud_aws_host resource

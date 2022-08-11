@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -35,8 +34,9 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== ASG TF generation started. =====>")
 		for _, asgProfile := range *list {
 			shortName := asgProfile.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(asgProfile.FriendlyName)]
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo ASG : %s", asgProfile.FriendlyName)
-			varFullPrefix := ASG_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := ASG_VAR_PREFIX + resourceName + "_"
 
 			hclFile := hclwrite.NewEmptyFile()
 			inputVars := generateAsgVars(asgProfile, varFullPrefix)
@@ -54,7 +54,7 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			asgBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_asg_profile",
-					shortName})
+					resourceName})
 			asgBody := asgBlock.Body()
 			asgBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -180,12 +180,12 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo ASG : %s", asgProfile.FriendlyName)
 
-			outVars := generateAsgOutputVars(asgProfile, varFullPrefix, shortName)
+			outVars := generateAsgOutputVars(asgProfile, varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_asg_profile." + shortName,
+					ResourceAddress: "duplocloud_asg_profile." + resourceName,
 					ResourceId:      config.TenantId + "/" + asgProfile.FriendlyName,
 					WorkingDir:      workingDir,
 				})
@@ -242,12 +242,12 @@ func generateAsgVars(duplo duplosdk.DuploAsgProfile, prefix string) []common.Var
 	return vars
 }
 
-func generateAsgOutputVars(duplo duplosdk.DuploAsgProfile, prefix, shortName string) []common.OutputVarConfig {
+func generateAsgOutputVars(duplo duplosdk.DuploAsgProfile, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	fullNameVar := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_asg_profile." + shortName + ".fullname",
+		ActualVal:     "duplocloud_asg_profile." + resourceName + ".fullname",
 		DescVal:       "The full name of the ASG.",
 		RootTraversal: true,
 	}

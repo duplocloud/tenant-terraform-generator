@@ -32,11 +32,12 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	if list != nil {
 		for _, sqs := range *list {
 			shortName, err := extractSqsName(client, config.TenantId, sqs.Name)
+			resourceName := common.GetResourceName(shortName)
 			if err != nil {
 				return nil, err
 			}
 			log.Printf("[TRACE] Generating terraform config for duplo SQS : %s", shortName)
-			varFullPrefix := SQS_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := SQS_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -53,7 +54,7 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_aws_sqs_queue resource
 			sqsBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_sqs_queue",
-					shortName})
+					resourceName})
 			sqsBody := sqsBlock.Body()
 			sqsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -77,14 +78,14 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo SQS : %s", shortName)
 
-			outVars := generateSQSOutputVars(sqs, varFullPrefix, shortName)
+			outVars := generateSQSOutputVars(sqs, varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_sqs_queue." + shortName,
+					ResourceAddress: "duplocloud_aws_sqs_queue." + resourceName,
 					ResourceId:      config.TenantId + "/" + sqs.Name,
 					WorkingDir:      workingDir,
 				})
@@ -96,12 +97,12 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateSQSOutputVars(duplo duplosdk.DuploAwsResource, prefix, shortName string) []common.OutputVarConfig {
+func generateSQSOutputVars(duplo duplosdk.DuploAwsResource, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	urlVar := common.OutputVarConfig{
 		Name:          prefix + "url",
-		ActualVal:     "duplocloud_aws_sqs_queue." + shortName + ".url",
+		ActualVal:     "duplocloud_aws_sqs_queue." + resourceName + ".url",
 		DescVal:       "The URL for the created Amazon SQS queue.",
 		RootTraversal: true,
 	}

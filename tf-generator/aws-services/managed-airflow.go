@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -39,9 +38,10 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 		kms, kmsClientErr := client.TenantGetTenantKmsKey(config.TenantId)
 		for _, mwaa := range *list {
 			shortName, _ := duplosdk.UnprefixName(prefix, mwaa.Name)
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS Apache Airflow : %s", mwaa.Name)
 
-			varFullPrefix := MWAA_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := MWAA_VAR_PREFIX + resourceName + "_"
 			mwaaDetails, clientErr := client.MwaaAirflowDetailsGet(config.TenantId, mwaa.Name)
 			if clientErr != nil {
 				fmt.Println(clientErr)
@@ -64,7 +64,7 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 			// Add duplocloud_aws_mwaa_environment resource
 			mwaalock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_mwaa_environment",
-					shortName})
+					resourceName})
 			mwaaBody := mwaalock.Body()
 			mwaaBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -80,20 +80,26 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 				resourceName := duplosdk.UnwrapResoureNameFromAwsArn(mwaaDetails.SourceBucketArn)
 				s3, clientErr := client.TenantGetS3BucketSettings(config.TenantId, resourceName)
 				if s3 != nil && clientErr == nil && s3.Arn == mwaaDetails.SourceBucketArn {
-					s3ShortName := s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
-					parts := strings.Split(s3ShortName, "-")
-					if len(parts) > 0 {
-						parts = parts[:len(parts)-1]
-					}
-					s3ShortName = strings.Join(parts, "-")
-					mwaaBody.SetAttributeTraversal("source_bucket_arn", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: "duplocloud_s3_bucket." + s3ShortName,
-						},
-						hcl.TraverseAttr{
-							Name: "arn",
-						},
-					})
+					// s3ShortName := s3.Name
+
+					// if strings.HasPrefix(s3.Name, "duploservices-") {
+					// 	s3ShortName = s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+					// 	parts := strings.Split(s3ShortName, "-")
+					// 	if len(parts) > 0 {
+					// 		parts = parts[:len(parts)-1]
+					// 	}
+					// 	s3ShortName = strings.Join(parts, "-")
+					// }
+
+					// mwaaBody.SetAttributeTraversal("source_bucket_arn", hcl.Traversal{
+					// 	hcl.TraverseRoot{
+					// 		Name: "duplocloud_s3_bucket." + s3ShortName,
+					// 	},
+					// 	hcl.TraverseAttr{
+					// 		Name: "arn",
+					// 	},
+					// })
+					common.Interpolate(mwaaBody, *config, s3.Name, "source_bucket_arn", common.S3, "arn")
 				} else {
 					mwaaBody.SetAttributeValue("source_bucket_arn", cty.StringVal(mwaaDetails.SourceBucketArn))
 				}
@@ -235,12 +241,12 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo AWS Apache Airflow : %s", mwaa.Name)
 
-			outVars := generateMWAAOutputVars(varFullPrefix, shortName)
+			outVars := generateMWAAOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_aws_mwaa_environment." + shortName,
+					ResourceAddress: "duplocloud_aws_mwaa_environment." + resourceName,
 					ResourceId:      config.TenantId + "/" + mwaa.Name,
 					WorkingDir:      workingDir,
 				})
@@ -253,12 +259,12 @@ func (mwaa *MWAA) Generate(config *common.Config, client *duplosdk.Client) (*com
 	return &tfContext, nil
 }
 
-func generateMWAAOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateMWAAOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "webserver_url",
-		ActualVal:     "duplocloud_aws_mwaa_environment." + shortName + ".webserver_url",
+		ActualVal:     "duplocloud_aws_mwaa_environment." + resourceName + ".webserver_url",
 		DescVal:       "The webserver URL of the MWAA Environment.",
 		RootTraversal: true,
 	}
@@ -266,7 +272,7 @@ func generateMWAAOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_aws_mwaa_environment." + shortName + ".arn",
+		ActualVal:     "duplocloud_aws_mwaa_environment." + resourceName + ".arn",
 		DescVal:       "The ARN of the Managed Workflows Apache Airflow.",
 		RootTraversal: true,
 	}

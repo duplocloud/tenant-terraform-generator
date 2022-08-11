@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -34,9 +33,10 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 		log.Println("[TRACE] <====== BYOH TF generation started. =====>")
 		for _, byoh := range *list {
 			shortName := byoh.Name
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo byoh Instance : %s", shortName)
 
-			varFullPrefix := BYOH_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := BYOH_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -53,7 +53,7 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 			// Add duplocloud_ecache_instance resource
 			byohBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_byoh",
-					shortName})
+					resourceName})
 			byohBody := byohBlock.Body()
 			byohBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -110,13 +110,13 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 
 			log.Printf("[TRACE] Terraform config is generated for duplo BYOH instance : %s", shortName)
 
-			outVars := generateBYOHOutputVars(varFullPrefix, shortName)
+			outVars := generateBYOHOutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_byoh." + shortName,
+					ResourceAddress: "duplocloud_byoh." + resourceName,
 					ResourceId:      config.TenantId + "/" + shortName,
 					WorkingDir:      workingDir,
 				})
@@ -129,12 +129,12 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 	return &tfContext, nil
 }
 
-func generateBYOHOutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateBYOHOutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "connection_url",
-		ActualVal:     "duplocloud_byoh." + shortName + ".connection_url",
+		ActualVal:     "duplocloud_byoh." + resourceName + ".connection_url",
 		DescVal:       "The connection url for BYOH instance.",
 		RootTraversal: true,
 	}
@@ -142,7 +142,7 @@ func generateBYOHOutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "network_agent_url",
-		ActualVal:     "duplocloud_byoh." + shortName + ".network_agent_url",
+		ActualVal:     "duplocloud_byoh." + resourceName + ".network_agent_url",
 		DescVal:       "The network agent url for BYOH instance.",
 		RootTraversal: true,
 	}

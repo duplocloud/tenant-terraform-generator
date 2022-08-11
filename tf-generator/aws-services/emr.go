@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -33,6 +32,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== EMR TF generation started. =====>")
 		for _, emr := range *list {
 			shortName, _ := extractEMRShortName(client, config.TenantId, emr.Name)
+			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo EMR Instance : %s", shortName)
 
 			emrInfo, clientErr := client.DuploEmrClusterGet(config.TenantId, shortName)
@@ -40,7 +40,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				fmt.Println(clientErr)
 				return nil, clientErr
 			}
-			varFullPrefix := EMR_VAR_PREFIX + strings.ReplaceAll(shortName, "-", "_") + "_"
+			varFullPrefix := EMR_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -57,7 +57,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// Add duplocloud_ecache_instance resource
 			emrBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_emr_cluster",
-					shortName})
+					resourceName})
 			emrBody := emrBlock.Body()
 			emrBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 				hcl.TraverseRoot{
@@ -237,13 +237,13 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 			log.Printf("[TRACE] Terraform config is generated for duplo EMR : %s", shortName)
 
-			outVars := generateEMROutputVars(varFullPrefix, shortName)
+			outVars := generateEMROutputVars(varFullPrefix, resourceName)
 			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 
 			// Import all created resources.
 			if config.GenerateTfState {
 				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_emr_cluster." + shortName,
+					ResourceAddress: "duplocloud_emr_cluster." + resourceName,
 					ResourceId:      config.TenantId + "/" + emr.JobFlowId,
 					WorkingDir:      workingDir,
 				})
@@ -256,12 +256,12 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateEMROutputVars(prefix, shortName string) []common.OutputVarConfig {
+func generateEMROutputVars(prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_emr_cluster." + shortName + ".fullname",
+		ActualVal:     "duplocloud_emr_cluster." + resourceName + ".fullname",
 		DescVal:       "The full name of the EMR cluster.",
 		RootTraversal: true,
 	}
@@ -269,7 +269,7 @@ func generateEMROutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var2 := common.OutputVarConfig{
 		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_emr_cluster." + shortName + ".arn",
+		ActualVal:     "duplocloud_emr_cluster." + resourceName + ".arn",
 		DescVal:       "The ARN of the EMR cluster.",
 		RootTraversal: true,
 	}
@@ -277,7 +277,7 @@ func generateEMROutputVars(prefix, shortName string) []common.OutputVarConfig {
 
 	var3 := common.OutputVarConfig{
 		Name:          prefix + "job_flow_id",
-		ActualVal:     "duplocloud_emr_cluster." + shortName + ".job_flow_id",
+		ActualVal:     "duplocloud_emr_cluster." + resourceName + ".job_flow_id",
 		DescVal:       "job flow id.",
 		RootTraversal: true,
 	}

@@ -102,8 +102,14 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 		[]string{"duplocloud_infrastructure",
 			"infra"})
 	infraDsBody := infraDs.Body()
-	infraDsBody.SetAttributeValue("infra_name",
-		cty.StringVal(duplo.PlanID))
+	infraDsBody.SetAttributeTraversal("infra_name", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "infra_name",
+		},
+	})
 	rootBody.AppendNewline()
 
 	// Add duplocloud_tenant resource
