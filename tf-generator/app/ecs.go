@@ -173,10 +173,20 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.StringVal(serviceConfig.Protocol))
 				lbConfigBlockBody.SetAttributeValue("backend_protocol",
 					cty.StringVal(serviceConfig.BackendProtocol))
-				lbConfigBlockBody.SetAttributeValue("health_check_url",
-					cty.StringVal(serviceConfig.HealthCheckURL))
-				lbConfigBlockBody.SetAttributeValue("certificate_arn",
-					cty.StringVal(serviceConfig.CertificateArn))
+				if len(serviceConfig.HealthCheckURL) > 0 {
+					lbConfigBlockBody.SetAttributeValue("health_check_url",
+						cty.StringVal(serviceConfig.HealthCheckURL))
+				}
+				if len(serviceConfig.CertificateArn) > 0 {
+					lbConfigBlockBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "local",
+						},
+						hcl.TraverseAttr{
+							Name: "cert_arn",
+						},
+					})
+				}
 
 				// TODO - Add health_check_config block
 				if serviceConfig.HealthCheckConfig != nil && (serviceConfig.HealthCheckConfig.HealthyThresholdCount != 0 || serviceConfig.HealthCheckConfig.UnhealthyThresholdCount != 0 || serviceConfig.HealthCheckConfig.HealthCheckIntervalSeconds != 0 || serviceConfig.HealthCheckConfig.HealthCheckTimeoutSeconds != 0) {

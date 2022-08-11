@@ -403,8 +403,14 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 							cty.StringVal(serviceConfig.HealthCheckURL))
 					}
 					if len(serviceConfig.CertificateArn) > 0 {
-						lbConfigBlockBody.SetAttributeValue("certificate_arn",
-							cty.StringVal(serviceConfig.CertificateArn))
+						lbConfigBlockBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "local",
+							},
+							hcl.TraverseAttr{
+								Name: "cert_arn",
+							},
+						})
 					}
 					svcConfigBody.AppendNewline()
 				}
