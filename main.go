@@ -40,7 +40,7 @@ func main() {
 		log.Fatalf("error getting tenant from duplo: %s", err)
 	}
 	if tenantConfig == nil {
-		log.Fatalf("Tenant not found: Tenant Id - %s ", config.TenantId)
+		log.Fatalf("Tenant not found: Tenant Name - %s ", config.TenantName)
 	}
 	config.TenantId = tenantConfig.TenantID
 	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
