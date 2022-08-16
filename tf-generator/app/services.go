@@ -292,6 +292,18 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						})
 				}
 
+				if len(service.HPASpecs) > 0 {
+					hpaSpecsStr, err := duplosdk.JSONMarshal(service.HPASpecs)
+					if err != nil {
+						panic(err)
+					}
+					svcBody.SetAttributeTraversal("hpa_specs", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "jsonencode(" + hpaSpecsStr + ")",
+						},
+					})
+				}
+
 				if len(service.Template.Volumes) > 0 {
 					//log.Printf("[TRACE] Volume : %s", service.Template.Volumes)
 					//volConfigMap := make(map[string]interface{})
@@ -346,6 +358,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						},
 					})
 				}
+
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo service : %s", service.Name)
 			rootBody.AppendNewline()
@@ -466,7 +479,11 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						if details == nil || err != nil {
 							isError = true
 						}
-						settings, err := client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
+						var settings *duplosdk.DuploAwsLbSettings
+						if !isError {
+							settings, err = client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
+						}
+
 						if err != nil {
 							isError = true
 						}

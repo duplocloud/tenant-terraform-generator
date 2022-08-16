@@ -10,6 +10,7 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -66,8 +67,20 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			})
 			// tdBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
-			tdBody.SetAttributeValue("family",
-				cty.StringVal(taskDefObj.Family))
+			taskDefnName, err := extractTaskDefnName(client, config.TenantId, taskDefObj.Family)
+			if err != nil {
+				return nil, err
+			}
+			name := "duploservices-${local.tenant_name}-" + taskDefnName
+			tdNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			tdBody.SetAttributeRaw("family", tdNameTokens)
+
+			// tdBody.SetAttributeValue("family",
+			// 	cty.StringVal(taskDefObj.Family))
 			tdBody.SetAttributeValue("cpu",
 				cty.StringVal(taskDefObj.CPU))
 			tdBody.SetAttributeValue("memory",
@@ -240,4 +253,13 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 
 	return &tfContext, nil
+}
+
+func extractTaskDefnName(client *duplosdk.Client, tenantID string, family string) (string, error) {
+	prefix, err := client.GetDuploServicesPrefix(tenantID)
+	if err != nil {
+		return "", err
+	}
+	name, _ := duplosdk.UnprefixName(prefix, family)
+	return name, nil
 }
