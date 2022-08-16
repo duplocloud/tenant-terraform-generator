@@ -169,8 +169,10 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.NumberIntVal(int64(serviceConfig.ExternalPort)))
 				lbConfigBlockBody.SetAttributeValue("protocol",
 					cty.StringVal(serviceConfig.Protocol))
-				lbConfigBlockBody.SetAttributeValue("backend_protocol",
-					cty.StringVal(serviceConfig.BackendProtocol))
+				if len(serviceConfig.BackendProtocol) > 0 {
+					lbConfigBlockBody.SetAttributeValue("backend_protocol",
+						cty.StringVal(serviceConfig.BackendProtocol))
+				}
 				if len(serviceConfig.HealthCheckURL) > 0 {
 					lbConfigBlockBody.SetAttributeValue("health_check_url",
 						cty.StringVal(serviceConfig.HealthCheckURL))
