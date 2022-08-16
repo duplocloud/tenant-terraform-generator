@@ -38,6 +38,6 @@ func Interpolate(body *hclwrite.Body, config Config, resourceName string, attrNa
 }
 
 func GetResourceName(name string) string {
-	replacer := strings.NewReplacer("/", "_", "-", "_", ".", "_")
+	replacer := strings.NewReplacer("/", "_", "-", "_", ".", "_", " ", "_")
 	return strings.ToLower(replacer.Replace(name))
 }
