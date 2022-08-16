@@ -25,7 +25,7 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
-		return nil, clientErr
+		return nil, nil
 	}
 	tfContext := common.TFContext{}
 	importConfigs := []common.ImportConfig{}
