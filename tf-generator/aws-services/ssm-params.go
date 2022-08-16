@@ -1,14 +1,17 @@
 package awsservices
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -74,8 +77,39 @@ func (ssmParams *SsmParams) Generate(config *common.Config, client *duplosdk.Cli
 				cty.StringVal(ssmParam.Type))
 
 			if len(ssmDetails.Value) > 0 {
-				ssmParamBody.SetAttributeValue("value",
-					cty.StringVal(ssmDetails.Value))
+				valueMap := make(map[string]interface{})
+				err := json.Unmarshal([]byte(ssmDetails.Value), &valueMap)
+				if err == nil {
+					valueMapStr, err := duplosdk.JSONMarshal(valueMap)
+					if err != nil {
+						panic(err)
+					}
+					ssmParamBody.SetAttributeTraversal("value", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "jsonencode(" + valueMapStr + ")",
+						},
+					})
+				} else {
+					values := strings.Split(strings.TrimSuffix(ssmDetails.Value, "\n"), "\n")
+					if len(values) > 1 {
+						heredocstr := "<<-EOT"
+						ssmParamTokens := hclwrite.Tokens{
+							{Type: hclsyntax.TokenOQuote, Bytes: []byte(heredocstr)},
+							// {Type: hclsyntax.TokenMinus, Bytes: []byte(`-`)},
+							// {Type: hclsyntax.TokenEOF, Bytes: []byte(`EOT`)},
+							{Type: hclsyntax.TokenIdent, Bytes: []byte("\n")},
+						}
+						for _, line := range values {
+							ssmParamTokens = append(ssmParamTokens, &hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte(line)})
+							ssmParamTokens = append(ssmParamTokens, &hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("\n")})
+						}
+						ssmParamTokens = append(ssmParamTokens, &hclwrite.Token{Type: hclsyntax.TokenEOF, Bytes: []byte(`EOT`)})
+						ssmParamBody.SetAttributeRaw("value", ssmParamTokens)
+					} else {
+						ssmParamBody.SetAttributeValue("value",
+							cty.StringVal(ssmDetails.Value))
+					}
+				}
 			}
 
 			if len(ssmDetails.Description) > 0 {
