@@ -183,3 +183,30 @@ This infrastructure is divided into terraform sub projects which manages differe
     - ```shell
       scripts/destroy.sh <tenant-name> app
       ```
+
+### External Configurations (Manual Step)
+
+End user can pass external configurations like RDS instance type, ES version, Docker image version etc. while running these projects.
+
+#### How to create configuration file
+
+- Create configuration folder inside config folder with the name of tenant, Example, Tenant Name is `dev01` then `dev01` folder is created inside config folder first.
+
+- File - **admin-tenant.tfvars.json**
+  - This file is used while running **Project - admin-tenant**, You can create file **admin-tenant.tfvars.json** and pass required configuration.
+- File - **aws-services.tfvars.json**
+  - This file is used while running **Project - aws-services**, You can create file **aws-services.tfvars.json** and pass required configuration.
+
+- File - **app.tfvars.json**
+  - This file is used while running **Project - app**, You can create file **app.tfvars.json** and pass required configuration.
+
+    ```
+    ├── target                                  # Target folder for terraform code
+    │   ├── customer-name                       # Folder with customer name
+    │     ├── tenant-name                       # Folder with tenant name
+    │       ├── config                          # External configuration folder.
+    │          ├── dev01                        # Tenant specific config folder.
+    │             ├── admin-tenant.tfvars.json  # admin-tenant project variables.
+    │             ├── aws-services.tfvars.json  # aws-services project variables.
+    │             ├── app.tfvars.json           # app project variables.
+    ```  
