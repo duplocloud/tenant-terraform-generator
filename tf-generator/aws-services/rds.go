@@ -55,6 +55,16 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 
+			if len(rds.MasterPassword) > 0 {
+				randomBlock := rootBody.AppendNewBlock("resource",
+					[]string{"random_password",
+						resourceName + "_password"})
+				randomBody := randomBlock.Body()
+				randomBody.SetAttributeValue("length",
+					cty.NumberIntVal(int64(16)))
+				randomBody.SetAttributeValue("special",
+					cty.BoolVal(false))
+			}
 			// Add duplocloud_rds_instance resource
 			rdsBlock := rootBody.AppendNewBlock("resource",
 				[]string{"duplocloud_rds_instance",
@@ -110,9 +120,16 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						Name: varFullPrefix + "master_username",
 					},
 				})
+				rdsBody.SetAttributeTraversal("master_password", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: " random_password." + resourceName + "_password",
+					},
+					hcl.TraverseAttr{
+						Name: "result",
+					},
+				})
 			}
-			rdsBody.SetAttributeValue("master_password",
-				cty.StringVal(rds.MasterPassword))
+
 			// if len(rds.DBParameterGroupName) > 0 {
 			// 	rdsBody.SetAttributeValue("parameter_group_name",
 			// 		cty.StringVal(rds.DBParameterGroupName))
@@ -182,11 +199,11 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 	varConfigs["encrypt_storage"] = var3
 
 	var4 := common.VarConfig{
-		Name:       prefix + "master_password",
-		DefaultVal: duplo.MasterPassword,
+		Name:       prefix + "master_username",
+		DefaultVal: duplo.MasterUsername,
 		TypeVal:    "string",
 	}
-	varConfigs["master_password"] = var4
+	varConfigs["master_username"] = var4
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {

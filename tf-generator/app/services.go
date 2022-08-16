@@ -412,77 +412,79 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 							},
 						})
 					}
-					svcConfigBody.AppendNewline()
+					//svcConfigBody.AppendNewline()
 				}
-
-				svcParamBlock := rootBody.AppendNewBlock("resource",
-					[]string{"duplocloud_duplo_service_params",
-						resourceName + "_params"})
-				svcParamBody := svcParamBlock.Body()
-				svcParamBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
-					},
-					hcl.TraverseAttr{
-						Name: "tenant_id",
-					},
-				})
-				svcParamBody.SetAttributeTraversal("replication_controller_name", hcl.Traversal{
-					hcl.TraverseRoot{
-						Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
-					},
-					hcl.TraverseAttr{
-						Name: "replication_controller_name",
-					},
-				})
-				if len(service.DnsPrfx) > 0 {
-					dnsPrefix := strings.Replace(service.DnsPrfx, "-"+config.TenantName, "", -1)
-					dnsPrefix = dnsPrefix + "-${local.tenant_name}"
-					dnsPrefixTokens := hclwrite.Tokens{
-						{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
-						{Type: hclsyntax.TokenIdent, Bytes: []byte(dnsPrefix)},
-						{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
-					}
-					svcParamBody.SetAttributeRaw("dns_prfx", dnsPrefixTokens)
-				}
-
-				if doesReplicationControllerHaveAlb(&service) {
-					webAclId, clientError := client.ReplicationControllerLbWafGet(config.TenantId, service.Name)
-					if clientError != nil {
-						if clientError.Status() == 500 && service.Template.Cloud != 0 {
-							log.Printf("[TRACE] Ignoring error %s for non AWS cloud.", clientError)
-						}
-						webAclId = ""
-					}
-					if len(webAclId) > 0 {
-						svcParamBody.SetAttributeValue("webaclid",
-							cty.StringVal(webAclId))
-					}
-				}
-				isError := false
 				if doesReplicationControllerHaveAlbOrNlb(&service) {
-					details, err := getDuploServiceAwsLbSettings(config.TenantId, &service, client)
-					if details == nil || err != nil {
-						isError = true
+					svcParamBlock := rootBody.AppendNewBlock("resource",
+						[]string{"duplocloud_duplo_service_params",
+							resourceName + "_params"})
+					svcParamBody := svcParamBlock.Body()
+					svcParamBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
+						},
+						hcl.TraverseAttr{
+							Name: "tenant_id",
+						},
+					})
+
+					svcParamBody.SetAttributeTraversal("replication_controller_name", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "duplocloud_duplo_service_lbconfigs." + resourceName + "_config",
+						},
+						hcl.TraverseAttr{
+							Name: "replication_controller_name",
+						},
+					})
+					if len(service.DnsPrfx) > 0 {
+						dnsPrefix := strings.Replace(service.DnsPrfx, "-"+config.TenantName, "", -1)
+						dnsPrefix = dnsPrefix + "-${local.tenant_name}"
+						dnsPrefixTokens := hclwrite.Tokens{
+							{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+							{Type: hclsyntax.TokenIdent, Bytes: []byte(dnsPrefix)},
+							{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+						}
+						svcParamBody.SetAttributeRaw("dns_prfx", dnsPrefixTokens)
 					}
-					settings, err := client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
-					if err != nil {
-						isError = true
+
+					if doesReplicationControllerHaveAlb(&service) {
+						webAclId, clientError := client.ReplicationControllerLbWafGet(config.TenantId, service.Name)
+						if clientError != nil {
+							if clientError.Status() == 500 && service.Template.Cloud != 0 {
+								log.Printf("[TRACE] Ignoring error %s for non AWS cloud.", clientError)
+							}
+							webAclId = ""
+						}
+						if len(webAclId) > 0 {
+							svcParamBody.SetAttributeValue("webaclid",
+								cty.StringVal(webAclId))
+						}
 					}
-					if settings != nil && settings.LoadBalancerArn != "" {
-						svcParamBody.SetAttributeValue("enable_access_logs",
-							cty.BoolVal(settings.EnableAccessLogs))
-						svcParamBody.SetAttributeValue("drop_invalid_headers",
-							cty.BoolVal(settings.DropInvalidHeaders))
-						svcParamBody.SetAttributeValue("http_to_https_redirect",
-							cty.BoolVal(settings.HttpToHttpsRedirect))
-					} else if isError {
-						svcParamBody.SetAttributeValue("enable_access_logs",
-							cty.BoolVal(false))
-						svcParamBody.SetAttributeValue("drop_invalid_headers",
-							cty.BoolVal(false))
-						svcParamBody.SetAttributeValue("http_to_https_redirect",
-							cty.BoolVal(false))
+					isError := false
+					if doesReplicationControllerHaveAlbOrNlb(&service) {
+						details, err := getDuploServiceAwsLbSettings(config.TenantId, &service, client)
+						if details == nil || err != nil {
+							isError = true
+						}
+						settings, err := client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
+						if err != nil {
+							isError = true
+						}
+						if settings != nil && settings.LoadBalancerArn != "" {
+							svcParamBody.SetAttributeValue("enable_access_logs",
+								cty.BoolVal(settings.EnableAccessLogs))
+							svcParamBody.SetAttributeValue("drop_invalid_headers",
+								cty.BoolVal(settings.DropInvalidHeaders))
+							svcParamBody.SetAttributeValue("http_to_https_redirect",
+								cty.BoolVal(settings.HttpToHttpsRedirect))
+						} else if isError {
+							svcParamBody.SetAttributeValue("enable_access_logs",
+								cty.BoolVal(false))
+							svcParamBody.SetAttributeValue("drop_invalid_headers",
+								cty.BoolVal(false))
+							svcParamBody.SetAttributeValue("http_to_https_redirect",
+								cty.BoolVal(false))
+						}
 					}
 				}
 			}
