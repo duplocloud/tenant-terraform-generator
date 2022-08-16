@@ -25,9 +25,9 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
-	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject, "provider.tf")
-	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject, "provider.tf")
-	appProject := filepath.Join(config.TFCodePath, config.AppProject, "provider.tf")
+	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject, "providers.tf")
+	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject, "providers.tf")
+	appProject := filepath.Join(config.TFCodePath, config.AppProject, "providers.tf")
 	tenantProjectFile, err := os.Create(tenantProject)
 	if err != nil {
 		fmt.Println(err)
@@ -87,13 +87,10 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 			Name: "region",
 		},
 	})
+	awsProviderBody.AppendNewline()
+
 	fmt.Printf("%s", hclFile.Bytes())
 	_, err = tenantProjectFile.Write(hclFile.Bytes())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	_, err = awsServicesProjectFile.Write(hclFile.Bytes())
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -103,5 +100,22 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		fmt.Println(err)
 		return
 	}
+	reqProvsBlockBody.SetAttributeValue("random",
+		cty.ObjectVal(map[string]cty.Value{
+			"source":  cty.StringVal("hashicorp/random"),
+			"version": cty.StringVal("~> 3.3.2"),
+		}))
+	randomProvider := rootBody.AppendNewBlock("provider",
+		[]string{"random"})
+
+	randomProviderBody := randomProvider.Body()
+	randomProviderBody.AppendNewline()
+
+	_, err = awsServicesProjectFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	log.Println("[TRACE] <====== Provider TF generation done. =====>")
 }

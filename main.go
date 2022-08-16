@@ -235,6 +235,14 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	envFile, err := os.OpenFile(filepath.Join("target", config.CustomerName, config.TenantName, ".envrc"), os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer envFile.Close()
+	if _, err := envFile.WriteString("\nexport tenant_id=\"" + config.TenantId + "\""); err != nil {
+		log.Fatal(err)
+	}
 
 }
 
