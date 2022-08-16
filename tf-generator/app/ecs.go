@@ -114,16 +114,14 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				[]string{"duplocloud_ecs_service",
 					resourceName})
 			ecsBody := ecsBlock.Body()
-			// svcBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-			// 	hcl.TraverseRoot{
-			// 		Name: "duplocloud_tenant.tenant",
-			// 	},
-			// 	hcl.TraverseAttr{
-			// 		Name: "tenant_id",
-			// 	},
-			// })
-			ecsBody.SetAttributeValue("tenant_id",
-				cty.StringVal(config.TenantId))
+			ecsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
 			ecsBody.SetAttributeValue("name",
 				cty.StringVal(ecs.Name))
 			ecsBody.SetAttributeTraversal("task_definition", hcl.Traversal{
