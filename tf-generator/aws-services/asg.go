@@ -127,8 +127,8 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.StringVal(asgProfile.Base64UserData))
 			}
 
-			if asgProfile.MinionTags != nil {
-				for _, duploObject := range *asgProfile.MinionTags {
+			if asgProfile.CustomDataTags != nil {
+				for _, duploObject := range *asgProfile.CustomDataTags {
 					minionTagsBlock := asgBody.AppendNewBlock("minion_tags",
 						nil)
 					minionTagsBody := minionTagsBlock.Body()
@@ -152,25 +152,24 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// 		rootBody.AppendNewline()
 			// 	}
 			// }
-			// TODO - Duplo provider doesn't handle this yet.
-			// if asgProfile.Volumes != nil {
-			// 	for _, duploObject := range *asgProfile.Volumes {
-			// 		volumeBlock := asgBody.AppendNewBlock("volume",
-			// 			nil)
-			// 		volumeBody := volumeBlock.Body()
-			// 		volumeBody.SetAttributeValue("iops",
-			// 			cty.NumberIntVal(int64(duploObject.Iops)))
-			// 		volumeBody.SetAttributeValue("name",
-			// 			cty.StringVal(duploObject.Name))
-			// 		volumeBody.SetAttributeValue("size",
-			// 			cty.NumberIntVal(int64(duploObject.Size)))
-			// 		volumeBody.SetAttributeValue("volume_id",
-			// 			cty.StringVal(duploObject.VolumeID))
-			// 		volumeBody.SetAttributeValue("volume_type",
-			// 			cty.StringVal(duploObject.VolumeType))
-			// 		rootBody.AppendNewline()
-			// 	}
-			// }
+			if len(*asgProfile.Volumes) > 0 {
+				for _, duploObject := range *asgProfile.Volumes {
+					volumeBlock := asgBody.AppendNewBlock("volume",
+						nil)
+					volumeBody := volumeBlock.Body()
+					volumeBody.SetAttributeValue("iops",
+						cty.NumberIntVal(int64(duploObject.Iops)))
+					volumeBody.SetAttributeValue("name",
+						cty.StringVal(duploObject.Name))
+					volumeBody.SetAttributeValue("size",
+						cty.NumberIntVal(int64(duploObject.Size)))
+					volumeBody.SetAttributeValue("volume_id",
+						cty.StringVal(duploObject.VolumeID))
+					volumeBody.SetAttributeValue("volume_type",
+						cty.StringVal(duploObject.VolumeType))
+					rootBody.AppendNewline()
+				}
+			}
 			// TODO - Handle tags, network_interface
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
