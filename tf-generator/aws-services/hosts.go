@@ -124,38 +124,36 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					}
 				}
 			}
-			//TODO - Duplo provider doesn't handle this yet.
-			// if host.MetaData != nil {
-			// 	for _, duploObject := range *host.MetaData {
-			// 		mdBlock := hostBody.AppendNewBlock("metadata",
-			// 			nil)
-			// 		mdBody := mdBlock.Body()
-			// 		mdBody.SetAttributeValue("key",
-			// 			cty.StringVal(duploObject.Key))
-			// 		mdBody.SetAttributeValue("value",
-			// 			cty.StringVal(duploObject.Value))
-			// 		rootBody.AppendNewline()
-			// 	}
-			// }
-			// TODO - Duplo provider doesn't handle this yet.
-			// if host.Volumes != nil {
-			// 	for _, duploObject := range *host.Volumes {
-			// 		volumeBlock := hostBody.AppendNewBlock("volume",
-			// 			nil)
-			// 		volumeBody := volumeBlock.Body()
-			// 		volumeBody.SetAttributeValue("iops",
-			// 			cty.NumberIntVal(int64(duploObject.Iops)))
-			// 		volumeBody.SetAttributeValue("name",
-			// 			cty.StringVal(duploObject.Name))
-			// 		volumeBody.SetAttributeValue("size",
-			// 			cty.NumberIntVal(int64(duploObject.Size)))
-			// 		volumeBody.SetAttributeValue("volume_id",
-			// 			cty.StringVal(duploObject.VolumeID))
-			// 		volumeBody.SetAttributeValue("volume_type",
-			// 			cty.StringVal(duploObject.VolumeType))
-			// 		rootBody.AppendNewline()
-			// 	}
-			// }
+			if host.MetaData != nil {
+				for _, duploObject := range *host.MetaData {
+					mdBlock := hostBody.AppendNewBlock("metadata",
+						nil)
+					mdBody := mdBlock.Body()
+					mdBody.SetAttributeValue("key",
+						cty.StringVal(duploObject.Key))
+					mdBody.SetAttributeValue("value",
+						cty.StringVal(duploObject.Value))
+					rootBody.AppendNewline()
+				}
+			}
+			if host.Volumes != nil {
+				for _, duploObject := range *host.Volumes {
+					volumeBlock := hostBody.AppendNewBlock("volume",
+						nil)
+					volumeBody := volumeBlock.Body()
+					volumeBody.SetAttributeValue("iops",
+						cty.NumberIntVal(int64(duploObject.Iops)))
+					volumeBody.SetAttributeValue("name",
+						cty.StringVal(duploObject.Name))
+					volumeBody.SetAttributeValue("size",
+						cty.NumberIntVal(int64(duploObject.Size)))
+					volumeBody.SetAttributeValue("volume_id",
+						cty.StringVal(duploObject.VolumeID))
+					volumeBody.SetAttributeValue("volume_type",
+						cty.StringVal(duploObject.VolumeType))
+					rootBody.AppendNewline()
+				}
+			}
 			// TODO - Handle tags, network_interface
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
