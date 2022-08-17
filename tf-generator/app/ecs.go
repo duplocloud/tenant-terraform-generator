@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -155,9 +156,16 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.NumberIntVal(int64(ecs.OldTaskDefinitionBufferSize)))
 			ecsBody.SetAttributeValue("is_target_group_only",
 				cty.BoolVal(ecs.IsTargetGroupOnly))
+
 			if len(ecs.DNSPrfx) > 0 {
-				ecsBody.SetAttributeValue("dns_prfx",
-					cty.StringVal(ecs.DNSPrfx))
+				dnsPrefix := strings.Replace(ecs.DNSPrfx, "-"+config.TenantName, "", -1)
+				dnsPrefix = dnsPrefix + "-${local.tenant_name}"
+				dnsPrefixTokens := hclwrite.Tokens{
+					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+					{Type: hclsyntax.TokenIdent, Bytes: []byte(dnsPrefix)},
+					{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				}
+				ecsBody.SetAttributeRaw("dns_prfx", dnsPrefixTokens)
 			}
 
 			for _, serviceConfig := range *ecs.LBConfigurations {
