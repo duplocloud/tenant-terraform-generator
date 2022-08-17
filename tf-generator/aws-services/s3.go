@@ -47,8 +47,8 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 			varFullPrefix := S3_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
-
-			inputVars := generateS3Vars(s3, varFullPrefix)
+			s3Settings, _ := client.TenantGetS3BucketSettings(config.TenantId, s3.Name)
+			inputVars := generateS3Vars(s3Settings, varFullPrefix)
 			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new file on system
@@ -106,6 +106,15 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 				},
 			})
 
+			if len(s3.Policies) > 0 {
+				var vals []cty.Value
+				for _, s := range s3.Policies {
+					vals = append(vals, cty.StringVal(s))
+				}
+				s3Body.SetAttributeValue("managed_policies",
+					cty.ListVal(vals))
+			}
+
 			var encryptionMethod string
 			if len(s3.DefaultEncryption) > 0 {
 				encryptionMethod = s3.DefaultEncryption
@@ -143,7 +152,7 @@ func (s3 *S3Bucket) Generate(config *common.Config, client *duplosdk.Client) (*c
 	return &tfContext, nil
 }
 
-func generateS3Vars(duplo duplosdk.DuploS3Bucket, prefix string) []common.VarConfig {
+func generateS3Vars(duplo *duplosdk.DuploS3Bucket, prefix string) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
 	var1 := common.VarConfig{

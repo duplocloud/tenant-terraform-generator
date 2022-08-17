@@ -644,9 +644,11 @@ func (c *Client) TenantListS3Buckets(tenantID string) (*[]DuploS3Bucket, ClientE
 	for _, resource := range *allResources {
 		if resource.Type == ResourceTypeS3Bucket {
 			m[resource.Arn] = DuploS3Bucket{
-				TenantID: tenantID,
-				Name:     resource.Name,
-				Arn:      resource.Arn,
+				TenantID:          tenantID,
+				Name:              resource.Name,
+				Arn:               resource.Arn,
+				Policies:          resource.Policies,
+				DefaultEncryption: resource.DefaultEncryption,
 			}
 		}
 	}
