@@ -9,6 +9,7 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -65,8 +66,13 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				},
 			})
 
-			ecrBody.SetAttributeValue("name",
-				cty.StringVal(shortName))
+			name := shortName + "-${local.tenant_name}"
+			ecrNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			ecrBody.SetAttributeRaw("name", ecrNameTokens)
 
 			ecrBody.SetAttributeValue("enable_scan_image_on_push",
 				cty.BoolVal(ecr.EnableScanImageOnPush))

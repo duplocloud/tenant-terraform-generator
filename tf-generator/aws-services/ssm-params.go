@@ -70,8 +70,13 @@ func (ssmParams *SsmParams) Generate(config *common.Config, client *duplosdk.Cli
 				},
 			})
 
-			ssmParamBody.SetAttributeValue("name",
-				cty.StringVal(shortName))
+			name := shortName + "-${local.tenant_name}"
+			ssmNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			ssmParamBody.SetAttributeRaw("name", ssmNameTokens)
 
 			ssmParamBody.SetAttributeValue("type",
 				cty.StringVal(ssmParam.Type))
