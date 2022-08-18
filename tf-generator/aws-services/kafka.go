@@ -101,11 +101,21 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 						Name: varFullPrefix + "kafka_version",
 					},
 				})
-				kafkaBody.SetAttributeValue("configuration_revision",
-					cty.NumberIntVal(int64(clusterInfo.CurrentSoftware.ConfigurationRevision)))
-				kafkaBody.SetAttributeValue("configuration_arn",
-					cty.StringVal(clusterInfo.CurrentSoftware.ConfigurationArn))
+				if len(clusterInfo.CurrentSoftware.ConfigurationArn) > 0 {
+					kafkaBody.SetAttributeValue("configuration_revision",
+						cty.NumberIntVal(int64(clusterInfo.CurrentSoftware.ConfigurationRevision)))
+					kafkaBody.SetAttributeValue("configuration_arn",
+						cty.StringVal(clusterInfo.CurrentSoftware.ConfigurationArn))
+				}
+			}
 
+			if clusterInfo.BrokerNodeGroup != nil && len(*clusterInfo.BrokerNodeGroup.Subnets) > 0 {
+				var vals []cty.Value
+				for _, s := range *clusterInfo.BrokerNodeGroup.Subnets {
+					vals = append(vals, cty.StringVal(s))
+				}
+				kafkaBody.SetAttributeValue("subnets",
+					cty.ListVal(vals))
 			}
 
 			//fmt.Printf("%s", hclFile.Bytes())
