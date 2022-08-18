@@ -146,9 +146,14 @@ func (es *ES) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				}
 			}
 
-			// esBody.SetAttributeValue("selected_zone",
-			// 	cty.NumberIntVal(es.NodeToNodeEncryptionOptions.Enabled))
-
+			esBody.SetAttributeTraversal("selected_zone", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "var",
+				},
+				hcl.TraverseAttr{
+					Name: varFullPrefix + "selected_zone",
+				},
+			})
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
@@ -191,6 +196,13 @@ func generateESVars(duplo duplosdk.DuploElasticSearchDomain, prefix string) []co
 		TypeVal:    "string",
 	}
 	varConfigs["elasticsearch_version"] = var2
+
+	var3 := common.VarConfig{
+		Name:       prefix + "selected_zone",
+		DefaultVal: "1",
+		TypeVal:    "number",
+	}
+	varConfigs["selected_zone"] = var3
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
