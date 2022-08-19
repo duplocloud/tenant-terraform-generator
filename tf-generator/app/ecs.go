@@ -88,6 +88,8 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.StringVal(taskDefObj.Memory))
 			tdBody.SetAttributeValue("network_mode",
 				cty.StringVal(taskDefObj.NetworkMode.Value))
+			tdBody.SetAttributeValue("prevent_tf_destroy",
+				cty.BoolVal(false))
 
 			if taskDefObj.RequiresCompatibilities != nil && len(taskDefObj.RequiresCompatibilities) > 0 {
 				var vals []cty.Value
