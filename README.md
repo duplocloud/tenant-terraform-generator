@@ -21,6 +21,7 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
 export AWS_RUNNER="duplo-admin"
 export aws_account_id="1234567890"
 ```
+5. Set DISABLETFSTATERESOURCECREATION key as false in DuploCloud. Please contact the DuploCloud team for assistance.
 
 ## How to run this project to export DuploCloud Provider terraform code?
 
@@ -44,12 +45,12 @@ export aws_account_id="1234567890"
     │       ├── terraform        # Terraform code generated using this utility.
     │          ├── admin-tenant  # Terraform code for tenant and tenant related resources.
     │          ├── aws-services  # Terraform code for AWS services.
-    │          ├── app           # Terraform code for duplo services and ecs.
+    │          ├── app           # Terraform code for DuploCloud services and ECS.
     ```
 
-  - **Project : admin-tenant** This projects manages creation of duplo tenant and tenant related resources.
-  - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside duplo.
-  - **Project : app** This project manages duplo services like eks and ecs etc.
+  - **Project : admin-tenant** This projects manages creation of DuploCloud tenant and tenant related resources.
+  - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside DuploCloud.
+  - **Project : app** This project manages DuploCloud services like EKS, ECS etc.
 
 ## Following DuploCloud resources are supported.
    - `duplocloud_tenant`
@@ -105,7 +106,7 @@ cd target/customer-name/tenant-name
 
 ### Wrapper Scripts
 
-There are scripts to manage terraform infrastructure. Which will helps to create Duplo infrastructure based on tenant.
+There are scripts to manage terraform infrastructure. Which will helps to create a DuploCloud infrastructure based on tenant.
 
 - scripts/plan.sh
 - scripts/apply.sh
@@ -118,11 +119,11 @@ There are scripts to manage terraform infrastructure. Which will helps to create
 
 ### Terraform Projects
 
-This infrastructure is divided into terraform sub projects which manages different duplo resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and Duplo services which are containerized.
+This infrastructure is divided into terraform sub projects which manages different managed DuploCloud resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and DuploCloud services which are containerized.
 
 - **Project - admin-tenant**
 
-  This projects manages duplo infrastructure and tenant, Run this project using following command using tenant-name and project name.
+  This projects manages DuploCloud infrastructure and tenant, Run this project using following command using tenant-name and project name.
 
   - Dry-run
 
@@ -144,7 +145,7 @@ This infrastructure is divided into terraform sub projects which manages differe
 
 - **Project - aws-services**
 
-  This project manages AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search, etc. inside duplo.
+  This project manages AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search, etc. inside DuploCloud.
 
   - Dry-run
 
@@ -164,7 +165,7 @@ This infrastructure is divided into terraform sub projects which manages differe
 
 - **Project - app**
 
-  This project manages containerized applications inside duplo liek eks services, ecs, docker native service etc.
+  This project manages containerized applications inside DuploCloud like EKS services, ECS, Docker Native service etc.
 
   - Dry-run
 
