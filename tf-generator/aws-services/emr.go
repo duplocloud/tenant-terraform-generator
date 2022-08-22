@@ -74,8 +74,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			if len(emrInfo.CustomAmiId) > 0 {
 				emrBody.SetAttributeValue("custom_ami_id", cty.StringVal(emrInfo.CustomAmiId))
 			}
-			if len(emrInfo.LogUri) > 0 {
-				emrBody.SetAttributeValue("log_uri", cty.StringVal(emrInfo.LogUri))
+			if len(emrInfo.LogURI) > 0 {
+				emrBody.SetAttributeValue("log_uri", cty.StringVal(emrInfo.LogURI))
 			}
 			emrBody.SetAttributeValue("termination_protection", cty.BoolVal(emrInfo.TerminationProtection))
 			emrBody.SetAttributeValue("keep_job_flow_alive_when_no_steps", cty.BoolVal(emrInfo.KeepJobFlowAliveWhenNoSteps))
@@ -99,13 +99,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			if len(emrInfo.ScaleDownBehavior) > 0 {
 				emrBody.SetAttributeValue("scale_down_behavior", cty.StringVal(emrInfo.ScaleDownBehavior))
 			}
-			if len(emrInfo.Applications) > 0 {
-				var appsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.Applications), &appsMap)
-				if err != nil {
-					panic(err)
-				}
-				appsStr, err := duplosdk.JSONMarshal(appsMap)
+			if emrInfo.Applications != nil {
+				appsStr, err := duplosdk.JSONMarshal(emrInfo.Applications)
 				if err != nil {
 					panic(err)
 				}
@@ -115,13 +110,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.BootstrapActions) > 0 {
-				var bootstrapActionsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.BootstrapActions), &bootstrapActionsMap)
-				if err != nil {
-					panic(err)
-				}
-				bootstrapActionsMapStr, err := duplosdk.JSONMarshal(bootstrapActionsMap)
+			if emrInfo.BootstrapActions != nil {
+				bootstrapActionsMapStr, err := duplosdk.JSONMarshal(emrInfo.BootstrapActions)
 				if err != nil {
 					panic(err)
 				}
@@ -131,13 +121,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.Configurations) > 0 {
-				var configurationsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.Configurations), &configurationsMap)
-				if err != nil {
-					panic(err)
-				}
-				configurationsMapStr, err := duplosdk.JSONMarshal(configurationsMap)
+			if emrInfo.Configurations != nil {
+				configurationsMapStr, err := duplosdk.JSONMarshal(emrInfo.Configurations)
 				if err != nil {
 					panic(err)
 				}
@@ -147,13 +132,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.Steps) > 0 {
-				var stepsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.Steps), &stepsMap)
-				if err != nil {
-					panic(err)
-				}
-				stepsMapStr, err := duplosdk.JSONMarshal(stepsMap)
+			if emrInfo.Steps != nil {
+				stepsMapStr, err := duplosdk.JSONMarshal(emrInfo.Steps)
 				if err != nil {
 					panic(err)
 				}
@@ -179,13 +159,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.ManagedScalingPolicy) > 0 {
-				var managedScalingPolicyMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.ManagedScalingPolicy), &managedScalingPolicyMap)
-				if err != nil {
-					panic(err)
-				}
-				managedScalingPolicyMapStr, err := duplosdk.JSONMarshal(managedScalingPolicyMap)
+			if emrInfo.ManagedScalingPolicy != nil {
+				managedScalingPolicyMapStr, err := duplosdk.JSONMarshal(emrInfo.ManagedScalingPolicy)
 				if err != nil {
 					panic(err)
 				}
@@ -195,13 +170,8 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.InstanceFleets) > 0 {
-				var instanceFleetsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.InstanceFleets), &instanceFleetsMap)
-				if err != nil {
-					panic(err)
-				}
-				instanceFleetsMapStr, err := duplosdk.JSONMarshal(instanceFleetsMap)
+			if emrInfo.InstanceFleets != nil {
+				instanceFleetsMapStr, err := duplosdk.JSONMarshal(emrInfo.InstanceFleets)
 				if err != nil {
 					panic(err)
 				}
@@ -211,21 +181,33 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
-			if len(emrInfo.InstanceGroups) > 0 {
-				var instanceGroupsMap interface{}
-				err := json.Unmarshal([]byte(emrInfo.InstanceGroups), &instanceGroupsMap)
-				if err != nil {
-					panic(err)
+			if emrInfo.InstanceGroups != nil && len(emrInfo.InstanceGroups) > 0 {
+				masterInstanceType := "m3.xlarge"
+				slaveInstanceType := "m3.xlarge"
+				requestedInstanceCount := 1
+				for _, ig := range emrInfo.InstanceGroups {
+					if ig.InstanceGroupType.Value == "MASTER" {
+						masterInstanceType = ig.InstanceType
+					} else if ig.InstanceGroupType.Value == "CORE" {
+						slaveInstanceType = ig.InstanceType
+					}
 				}
-				instanceGroupsMapStr, err := duplosdk.JSONMarshal(instanceGroupsMap)
-				if err != nil {
-					panic(err)
+				if len(emrInfo.Instances) > 0 {
+					requestedInstanceCount = len(emrInfo.Instances)
 				}
-				emrBody.SetAttributeTraversal("instance_groups", hcl.Traversal{
-					hcl.TraverseRoot{
-						Name: "jsonencode(" + instanceGroupsMapStr + ")",
-					},
-				})
+				emrBody.SetAttributeValue("master_instance_type", cty.StringVal(masterInstanceType))
+				emrBody.SetAttributeValue("slave_instance_type", cty.StringVal(slaveInstanceType))
+				emrBody.SetAttributeValue("instance_count", cty.NumberIntVal(int64(requestedInstanceCount)))
+				// instanceGroupsMapStr, err := duplosdk.JSONMarshal(emrInfo.InstanceGroups)
+
+				// if err != nil {
+				// 	panic(err)
+				// }
+				// emrBody.SetAttributeTraversal("instance_groups", hcl.Traversal{
+				// 	hcl.TraverseRoot{
+				// 		Name: "jsonencode(" + instanceGroupsMapStr + ")",
+				// 	},
+				// })
 			}
 
 			//fmt.Printf("%s", hclFile.Bytes())
@@ -261,7 +243,7 @@ func generateEMROutputVars(prefix, resourceName string) []common.OutputVarConfig
 
 	var1 := common.OutputVarConfig{
 		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_emr_cluster." + resourceName + ".fullname",
+		ActualVal:     "duplocloud_emr_cluster." + resourceName + ".full_name",
 		DescVal:       "The full name of the EMR cluster.",
 		RootTraversal: true,
 	}
