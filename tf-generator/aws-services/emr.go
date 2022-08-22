@@ -35,7 +35,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo EMR Instance : %s", shortName)
 
-			emrInfo, clientErr := client.DuploEmrClusterGet(config.TenantId, emr.Name)
+			emrInfo, clientErr := client.DuploEmrClusterGet(config.TenantId, emr.JobFlowId)
 			if clientErr != nil {
 				fmt.Println(clientErr)
 				return nil, clientErr
