@@ -152,6 +152,14 @@ func validateAndGetConfig() *common.Config {
 		generateTfState = generateTfStateBool
 	}
 
+	validateTf := true
+	validateTfStr := os.Getenv("validate_tf")
+	if len(validateTfStr) == 0 {
+		validateTf = true
+	} else {
+		validateTf, _ := strconv.ParseBool(generateTfStateStr)
+	}
+
 	s3Backend := true
 	s3BackendStr := os.Getenv("s3_backend")
 	if len(s3BackendStr) == 0 {
@@ -176,6 +184,7 @@ func validateAndGetConfig() *common.Config {
 		GenerateTfState:      generateTfState,
 		S3Backend:            s3Backend,
 		CertArn:              certArn,
+		ValidateTf:           validateTf,
 	}
 }
 
@@ -267,7 +276,9 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	}
 
 	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
-	validateAndFormatTfCode(config.AdminTenantDir)
+	if config.ValidateTf {
+		validateAndFormatTfCode(config.AdminTenantDir)
+	}
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
@@ -299,7 +310,9 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
 	}
 	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
-	validateAndFormatTfCode(config.AwsServicesDir)
+	if config.ValidateTf {
+		validateAndFormatTfCode(config.AwsServicesDir)
+	}
 	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
 	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
@@ -315,7 +328,9 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
 	}
 	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
-	validateAndFormatTfCode(config.AppDir)
+	if config.ValidateTf {
+		validateAndFormatTfCode(config.AppDir)
+	}
 	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
 	// if config.GenerateTfState && config.S3Backend {

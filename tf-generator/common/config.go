@@ -14,6 +14,7 @@ type Config struct {
 	AppProject           string
 	GenerateTfState      bool
 	S3Backend            bool
+	ValidateTf           bool
 	AccountID            string
 	TFCodePath           string
 }
