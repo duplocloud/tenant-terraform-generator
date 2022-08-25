@@ -1,6 +1,7 @@
 package common
 
 import (
+	"os"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2"
@@ -40,4 +41,12 @@ func Interpolate(body *hclwrite.Body, config Config, resourceName string, attrNa
 func GetResourceName(name string) string {
 	replacer := strings.NewReplacer("/", "_", "-", "_", ".", "_", " ", "_")
 	return strings.ToLower(replacer.Replace(name))
+}
+
+func GetEnv(key string, defaultVal string) string {
+    if value, exists := os.LookupEnv(key); exists {
+	return value
+    }
+
+    return defaultVal
 }
