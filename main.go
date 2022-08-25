@@ -157,7 +157,7 @@ func validateAndGetConfig() *common.Config {
 	if len(validateTfStr) == 0 {
 		validateTf = true
 	} else {
-		validateTf, _ := strconv.ParseBool(generateTfStateStr)
+		validateTf, _ = strconv.ParseBool(generateTfStateStr)
 	}
 
 	s3Backend := true
