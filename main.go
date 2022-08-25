@@ -444,7 +444,7 @@ func validateAndFormatTfCode(tfDir, tfVersion string) {
 		Version: version.Must(version.NewVersion(tfVersion)),
 		//Version: version.NewConstraint(">= 1.0, < 1.4"),
 	}
-	// constraint, _ := version.NewConstraint(">= 0.14.11")
+	// constraint, _ := version.NewConstraint(">= 1.2.8")
 	// installer := &releases.Versions{
 	// 	Product:     product.Terraform,
 	// 	Constraints: constraint,

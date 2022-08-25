@@ -18,9 +18,10 @@ type TfInitializer struct {
 
 func (tfi *TfInitializer) InitWithWorkspace() *tfexec.Terraform {
 	log.Println("[TRACE] <================================== TF init in progress. ==================================>")
+	tfVersion := GetEnv("tf_version", "0.14.11")
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("0.14.11")),
+		Version: version.Must(version.NewVersion(tfVersion)),
 	}
 
 	execPath, err := installer.Install(context.Background())
@@ -71,9 +72,10 @@ func (tfi *TfInitializer) InitWithWorkspace() *tfexec.Terraform {
 }
 
 func (tfi *TfInitializer) Init(config *Config, workingDir string) *tfexec.Terraform {
+	tfVersion := GetEnv("tf_version", "0.14.11")
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("0.14.11")),
+		Version: version.Must(version.NewVersion(tfVersion)),
 	}
 
 	execPath, err := installer.Install(context.Background())
