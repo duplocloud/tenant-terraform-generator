@@ -526,12 +526,13 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ServiceLBConfigsV2/" + service.Name,
 						WorkingDir:      workingDir,
 					})
-					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_duplo_service_params." + resourceName + "_params",
-						ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerParamsV2/" + service.Name,
-						WorkingDir:      workingDir,
-					})
-
+					if doesReplicationControllerHaveAlbOrNlb(&service) {
+						importConfigs = append(importConfigs, common.ImportConfig{
+							ResourceAddress: "duplocloud_duplo_service_params." + resourceName + "_params",
+							ResourceId:      "v2/subscriptions/" + config.TenantId + "/ReplicationControllerParamsV2/" + service.Name,
+							WorkingDir:      workingDir,
+						})
+					}
 				}
 				tfContext.ImportConfigs = importConfigs
 			}
