@@ -21,12 +21,14 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
 export AWS_RUNNER="duplo-admin"
 export aws_account_id="1234567890"
 ```
-You can optionally pass follwoing environment variables.
+You can optionally pass following environment variables.
 
 ```shell
-# Required Vars
+# Optional Vars
 export tf_version=0.14.11  # Terraform version to be used, Default is 0.14.11.
 export validate_tf="false" # Whether to validate generated tf code, Default is true.
+export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
+                                 # If true please use 'AWS_PROFILE' environment variable, This required for s3 backend
 ```
 5. Set DISABLETFSTATERESOURCECREATION key as false in DuploCloud. Please contact the DuploCloud team for assistance.
 
