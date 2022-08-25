@@ -17,6 +17,7 @@ type Config struct {
 	ValidateTf           bool
 	AccountID            string
 	TFCodePath           string
+	TFVersion            string
 }
 
 type TFContext struct {

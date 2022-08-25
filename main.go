@@ -63,19 +63,19 @@ func main() {
 func validateAndGetDuploClient() *duplosdk.Client {
 	host := os.Getenv("duplo_host")
 	if len(host) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "duplo_host")
+		err := fmt.Errorf("error - Please provide \"%s\" as env variable", "duplo_host")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
 	token := os.Getenv("duplo_token")
 	if len(token) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "duplo_token")
+		err := fmt.Errorf("error - Please provide \"%s\" as env variable", "duplo_token")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
 	c, err := duplosdk.NewClient(host, token)
 	if err != nil {
-		err = fmt.Errorf("Error while creating duplo client %s", err)
+		err = fmt.Errorf("error while creating duplo client %s", err)
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
@@ -99,20 +99,20 @@ func validateAndGetConfig() *common.Config {
 	// }
 	tenantName := os.Getenv("tenant_name")
 	if len(tenantName) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "tenant_name")
+		err := fmt.Errorf("error - please provide \"%s\" as env variable", "tenant_name")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
 	custName := os.Getenv("customer_name")
 	if len(custName) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "customer_name")
+		err := fmt.Errorf("error - please provide \"%s\" as env variable", "customer_name")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
 
 	certArn := os.Getenv("cert_arn")
 	if len(certArn) == 0 {
-		err := fmt.Errorf("Error - Please provide \"%s\" as env variable.", "cert_arn")
+		err := fmt.Errorf("error - please provide \"%s\" as env variable", "cert_arn")
 		log.Printf("[TRACE] - %s", err)
 		os.Exit(1)
 	}
@@ -120,6 +120,11 @@ func validateAndGetConfig() *common.Config {
 	duploProviderVersion := os.Getenv("duplo_provider_version")
 	if len(duploProviderVersion) == 0 {
 		duploProviderVersion = "0.8.0"
+	}
+
+	tfVersion := os.Getenv("tf_version")
+	if len(tfVersion) == 0 {
+		tfVersion = "0.14.11"
 	}
 
 	tenantProject := os.Getenv("tenant_project")
@@ -145,7 +150,7 @@ func validateAndGetConfig() *common.Config {
 	} else {
 		generateTfStateBool, err := strconv.ParseBool(generateTfStateStr)
 		if err != nil {
-			err = fmt.Errorf("Error while reading generate_tf_state from env vars %s", err)
+			err = fmt.Errorf("error while reading generate_tf_state from env vars %s", err)
 			log.Printf("[TRACE] - %s", err)
 			os.Exit(1)
 		}
@@ -167,7 +172,7 @@ func validateAndGetConfig() *common.Config {
 	} else {
 		s3BackendBool, err := strconv.ParseBool(s3BackendStr)
 		if err != nil {
-			err = fmt.Errorf("Error while reading s3_backend from env vars %s", err)
+			err = fmt.Errorf("error while reading s3_backend from env vars %s", err)
 			log.Printf("[TRACE] - %s", err)
 			os.Exit(1)
 		}
@@ -185,6 +190,7 @@ func validateAndGetConfig() *common.Config {
 		S3Backend:            s3Backend,
 		CertArn:              certArn,
 		ValidateTf:           validateTf,
+		TFVersion:            tfVersion,
 	}
 }
 
@@ -277,7 +283,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 
 	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
 	if config.ValidateTf {
-		validateAndFormatTfCode(config.AdminTenantDir)
+		validateAndFormatTfCode(config.AdminTenantDir, config.TFVersion)
 	}
 	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
@@ -311,7 +317,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	}
 	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
 	if config.ValidateTf {
-		validateAndFormatTfCode(config.AwsServicesDir)
+		validateAndFormatTfCode(config.AwsServicesDir, config.TFVersion)
 	}
 	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 
@@ -329,7 +335,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	}
 	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
 	if config.ValidateTf {
-		validateAndFormatTfCode(config.AppDir)
+		validateAndFormatTfCode(config.AppDir, config.TFVersion)
 	}
 	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
@@ -398,12 +404,18 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 	}
 }
 
-func validateAndFormatTfCode(tfDir string) {
+func validateAndFormatTfCode(tfDir, tfVersion string) {
 	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is started.", tfDir)
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("0.14.11")),
+		Version: version.Must(version.NewVersion(tfVersion)),
+		//Version: version.NewConstraint(">= 1.0, < 1.4"),
 	}
+	// constraint, _ := version.NewConstraint(">= 0.14.11")
+	// installer := &releases.Versions{
+	// 	Product:     product.Terraform,
+	// 	Constraints: constraint,
+	// }
 
 	execPath, err := installer.Install(context.Background())
 	if err != nil {

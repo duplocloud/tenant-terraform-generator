@@ -21,6 +21,13 @@ export duplo_token="xxx-xxxxx-xxxxxxxx"
 export AWS_RUNNER="duplo-admin"
 export aws_account_id="1234567890"
 ```
+You can optionally pass follwoing environment variables.
+
+```shell
+# Required Vars
+export tf_version=0.14.11  # Terraform version to be used, Default is 0.14.11.
+export validate_tf="false" # Whether to validate generated tf code, Default is true.
+```
 5. Set DISABLETFSTATERESOURCECREATION key as false in DuploCloud. Please contact the DuploCloud team for assistance.
 
 ## How to run this project to export DuploCloud Provider terraform code?
