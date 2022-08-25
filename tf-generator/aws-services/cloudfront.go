@@ -75,7 +75,13 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			})
 
 			if len(cfd.Comment) > 0 {
-				cfdBody.SetAttributeValue("comment", cty.StringVal(shortName))
+				comment := "duploservices-${local.tenant_name}-" + shortName
+				commentTokens := hclwrite.Tokens{
+					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+					{Type: hclsyntax.TokenIdent, Bytes: []byte(comment)},
+					{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				}
+				cfdBody.SetAttributeRaw("comment", commentTokens)
 			}
 
 			if cfd.Aliases != nil && len(cfd.Aliases.Items) > 0 {
@@ -411,6 +417,17 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					ocbBody.SetAttributeValue("viewer_protocol_policy", cty.StringVal(ocb.ViewerProtocolPolicy.Value))
 				}
 			}
+
+			lifecycleBlock := cfdBody.AppendNewBlock("lifecycle", nil)
+			lifecycleBody := lifecycleBlock.Body()
+			ignoreChanges := "origin, cors_allowed_host_names"
+			ignoreChangesTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`[`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(ignoreChanges)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`]`)},
+			}
+			lifecycleBody.SetAttributeRaw("ignore_changes", ignoreChangesTokens)
+
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {

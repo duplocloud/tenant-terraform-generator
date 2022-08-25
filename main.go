@@ -179,6 +179,30 @@ func validateAndGetConfig() *common.Config {
 		s3Backend = s3BackendBool
 	}
 
+	skipTenant := false
+	skipTenantStr := os.Getenv("skip_admin_tenant")
+	if len(skipTenantStr) == 0 {
+		skipTenant = false
+	} else {
+		skipTenant, _ = strconv.ParseBool(skipTenantStr)
+	}
+
+	skipAwsServices := false
+	skipAwsServicesStr := os.Getenv("skip_aws_services")
+	if len(skipAwsServicesStr) == 0 {
+		skipAwsServices = false
+	} else {
+		skipAwsServices, _ = strconv.ParseBool(skipAwsServicesStr)
+	}
+
+	skipApp := false
+	skipAppStr := os.Getenv("skip_app")
+	if len(skipAppStr) == 0 {
+		skipApp = false
+	} else {
+		skipApp, _ = strconv.ParseBool(skipAppStr)
+	}
+
 	return &common.Config{
 		TenantName:           tenantName,
 		CustomerName:         custName,
@@ -191,6 +215,9 @@ func validateAndGetConfig() *common.Config {
 		CertArn:              certArn,
 		ValidateTf:           validateTf,
 		TFVersion:            tfVersion,
+		SkipAdminTenant:      skipTenant,
+		SkipAwsServices:      skipAwsServices,
+		SkipApp:              skipApp,
 	}
 }
 
@@ -271,73 +298,79 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 	// 	tfNewWorkspace(config, tf)
 	// }
 
-	log.Println("[TRACE] <====== Start TF generation for tenant project. =====>")
-	// Register New TF generator for Tenant Project
-	tenantGeneratorList := []tfgenerator.Generator{
-		&tenant.Tenant{},
-		&tenant.TenantSGRule{},
-	}
-	if config.S3Backend {
-		tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
+	if !config.SkipAdminTenant {
+		log.Println("[TRACE] <====== Start TF generation for tenant project. =====>")
+		// Register New TF generator for Tenant Project
+		tenantGeneratorList := []tfgenerator.Generator{
+			&tenant.Tenant{},
+			&tenant.TenantSGRule{},
+		}
+		if config.S3Backend {
+			tenantGeneratorList = append(tenantGeneratorList, &tenant.TenantBackend{})
+		}
+
+		starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
+		if config.ValidateTf {
+			validateAndFormatTfCode(config.AdminTenantDir, config.TFVersion)
+		}
+		log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 	}
 
-	starTFGenerationForProject(config, client, tenantGeneratorList, config.AdminTenantDir)
-	if config.ValidateTf {
-		validateAndFormatTfCode(config.AdminTenantDir, config.TFVersion)
+	if !config.SkipAwsServices {
+		log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
+		// Register New TF generator for AWS Services project
+		awsServcesGeneratorList := []tfgenerator.Generator{
+			&awsservices.AwsServicesMain{},
+			&awsservices.Hosts{},
+			&awsservices.ASG{},
+			&awsservices.Rds{},
+			&awsservices.Redis{},
+			&awsservices.Kafka{},
+			&awsservices.S3Bucket{},
+			&awsservices.SQS{},
+			&awsservices.SNS{},
+			&awsservices.MWAA{},
+			&awsservices.ES{},
+			&awsservices.SsmParams{},
+			&awsservices.LoadBalancer{},
+			&awsservices.ApiGatewayIntegration{},
+			&awsservices.CFD{},
+			&awsservices.LambdaFunction{},
+			&awsservices.DynamoDB{},
+			&awsservices.BYOH{},
+			&awsservices.EMR{},
+			&awsservices.CloudwatchMetrics{},
+			&awsservices.ECR{},
+		}
+		if config.S3Backend {
+			awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
+		}
+		starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
+		if config.ValidateTf {
+			validateAndFormatTfCode(config.AwsServicesDir, config.TFVersion)
+		}
+		log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 	}
-	log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 
-	log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
-	// Register New TF generator for AWS Services project
-	awsServcesGeneratorList := []tfgenerator.Generator{
-		&awsservices.AwsServicesMain{},
-		&awsservices.Hosts{},
-		&awsservices.ASG{},
-		&awsservices.Rds{},
-		&awsservices.Redis{},
-		&awsservices.Kafka{},
-		&awsservices.S3Bucket{},
-		&awsservices.SQS{},
-		&awsservices.SNS{},
-		&awsservices.MWAA{},
-		&awsservices.ES{},
-		&awsservices.SsmParams{},
-		&awsservices.LoadBalancer{},
-		&awsservices.ApiGatewayIntegration{},
-		&awsservices.CFD{},
-		&awsservices.LambdaFunction{},
-		&awsservices.DynamoDB{},
-		&awsservices.BYOH{},
-		&awsservices.EMR{},
-		&awsservices.CloudwatchMetrics{},
-		&awsservices.ECR{},
+	if !config.SkipApp {
+		log.Println("[TRACE] <====== Start TF generation for app project. =====>")
+		// Register New TF generator for App Services project
+		appGeneratorList := []tfgenerator.Generator{
+			&app.AppMain{},
+			&app.Services{},
+			&app.ECS{},
+			&app.K8sConfig{},
+			&app.K8sSecret{},
+		}
+		if config.S3Backend {
+			appGeneratorList = append(appGeneratorList, &app.AppBackend{})
+		}
+		starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
+		if config.ValidateTf {
+			validateAndFormatTfCode(config.AppDir, config.TFVersion)
+		}
+		log.Println("[TRACE] <====== End TF generation for app project. =====>")
 	}
-	if config.S3Backend {
-		awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
-	}
-	starTFGenerationForProject(config, client, awsServcesGeneratorList, config.AwsServicesDir)
-	if config.ValidateTf {
-		validateAndFormatTfCode(config.AwsServicesDir, config.TFVersion)
-	}
-	log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
-
-	log.Println("[TRACE] <====== Start TF generation for app project. =====>")
-	// Register New TF generator for App Services project
-	appGeneratorList := []tfgenerator.Generator{
-		&app.AppMain{},
-		&app.Services{},
-		&app.ECS{},
-		&app.K8sConfig{},
-		&app.K8sSecret{},
-	}
-	if config.S3Backend {
-		appGeneratorList = append(appGeneratorList, &app.AppBackend{})
-	}
-	starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
-	if config.ValidateTf {
-		validateAndFormatTfCode(config.AppDir, config.TFVersion)
-	}
-	log.Println("[TRACE] <====== End TF generation for app project. =====>")
 
 	// if config.GenerateTfState && config.S3Backend {
 	// 	tf = tfInit(config, config.AppDir)

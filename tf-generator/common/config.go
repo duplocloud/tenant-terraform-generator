@@ -18,6 +18,9 @@ type Config struct {
 	AccountID            string
 	TFCodePath           string
 	TFVersion            string
+	SkipAdminTenant      bool
+	SkipAwsServices      bool
+	SkipApp              bool
 }
 
 type TFContext struct {
