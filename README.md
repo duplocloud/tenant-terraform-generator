@@ -25,6 +25,9 @@ You can optionally pass following environment variables.
 
 ```shell
 # Optional Vars
+export skip_admin_tenant="true" # Whether to skip tf generation for admin-tenant, Default is false.
+export skip_aws_services="true" # Whether to skip tf generation for aws_services, Default is false.
+export skip_app="true" # Whether to skip tf generation for app, Default is false.
 export tf_version=0.14.11  # Terraform version to be used, Default is 0.14.11.
 export validate_tf="false" # Whether to validate generated tf code, Default is true.
 export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
