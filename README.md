@@ -31,7 +31,7 @@ export skip_app="true" # Whether to skip tf generation for app, Default is false
 export tf_version=0.14.11  # Terraform version to be used, Default is 0.14.11.
 export validate_tf="false" # Whether to validate generated tf code, Default is true.
 export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
-                                 # If true please use 'AWS_PROFILE' environment variable, This required for s3 backend
+                                 # If true please use 'AWS_PROFILE' environment variable, This is required for s3 backend.
 ```
 5. Set DISABLETFSTATERESOURCECREATION key as false in DuploCloud. Please contact the DuploCloud team for assistance.
 
