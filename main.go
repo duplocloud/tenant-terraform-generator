@@ -361,6 +361,7 @@ func startTFGeneration(config *common.Config, client *duplosdk.Client) {
 			&app.ECS{},
 			&app.K8sConfig{},
 			&app.K8sSecret{},
+			&app.K8sIngress{},
 		}
 		if config.S3Backend {
 			appGeneratorList = append(appGeneratorList, &app.AppBackend{})

@@ -44,9 +44,9 @@ func GetResourceName(name string) string {
 }
 
 func GetEnv(key string, defaultVal string) string {
-    if value, exists := os.LookupEnv(key); exists {
-	return value
-    }
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
 
-    return defaultVal
+	return defaultVal
 }

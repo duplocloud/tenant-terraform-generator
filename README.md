@@ -84,6 +84,7 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
    - `duplocloud_aws_elasticsearch`
    - `duplocloud_k8_secret`
    - `duplocloud_k8_config_map`
+   - `duplocloud_k8_ingress`
    - `duplocloud_aws_ssm_parameter`
    - `duplocloud_aws_load_balancer`
    - `duplocloud_aws_load_balancer_listener`
