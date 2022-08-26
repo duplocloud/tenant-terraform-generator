@@ -119,8 +119,6 @@ func (k8sIngress *K8sIngress) Generate(config *common.Config, client *duplosdk.C
 							Name: "name",
 						},
 					})
-					// Interpoalte
-					ruleBody.SetAttributeValue("error_code", cty.StringVal(rule.ServiceName))
 				}
 			}
 			_, err = tfFile.Write(hclFile.Bytes())
