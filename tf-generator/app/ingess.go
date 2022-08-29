@@ -5,10 +5,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -80,7 +82,17 @@ func (k8sIngress *K8sIngress) Generate(config *common.Config, client *duplosdk.C
 				lbcBlock := k8sIngressBody.AppendNewBlock("lbconfig",
 					nil)
 				lbcBody := lbcBlock.Body()
-				lbcBody.SetAttributeValue("dns_prefix", cty.StringVal(k8sIngress.LbConfig.DnsPrefix))
+
+				if len(k8sIngress.LbConfig.DnsPrefix) > 0 {
+					dnsPrefix := strings.Replace(k8sIngress.LbConfig.DnsPrefix, config.TenantName, "${local.tenant_name}", -1)
+					//dnsPrefix = dnsPrefix + "-${local.tenant_name}"
+					dnsPrefixTokens := hclwrite.Tokens{
+						{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+						{Type: hclsyntax.TokenIdent, Bytes: []byte(dnsPrefix)},
+						{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+					}
+					lbcBody.SetAttributeRaw("dns_prefix", dnsPrefixTokens)
+				}
 				lbcBody.SetAttributeValue("is_internal", cty.BoolVal(!k8sIngress.LbConfig.IsPublic))
 				if len(k8sIngress.LbConfig.CertArn) > 0 {
 					lbcBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
