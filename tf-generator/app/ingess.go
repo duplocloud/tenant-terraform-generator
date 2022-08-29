@@ -84,7 +84,12 @@ func (k8sIngress *K8sIngress) Generate(config *common.Config, client *duplosdk.C
 				lbcBody := lbcBlock.Body()
 
 				if len(k8sIngress.LbConfig.DnsPrefix) > 0 {
-					dnsPrefix := strings.Replace(k8sIngress.LbConfig.DnsPrefix, config.TenantName, "${local.tenant_name}", -1)
+					dnsPrefix := ""
+					if strings.Contains(k8sIngress.LbConfig.DnsPrefix, config.TenantName) {
+						dnsPrefix = strings.Replace(k8sIngress.LbConfig.DnsPrefix, config.TenantName, "${local.tenant_name}", -1)
+					} else {
+						dnsPrefix = dnsPrefix + "-${local.tenant_name}"
+					}
 					//dnsPrefix = dnsPrefix + "-${local.tenant_name}"
 					dnsPrefixTokens := hclwrite.Tokens{
 						{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
