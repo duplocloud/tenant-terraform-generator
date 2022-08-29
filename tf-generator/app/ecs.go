@@ -115,6 +115,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				if err != nil {
 					panic(err)
 				}
+				containerString = strings.Replace(containerString, config.TenantName, "${local.tenant_name}", -1)
 				tdBody.SetAttributeTraversal("container_definitions", hcl.Traversal{
 					hcl.TraverseRoot{
 						Name: "jsonencode(" + containerString + ")",
