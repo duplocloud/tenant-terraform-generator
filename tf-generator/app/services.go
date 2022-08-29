@@ -90,19 +90,20 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 			// 	cty.StringVal(config.TenantId))
 			svcBody.SetAttributeValue("name",
 				cty.StringVal(service.Name))
+			if len(service.ReplicasMatchingAsgName) > 0 {
+				svcBody.SetAttributeValue("replicas_matching_asg_name",
+					cty.StringVal(service.ReplicasMatchingAsgName))
+			} else {
+				svcBody.SetAttributeValue("replicas",
+					cty.NumberIntVal(int64(service.Replicas)))
+			}
 
-			svcBody.SetAttributeValue("replicas",
-				cty.NumberIntVal(int64(service.Replicas)))
 			svcBody.SetAttributeValue("lb_synced_deployment",
 				cty.BoolVal(service.IsLBSyncedDeployment))
 			svcBody.SetAttributeValue("cloud_creds_from_k8s_service_account",
 				cty.BoolVal(service.IsCloudCredsFromK8sServiceAccount))
 			svcBody.SetAttributeValue("is_daemonset",
 				cty.BoolVal(service.IsDaemonset))
-			if len(service.ReplicasMatchingAsgName) > 0 {
-				svcBody.SetAttributeValue("replicas_matching_asg_name",
-					cty.StringVal(service.ReplicasMatchingAsgName))
-			}
 
 			if service.Template != nil {
 				svcBody.SetAttributeValue("agent_platform",
