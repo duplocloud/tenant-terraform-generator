@@ -78,7 +78,7 @@ func (emr *EMR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				emrBody.SetAttributeValue("log_uri", cty.StringVal(emrInfo.LogURI))
 			}
 			emrBody.SetAttributeValue("termination_protection", cty.BoolVal(emrInfo.TerminationProtection))
-			emrBody.SetAttributeValue("keep_job_flow_alive_when_no_steps", cty.BoolVal(emrInfo.KeepJobFlowAliveWhenNoSteps))
+			emrBody.SetAttributeValue("keep_job_flow_alive_when_no_steps", cty.BoolVal(true))
 			emrBody.SetAttributeValue("visible_to_all_users", cty.BoolVal(emrInfo.VisibleToAllUsers))
 
 			if emrInfo.EbsRootVolumeSize > 0 {
