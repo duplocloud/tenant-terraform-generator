@@ -106,6 +106,7 @@ type DuploKafkaClusterInfo struct {
 	Tags                      map[string]interface{}           `json:"Tags,omitempty"`
 	ZookeeperConnectString    string                           `json:"ZookeeperConnectString,omitempty"`
 	ZookeeperConnectStringTls string                           `json:"ZookeeperConnectStringTls,omitempty"`
+	EncryptionInfo            *DuploKafkaClusterEncryptionInfo `json:"EncryptionInfo,omitempty"`
 }
 
 // DuploKafkaBootstrapBrokers represents a non-cached view of an AWS kafka cluster's bootstrap brokers for a Duplo tenant

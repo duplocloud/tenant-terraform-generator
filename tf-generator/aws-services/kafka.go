@@ -117,7 +117,10 @@ func (k *Kafka) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				kafkaBody.SetAttributeValue("subnets",
 					cty.ListVal(vals))
 			}
-
+			if clusterInfo.EncryptionInfo != nil && clusterInfo.EncryptionInfo.InTransit != nil && clusterInfo.EncryptionInfo.InTransit.ClientBroker != nil {
+				kafkaBody.SetAttributeValue("encryption_in_transit",
+					cty.StringVal(clusterInfo.EncryptionInfo.InTransit.ClientBroker.Value))
+			}
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
