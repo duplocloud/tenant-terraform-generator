@@ -22,6 +22,11 @@ type ECS struct {
 func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
 
+	taskDefnList, clientErr := client.EcsTaskDefinitionArnssGet(config.TenantId)
+	if clientErr != nil {
+		fmt.Println(clientErr)
+		return nil, clientErr
+	}
 	list, clientErr := client.EcsServiceList(config.TenantId)
 
 	if clientErr != nil {
@@ -30,6 +35,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	}
 	tfContext := common.TFContext{}
 	importConfigs := []common.ImportConfig{}
+	taskDefn := []string{}
 	if list != nil {
 		log.Println("[TRACE] <====== Duplo ECS TF generation started. =====>")
 		for _, ecs := range *list {
@@ -69,6 +75,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// tdBody.SetAttributeValue("tenant_id",
 			// 	cty.StringVal(config.TenantId))
 			taskDefnName, err := extractTaskDefnName(client, config.TenantId, taskDefObj.Family)
+			taskDefn = append(taskDefn, taskDefnName)
 			if err != nil {
 				return nil, err
 			}
@@ -261,6 +268,114 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			}
 		}
 		log.Println("[TRACE] <====== Duplo ECS TF generation done. =====>")
+	}
+	if taskDefnList != nil {
+		for _, td := range *taskDefnList {
+			tdObj, clientErr := client.EcsTaskDefinitionGet(config.TenantId, td)
+			if clientErr != nil {
+				fmt.Println(clientErr)
+				return nil, nil
+			}
+			// create new empty hcl file object
+			hclFile := hclwrite.NewEmptyFile()
+
+			// create new file on system
+			shortName, err := extractTaskDefnName(client, config.TenantId, tdObj.Family)
+			if err != nil {
+				return nil, err
+			}
+			if common.Contains(taskDefn, shortName) {
+				continue
+			}
+			path := filepath.Join(workingDir, "td-"+shortName+".tf")
+			tfFile, err := os.Create(path)
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			resourceName := common.GetResourceName(shortName)
+			rootBody := hclFile.Body()
+			log.Printf("[TRACE] Generating terraform config for duplo task definition : %s", tdObj.Family)
+			// Add duplocloud_aws_host resource
+			tdBlock := rootBody.AppendNewBlock("resource",
+				[]string{"duplocloud_ecs_task_definition",
+					resourceName})
+			tdBody := tdBlock.Body()
+			tdBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+
+			name := "duploservices-${local.tenant_name}-" + shortName
+			tdNameTokens := hclwrite.Tokens{
+				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			}
+			tdBody.SetAttributeRaw("family", tdNameTokens)
+
+			// tdBody.SetAttributeValue("family",
+			// 	cty.StringVal(taskDefObj.Family))
+			tdBody.SetAttributeValue("cpu",
+				cty.StringVal(tdObj.CPU))
+			tdBody.SetAttributeValue("memory",
+				cty.StringVal(tdObj.Memory))
+			tdBody.SetAttributeValue("network_mode",
+				cty.StringVal(tdObj.NetworkMode.Value))
+			tdBody.SetAttributeValue("prevent_tf_destroy",
+				cty.BoolVal(false))
+
+			if tdObj.RequiresCompatibilities != nil && len(tdObj.RequiresCompatibilities) > 0 {
+				var vals []cty.Value
+				for _, s := range tdObj.RequiresCompatibilities {
+					vals = append(vals, cty.StringVal(s))
+				}
+				tdBody.SetAttributeValue("requires_compatibilities",
+					cty.ListVal(vals))
+			}
+			if tdObj.Volumes != nil && len(tdObj.Volumes) > 0 {
+				volString, err := duplosdk.JSONMarshal(tdObj.Volumes)
+				if err != nil {
+					panic(err)
+				}
+				tdBody.SetAttributeTraversal("volumes", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "jsonencode(" + volString + ")",
+					},
+				})
+			}
+			if tdObj.ContainerDefinitions != nil && len(tdObj.ContainerDefinitions) > 0 {
+				containerString, err := duplosdk.JSONMarshal(tdObj.ContainerDefinitions)
+				if err != nil {
+					panic(err)
+				}
+				containerString = strings.Replace(containerString, config.TenantName, "${local.tenant_name}", -1)
+				tdBody.SetAttributeTraversal("container_definitions", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "jsonencode(" + containerString + ")",
+					},
+				})
+			}
+
+			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			if config.GenerateTfState {
+				importConfigs = append(importConfigs, common.ImportConfig{
+					ResourceAddress: "duplocloud_ecs_task_definition." + resourceName,
+					ResourceId:      "subscriptions/" + config.TenantId + "/EcsTaskDefinition/" + td,
+					WorkingDir:      workingDir,
+				},
+				)
+				tfContext.ImportConfigs = importConfigs
+			}
+		}
 	}
 
 	return &tfContext, nil

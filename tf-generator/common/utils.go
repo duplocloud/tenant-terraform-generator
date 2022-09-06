@@ -50,3 +50,13 @@ func GetEnv(key string, defaultVal string) string {
 
 	return defaultVal
 }
+
+func Contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
