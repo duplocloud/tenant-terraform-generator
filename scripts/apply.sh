@@ -74,7 +74,7 @@ if [ "$selection" = "admin-infra" ]; then
     ;;
   esac
 else
-  tf_apply admin-tenant "$@"
-  tf_apply aws-services "$@"
-  tf_apply app "$@"
+  tf_apply <--admin-tenant--> "$@"
+  tf_apply <--aws-services--> "$@"
+  tf_apply <--app--> "$@"
 fi

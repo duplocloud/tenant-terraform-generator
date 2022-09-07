@@ -25,6 +25,9 @@ You can optionally pass following environment variables.
 
 ```shell
 # Optional Vars
+export tenant_project="admin-tenant" # Project name for tenant, Default is admin-tenant.
+export aws_services_project="aws-services" #  Project name for tenant, Default is aws-services.
+export app_project="app" #  Project name for tenant, Default is app.
 export skip_admin_tenant="true" # Whether to skip tf generation for admin-tenant, Default is false.
 export skip_aws_services="true" # Whether to skip tf generation for aws_services, Default is false.
 export skip_app="true" # Whether to skip tf generation for app, Default is false.

@@ -269,6 +269,15 @@ func initTargetDir(config *common.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var mapToRepalce = map[string]string{
+		"<--admin-tenant-->": config.TenantProject,
+		"<--aws-services-->": config.AwsServicesProject,
+		"<--app-->":          config.AppProject,
+	}
+	common.RepalceStringInFile(filepath.Join(scriptsPath, "plan.sh"), mapToRepalce)
+	common.RepalceStringInFile(filepath.Join(scriptsPath, "apply.sh"), mapToRepalce)
+	common.RepalceStringInFile(filepath.Join(scriptsPath, "destroy.sh"), mapToRepalce)
+
 	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, config.TenantName, ".gitignore"))
 	if err != nil {
 		log.Fatal(err)

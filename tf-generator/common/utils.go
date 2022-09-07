@@ -1,6 +1,8 @@
 package common
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -59,4 +61,20 @@ func Contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func RepalceStringInFile(file string, stringsToRepalce map[string]string) {
+	input, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	newStr := string(input)
+	for key, element := range stringsToRepalce {
+		newStr = strings.Replace(newStr, key, element, -1)
+	}
+
+	err = ioutil.WriteFile(file, []byte(newStr), 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }

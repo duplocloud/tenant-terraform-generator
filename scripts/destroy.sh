@@ -76,7 +76,7 @@ if [ "$selection" = "admin-infra" ]; then
     ;;
   esac
 else
-  tf_destroy app "$@"
-  tf_destroy aws-services "$@"
-  tf_destroy admin-tenant "$@"
+  tf_destroy <--app--> "$@"
+  tf_destroy <--aws-services--> "$@"
+  tf_destroy <--admin-tenant--> "$@"
 fi
