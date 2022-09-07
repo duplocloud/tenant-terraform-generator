@@ -430,8 +430,24 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 		}
 		tf := tfInitializer.InitWithWorkspace()
 		importer := &common.Importer{}
+		// Get state file if already present.
+		state, err := tf.Show(context.Background())
+		if err != nil {
+			// log.Fatalf("error running Show: %s", err)
+			fmt.Println(err)
+		}
+		importedResourceAddresses := []string{}
+		if state != nil && state.Values != nil && state.Values.RootModule != nil && len(state.Values.RootModule.Resources) > 0 {
+			for _, r := range state.Values.RootModule.Resources {
+				importedResourceAddresses = append(importedResourceAddresses, r.Address)
+			}
+		}
 		for _, ic := range tfContext.ImportConfigs {
 			//importer.Import(config, &ic)
+			if common.Contains(importedResourceAddresses, ic.ResourceAddress) {
+				log.Printf("[TRACE] Resource %s is already imported.", ic.ResourceAddress)
+				continue
+			}
 			importer.ImportWithoutInit(config, &ic, tf)
 		}
 		//tfInitializer.DeleteWorkspace(config, tf)
