@@ -183,10 +183,13 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 		TypeVal:    "string",
 	}
 	varConfigs["engine_version"] = var1
-
+	size := duplo.SizeEx
+	if len(size) == 0 {
+		size = "db.t2.medium"
+	}
 	var2 := common.VarConfig{
 		Name:       prefix + "size",
-		DefaultVal: duplo.SizeEx,
+		DefaultVal: size,
 		TypeVal:    "string",
 	}
 	varConfigs["size"] = var2
