@@ -224,7 +224,11 @@ func validateAndGetConfig() *common.Config {
 func initTargetDir(config *common.Config) {
 	config.TFCodePath = filepath.Join("target", config.CustomerName, config.TenantName, "terraform")
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
-	err := os.RemoveAll(tenantProject)
+	err := os.RemoveAll(filepath.Join("target", config.CustomerName, config.TenantName))
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.RemoveAll(tenantProject)
 	if err != nil {
 		log.Fatal(err)
 	}
