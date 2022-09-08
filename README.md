@@ -36,7 +36,7 @@ export validate_tf="false" # Whether to validate generated tf code, Default is t
 export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
                                  # If true please use 'AWS_PROFILE' environment variable, This is required for s3 backend.
 ```
-5. Set DISABLETFSTATERESOURCECREATION key as false in DuploCloud. Please contact the DuploCloud team for assistance.
+5. Set **DISABLETFSTATERESOURCECREATION** key as false in DuploCloud. Please contact the DuploCloud team for assistance.
 
 ## How to run this project to export DuploCloud Provider terraform code?
 
