@@ -227,3 +227,14 @@ End user can pass external configurations like RDS instance type, ES version, Do
     │             ├── aws-services.tfvars.json  # aws-services project variables.
     │             ├── app.tfvars.json           # app project variables.
     ```  
+
+### Contributing
+
+If you have enhancements, improvements or fixes, we would love to have your contributions.
+
+#### Developing
+
+If you want to add support of new resource, Follo the steps below.
+
+- Identify project([admin-tenant](./tf-generator/tenant), [aws-services](./tf-generator/aws-services) or [app](./tf-generator/app)), Add generator file for new resource like [redis.go](./tf-generator/aws-services/redis.go)
+- Once resource is added, Register same resource in [generator-registry.go](./tf-generator/generator-registry.go)
