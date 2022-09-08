@@ -6,7 +6,7 @@ This utility provides a way to export the terraform code that represents the inf
 
 ## Prerequisite
 
-1. Install [Go](https://go.dev/doc/install)
+1. Install [Go](https://go.dev/doc/install) 1.15 or later.
 2. Install [make](https://www.gnu.org/software/make) tool.
 3. Install [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) version greater than or equals to `v0.14.11`
 4. Following environment variables to be exported in the shell while running this projects.
