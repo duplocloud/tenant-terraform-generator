@@ -234,7 +234,7 @@ If you have enhancements, improvements or fixes, we would love to have your cont
 
 #### Developing
 
-If you want to add support of new resource, Follo the steps below.
+If you want to add support of new resource, Follow the steps below.
 
 - Identify project([admin-tenant](./tf-generator/tenant), [aws-services](./tf-generator/aws-services) or [app](./tf-generator/app)), Add generator file for new resource like [redis.go](./tf-generator/aws-services/redis.go)
-- Once resource is added, Register same resource in [generator-registry.go](./tf-generator/generator-registry.go)
+- Once resource file is added, Register same resource in [generator-registry.go](./tf-generator/generator-registry.go) like **&awsservices.Redis{}**
