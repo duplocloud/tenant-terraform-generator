@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
-	tfgenerator "tenant-terraform-generator/tf-generator"
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -134,7 +133,7 @@ func (am *AppMain) Generate(config *common.Config, client *duplosdk.Client) (*co
 	// 		hcl.TraverseAttr{Name: "region"},
 	// 	}),
 	// }
-	configTokens := []tfgenerator.ObjectAttrTokens{
+	configTokens := []common.ObjectAttrTokens{
 		{
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{
 				hcl.TraverseRoot{Name: "bucket"},
@@ -166,7 +165,7 @@ func (am *AppMain) Generate(config *common.Config, client *duplosdk.Client) (*co
 			}),
 		},
 	}
-	tokens := tfgenerator.TokensForObject(configTokens)
+	tokens := common.TokensForObject(configTokens)
 	remoteStateBody.SetAttributeRaw("config", tokens)
 	// 	cty.ObjectVal(configMap))
 

@@ -1,6 +1,8 @@
 package common
 
 type Config struct {
+	DuploHost            string
+	DuploToken           string
 	TenantId             string
 	TenantName           string
 	CertArn              string
