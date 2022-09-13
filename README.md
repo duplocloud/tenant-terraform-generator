@@ -9,7 +9,7 @@ This utility provides a way to export the terraform code that represents the inf
 1. Install [Go](https://go.dev/doc/install) 1.15 or later.
 2. Install [make](https://www.gnu.org/software/make) tool.
 3. Install [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) version greater than or equals to `v0.14.11`
-4. Install [jq](https://docs.vmware.com/en/VMware-Telco-Cloud-Operations/1.4.0/deployment-guide-140/GUID-E2B7213D-0EAB-4E62-BC3A-C9F6EE8F5F37.html)
+4. Install [jq](https://stedolan.github.io/jq/download/)
 5. Following environment variables to be exported in the shell while running this projects.
 
 ```shell
