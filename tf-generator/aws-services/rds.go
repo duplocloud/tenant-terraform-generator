@@ -130,12 +130,12 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				})
 			}
 
-			// if len(rds.DBParameterGroupName) > 0 {
-			// 	rdsBody.SetAttributeValue("parameter_group_name",
-			// 		cty.StringVal(rds.DBParameterGroupName))
-			// }
-			// rdsBody.SetAttributeValue("store_details_in_secret_manager",
-			// 	cty.BoolVal(rds.StoreDetailsInSecretManager))
+			if len(rds.DBParameterGroupName) > 0 {
+				rdsBody.SetAttributeValue("parameter_group_name",
+					cty.StringVal(rds.DBParameterGroupName))
+			}
+			rdsBody.SetAttributeValue("store_details_in_secret_manager",
+				cty.BoolVal(rds.StoreDetailsInSecretManager))
 			rdsBody.SetAttributeTraversal("encrypt_storage", hcl.Traversal{
 				hcl.TraverseRoot{
 					Name: "var",
