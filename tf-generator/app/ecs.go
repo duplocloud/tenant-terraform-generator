@@ -106,6 +106,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				tdBody.SetAttributeValue("requires_compatibilities",
 					cty.ListVal(vals))
 			}
+
 			if taskDefObj.Volumes != nil && len(taskDefObj.Volumes) > 0 {
 				volString, err := duplosdk.JSONMarshal(taskDefObj.Volumes)
 				if err != nil {
@@ -178,6 +179,17 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				ecsBody.SetAttributeRaw("dns_prfx", dnsPrefixTokens)
 			}
 
+			for _, capacityProvider := range *ecs.CapacityProviderStrategy {
+				cpConfigBlock := ecsBody.AppendNewBlock("capacity_provider_strategy",
+					nil)
+				cpConfigBlockBody := cpConfigBlock.Body()
+				cpConfigBlockBody.SetAttributeValue("base",
+					cty.NumberIntVal(int64(capacityProvider.Base)))
+				cpConfigBlockBody.SetAttributeValue("weight",
+					cty.NumberIntVal(int64(capacityProvider.Weight)))
+				cpConfigBlockBody.SetAttributeValue("capacity_provider",
+					cty.StringVal(capacityProvider.CapacityProvider))
+			}
 			for _, serviceConfig := range *ecs.LBConfigurations {
 				lbConfigBlock := ecsBody.AppendNewBlock("load_balancer",
 					nil)
