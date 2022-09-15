@@ -13,10 +13,6 @@ import (
 	"tenant-terraform-generator/tf-generator/common"
 )
 
-func init() {
-	fmt.Println("This will get called on main initialization")
-}
-
 func main() {
 
 	// Initialize duplo client and config
