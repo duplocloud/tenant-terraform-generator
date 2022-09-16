@@ -213,7 +213,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				lbConfigBlockBody.SetAttributeValue("protocol",
 					cty.StringVal(serviceConfig.Protocol))
 				if len(serviceConfig.BackendProtocol) > 0 {
-					lbConfigBlockBody.SetAttributeValue("backend_protocol",
+					lbConfigBlockBody.SetAttributeValue("backend_protocol_version",
 						cty.StringVal(serviceConfig.BackendProtocol))
 				}
 				if len(serviceConfig.HealthCheckURL) > 0 {
