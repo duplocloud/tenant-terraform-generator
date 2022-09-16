@@ -42,4 +42,5 @@ var AppGenerators = []Generator{
 	&app.K8sConfig{},
 	&app.K8sSecret{},
 	&app.K8sIngress{},
+	&app.K8sSecretProviderClass{},
 }
