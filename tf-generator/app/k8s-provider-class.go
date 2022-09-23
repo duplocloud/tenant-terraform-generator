@@ -79,7 +79,7 @@ func (spc *K8sSecretProviderClass) Generate(config *common.Config, client *duplo
 				spcBody.SetAttributeValue("labels", cty.ObjectVal(newMap))
 			}
 
-			if len(*secretProvClass.SecretObjects) > 0 {
+			if secretProvClass.SecretObjects != nil && len(*secretProvClass.SecretObjects) > 0 {
 				for _, so := range *secretProvClass.SecretObjects {
 					soBlock := spcBody.AppendNewBlock("secret_object", nil)
 					soBody := soBlock.Body()
