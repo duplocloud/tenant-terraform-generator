@@ -76,6 +76,12 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 
 			lbBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
+			lBType := "Application"
+			if len(lb.LbType.Value) > 0 {
+				lBType = lb.LbType.Value
+			}
+			lbBody.SetAttributeValue("load_balancer_type",
+				cty.StringVal(lBType))
 
 			lbBody.SetAttributeValue("enable_access_logs",
 				cty.BoolVal(lb.EnableAccessLogs))
@@ -106,9 +112,10 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 			log.Printf("[TRACE] Terraform config is generation started for duplo aws load balancer listener : %s", shortName)
 			if listeners != nil {
 				for _, listener := range *listeners {
+					listenerResourceName := resourceName + "_listener_" + strconv.Itoa(listener.Port)
 					listenerBlock := rootBody.AppendNewBlock("resource",
 						[]string{"duplocloud_aws_load_balancer_listener",
-							resourceName + "_listener_" + strconv.Itoa(listener.Port)})
+							listenerResourceName})
 					listenerBody := listenerBlock.Body()
 
 					listenerBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
@@ -140,7 +147,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 					rootBody.AppendNewline()
 
 					importConfigs = append(importConfigs, common.ImportConfig{
-						ResourceAddress: "duplocloud_aws_load_balancer_listener." + resourceName + "_listener_" + strconv.Itoa(listener.Port),
+						ResourceAddress: "duplocloud_aws_load_balancer_listener." + listenerResourceName,
 						ResourceId:      config.TenantId + "/" + shortName + "/" + listener.ListenerArn,
 						WorkingDir:      workingDir,
 					})
@@ -185,6 +192,9 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							WorkingDir:      workingDir,
 						})
 					}
+
+					// Add all listener Rules
+					appendListenerRuleResources(listener.ListenerArn, listenerResourceName, rootBody, config, client, importConfigs, workingDir)
 				}
 			}
 
@@ -257,4 +267,257 @@ func generateLBOutputVars(prefix, resourceName string) []common.OutputVarConfig 
 		outVars = append(outVars, v)
 	}
 	return outVars
+}
+
+func appendListenerRuleResources(listenerArn string, listenerResourceName string, body *hclwrite.Body, config *common.Config, client *duplosdk.Client, importConfigs []common.ImportConfig, workingDir string) {
+	listenerRules, clientErr := client.DuploAwsLbListenerRuleList(config.TenantId, listenerArn)
+	if clientErr != nil {
+		fmt.Println(clientErr)
+		listenerRules = nil
+	}
+	if listenerRules != nil {
+		for i, listenerRule := range *listenerRules {
+			listenerRuleResourceName := listenerResourceName + "_rule_" + strconv.Itoa(i+1)
+			listenerRuleBlock := body.AppendNewBlock("resource",
+				[]string{"duplocloud_aws_lb_listener_rule", listenerRuleResourceName})
+			listenerRuleBody := listenerRuleBlock.Body()
+
+			listenerRuleBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "local",
+				},
+				hcl.TraverseAttr{
+					Name: "tenant_id",
+				},
+			})
+			listenerRuleBody.SetAttributeTraversal("listener_arn", hcl.Traversal{
+				hcl.TraverseRoot{
+					Name: "duplocloud_aws_load_balancer_listener",
+				},
+				hcl.TraverseAttr{
+					Name: listenerResourceName + ".name",
+				},
+			})
+			priority, _ := strconv.Atoi(listenerRule.Priority)
+			if priority > 0 {
+				listenerRuleBody.SetAttributeValue("priority",
+					cty.NumberIntVal(int64(priority)))
+			}
+
+			if listenerRule.Actions != nil && len(*listenerRule.Actions) > 0 {
+				for _, action := range *listenerRule.Actions {
+					actionBlock := listenerRuleBody.AppendNewBlock("action", nil)
+					actionBody := actionBlock.Body()
+					actionBody.SetAttributeValue("type", cty.StringVal(action.Type.Value))
+					if action.Order > 0 {
+						actionBody.SetAttributeValue("order",
+							cty.NumberIntVal(int64(action.Order)))
+					}
+
+					switch action.Type.Value {
+					case "forward":
+						if action.Type.Value == "forward" && len(action.TargetGroupArn) > 0 {
+							actionBody.SetAttributeValue("target_group_arn", cty.StringVal(action.TargetGroupArn))
+						} else if action.ForwardConfig != nil {
+							forwardBlock := actionBody.AppendNewBlock("forward", nil)
+							forwardBody := forwardBlock.Body()
+							if action.ForwardConfig.TargetGroups != nil && len(*action.ForwardConfig.TargetGroups) > 0 {
+								for _, tg := range *action.ForwardConfig.TargetGroups {
+									tgBlock := forwardBody.AppendNewBlock("target_group", nil)
+									tgBody := tgBlock.Body()
+									tgBody.SetAttributeValue("arn", cty.StringVal(tg.TargetGroupArn))
+									tgBody.SetAttributeValue("weight",
+										cty.NumberIntVal(int64(tg.Weight)))
+								}
+							}
+							if action.ForwardConfig.TargetGroupStickinessConfig != nil {
+								tgscBlock := forwardBody.AppendNewBlock("stickiness", nil)
+								tgscBody := tgscBlock.Body()
+								tgscBody.SetAttributeValue("enabled", cty.BoolVal(action.ForwardConfig.TargetGroupStickinessConfig.Enabled))
+								tgscBody.SetAttributeValue("duration",
+									cty.NumberIntVal(int64(action.ForwardConfig.TargetGroupStickinessConfig.DurationSeconds)))
+							}
+						}
+					case "redirect":
+						if action.RedirectConfig != nil {
+							redirectBlock := actionBody.AppendNewBlock("redirect", nil)
+							redirectBody := redirectBlock.Body()
+							redirectBody.SetAttributeValue("status_code", cty.StringVal(action.RedirectConfig.StatusCode.Value))
+							if len(action.RedirectConfig.Host) > 0 {
+								redirectBody.SetAttributeValue("host", cty.StringVal(action.RedirectConfig.Host))
+							}
+							if len(action.RedirectConfig.Path) > 0 {
+								redirectBody.SetAttributeValue("path", cty.StringVal(action.RedirectConfig.Path))
+							}
+							if len(action.RedirectConfig.Port) > 0 {
+								redirectBody.SetAttributeValue("port", cty.StringVal(action.RedirectConfig.Port))
+							}
+							if len(action.RedirectConfig.Protocol) > 0 {
+								redirectBody.SetAttributeValue("protocol", cty.StringVal(action.RedirectConfig.Protocol))
+							}
+							if len(action.RedirectConfig.Query) > 0 {
+								redirectBody.SetAttributeValue("query", cty.StringVal(action.RedirectConfig.Query))
+							}
+						}
+					case "fixed-response":
+						if action.FixedResponseConfig != nil {
+							frcBlock := actionBody.AppendNewBlock("fixed_response", nil)
+							frcBody := frcBlock.Body()
+							frcBody.SetAttributeValue("content_type", cty.StringVal(action.FixedResponseConfig.ContentType))
+							if len(action.FixedResponseConfig.MessageBody) > 0 {
+								frcBody.SetAttributeValue("message_body", cty.StringVal(action.FixedResponseConfig.MessageBody))
+							}
+							if len(action.FixedResponseConfig.StatusCode) > 0 {
+								frcBody.SetAttributeValue("status_code", cty.StringVal(action.FixedResponseConfig.StatusCode))
+							}
+						}
+					case "authenticate-cognito":
+						if action.AuthenticateCognitoConfig != nil {
+							acBlock := actionBody.AppendNewBlock("authenticate_cognito", nil)
+							acBody := acBlock.Body()
+							acBody.SetAttributeValue("user_pool_arn", cty.StringVal(action.AuthenticateCognitoConfig.UserPoolArn))
+							acBody.SetAttributeValue("user_pool_client_id", cty.StringVal(action.AuthenticateCognitoConfig.UserPoolClientId))
+							acBody.SetAttributeValue("user_pool_domain", cty.StringVal(action.AuthenticateCognitoConfig.UserPoolDomain))
+
+							if len(action.AuthenticateCognitoConfig.AuthenticationRequestExtraParams) > 0 {
+								newMap := make(map[string]cty.Value)
+								for key, element := range action.AuthenticateCognitoConfig.AuthenticationRequestExtraParams {
+									newMap[key] = cty.StringVal(element)
+								}
+								acBody.SetAttributeValue("authentication_request_extra_params", cty.MapVal(newMap))
+							}
+							if action.AuthenticateCognitoConfig.OnUnauthenticatedRequest != nil && len(action.AuthenticateCognitoConfig.OnUnauthenticatedRequest.Value) > 0 {
+								acBody.SetAttributeValue("on_unauthenticated_request", cty.StringVal(action.AuthenticateCognitoConfig.OnUnauthenticatedRequest.Value))
+							}
+							if len(action.AuthenticateCognitoConfig.Scope) > 0 {
+								acBody.SetAttributeValue("scope", cty.StringVal(action.AuthenticateCognitoConfig.Scope))
+							}
+							if len(action.AuthenticateCognitoConfig.SessionCookieName) > 0 {
+								acBody.SetAttributeValue("session_cookie_name", cty.StringVal(action.AuthenticateCognitoConfig.SessionCookieName))
+							}
+							if action.AuthenticateCognitoConfig.SessionTimeout > 0 {
+								acBody.SetAttributeValue("session_timeout", cty.NumberIntVal(int64(action.AuthenticateCognitoConfig.SessionTimeout)))
+							}
+						}
+					case "authenticate-oidc":
+						if action.AuthenticateOidcConfig != nil {
+							oidcBlock := actionBody.AppendNewBlock("authenticate_oidc", nil)
+							oidcBody := oidcBlock.Body()
+							oidcBody.SetAttributeValue("authorization_endpoint", cty.StringVal(action.AuthenticateOidcConfig.AuthorizationEndpoint))
+							oidcBody.SetAttributeValue("client_id", cty.StringVal(action.AuthenticateOidcConfig.ClientId))
+							oidcBody.SetAttributeValue("client_secret", cty.StringVal(action.AuthenticateOidcConfig.ClientSecret))
+							oidcBody.SetAttributeValue("issuer", cty.StringVal(action.AuthenticateOidcConfig.Issuer))
+							oidcBody.SetAttributeValue("token_endpoint", cty.StringVal(action.AuthenticateOidcConfig.TokenEndpoint))
+							oidcBody.SetAttributeValue("user_info_endpoint", cty.StringVal(action.AuthenticateOidcConfig.UserInfoEndpoint))
+							if len(action.AuthenticateOidcConfig.AuthenticationRequestExtraParams) > 0 {
+								newMap := make(map[string]cty.Value)
+								for key, element := range action.AuthenticateOidcConfig.AuthenticationRequestExtraParams {
+									newMap[key] = cty.StringVal(element)
+								}
+								oidcBody.SetAttributeValue("authentication_request_extra_params", cty.MapVal(newMap))
+							}
+							if action.AuthenticateOidcConfig.OnUnauthenticatedRequest != nil && len(action.AuthenticateOidcConfig.OnUnauthenticatedRequest.Value) > 0 {
+								oidcBody.SetAttributeValue("on_unauthenticated_request", cty.StringVal(action.AuthenticateOidcConfig.OnUnauthenticatedRequest.Value))
+							}
+							if len(action.AuthenticateOidcConfig.Scope) > 0 {
+								oidcBody.SetAttributeValue("scope", cty.StringVal(action.AuthenticateOidcConfig.Scope))
+							}
+							if len(action.AuthenticateOidcConfig.SessionCookieName) > 0 {
+								oidcBody.SetAttributeValue("session_cookie_name", cty.StringVal(action.AuthenticateOidcConfig.SessionCookieName))
+							}
+							if action.AuthenticateOidcConfig.SessionTimeout > 0 {
+								oidcBody.SetAttributeValue("session_timeout", cty.NumberIntVal(int64(action.AuthenticateOidcConfig.SessionTimeout)))
+							}
+						}
+					}
+				}
+			}
+			if listenerRule.Conditions != nil && len(*listenerRule.Conditions) > 0 {
+				for _, condition := range *listenerRule.Conditions {
+					conditionBlock := listenerRuleBody.AppendNewBlock("condition", nil)
+					conditionBody := conditionBlock.Body()
+					switch condition.Field {
+					case "host-header":
+						if condition.HostHeaderConfig != nil {
+							hostHeaderBlock := conditionBody.AppendNewBlock("host_header", nil)
+							hostHeaderBody := hostHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HostHeaderConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							hostHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+					case "http-header":
+						if condition.HttpHeaderConfig != nil {
+							httpHeaderBlock := conditionBody.AppendNewBlock("http_header", nil)
+							httpHeaderBody := httpHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HttpHeaderConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							httpHeaderBody.SetAttributeValue("http_header_name",
+								cty.StringVal(condition.HttpHeaderConfig.HttpHeaderName))
+							httpHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+					case "http-request-method":
+						if condition.HttpRequestMethodConfig != nil {
+							httpReqHeaderBlock := conditionBody.AppendNewBlock("http_request_method", nil)
+							httpReqHeaderBody := httpReqHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HttpRequestMethodConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							httpReqHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
+					case "path-pattern":
+						if condition.PathPatternConfig != nil {
+							ppBlock := conditionBody.AppendNewBlock("path_pattern", nil)
+							ppBody := ppBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.PathPatternConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							ppBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
+					case "query-string":
+						if condition.QueryStringConfig != nil {
+							for _, s := range *condition.QueryStringConfig.Values {
+								qsBlock := conditionBody.AppendNewBlock("query_string", nil)
+								qsBody := qsBlock.Body()
+								qsBody.SetAttributeValue("key",
+									cty.StringVal(s.Key))
+								qsBody.SetAttributeValue("value",
+									cty.StringVal(s.Value))
+							}
+
+						}
+
+					case "source-ip":
+						if condition.SourceIpConfig != nil {
+							sipBlock := conditionBody.AppendNewBlock("source_ip", nil)
+							sipBody := sipBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.SourceIpConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							sipBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
+					}
+				}
+			}
+			importConfigs = append(importConfigs, common.ImportConfig{
+				ResourceAddress: "duplocloud_aws_lb_listener_rule." + listenerRuleResourceName,
+				ResourceId:      config.TenantId + "/" + listenerRule.RuleArn,
+				WorkingDir:      workingDir,
+			})
+		}
+	}
 }
