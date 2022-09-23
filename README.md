@@ -89,6 +89,7 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
    - `duplocloud_k8_secret`
    - `duplocloud_k8_config_map`
    - `duplocloud_k8_ingress`
+   - `duplocloud_k8_secret_provider_class`
    - `duplocloud_aws_ssm_parameter`
    - `duplocloud_aws_load_balancer`
    - `duplocloud_aws_load_balancer_listener`
@@ -104,6 +105,7 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
    - `duplocloud_aws_cloudwatch_event_rule`
    - `duplocloud_aws_cloudwatch_event_target`
    - `duplocloud_aws_target_group_attributes`
+   - `duplocloud_aws_lb_listener_rule`
 
 ## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
