@@ -76,6 +76,12 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 
 			lbBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
+			lBType := "Application"
+			if len(lb.LbType.Value) > 0 {
+				lBType = lb.LbType.Value
+			}
+			lbBody.SetAttributeValue("load_balancer_type",
+				cty.StringVal(lBType))
 
 			lbBody.SetAttributeValue("enable_access_logs",
 				cty.BoolVal(lb.EnableAccessLogs))
@@ -271,7 +277,7 @@ func appendListenerRuleResources(listenerArn string, listenerResourceName string
 	}
 	if listenerRules != nil {
 		for i, listenerRule := range *listenerRules {
-			listenerRuleResourceName := listenerResourceName + "_rule_" + strconv.Itoa(i)
+			listenerRuleResourceName := listenerResourceName + "_rule_" + strconv.Itoa(i+1)
 			listenerRuleBlock := body.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_lb_listener_rule", listenerRuleResourceName})
 			listenerRuleBody := listenerRuleBlock.Body()
@@ -307,12 +313,12 @@ func appendListenerRuleResources(listenerArn string, listenerResourceName string
 						actionBody.SetAttributeValue("order",
 							cty.NumberIntVal(int64(action.Order)))
 					}
-					if action.Type.Value == "forward" && len(action.TargetGroupArn) > 0 {
-						actionBody.SetAttributeValue("target_group_arn", cty.StringVal(action.TargetGroupArn))
-					}
+
 					switch action.Type.Value {
 					case "forward":
-						if action.ForwardConfig != nil {
+						if action.Type.Value == "forward" && len(action.TargetGroupArn) > 0 {
+							actionBody.SetAttributeValue("target_group_arn", cty.StringVal(action.TargetGroupArn))
+						} else if action.ForwardConfig != nil {
 							forwardBlock := actionBody.AppendNewBlock("forward", nil)
 							forwardBody := forwardBlock.Body()
 							if action.ForwardConfig.TargetGroups != nil && len(*action.ForwardConfig.TargetGroups) > 0 {
@@ -423,6 +429,87 @@ func appendListenerRuleResources(listenerArn string, listenerResourceName string
 								oidcBody.SetAttributeValue("session_timeout", cty.NumberIntVal(int64(action.AuthenticateOidcConfig.SessionTimeout)))
 							}
 						}
+					}
+				}
+			}
+			if listenerRule.Conditions != nil && len(*listenerRule.Conditions) > 0 {
+				for _, condition := range *listenerRule.Conditions {
+					conditionBlock := listenerRuleBody.AppendNewBlock("condition", nil)
+					conditionBody := conditionBlock.Body()
+					switch condition.Field {
+					case "host-header":
+						if condition.HostHeaderConfig != nil {
+							hostHeaderBlock := conditionBody.AppendNewBlock("host_header", nil)
+							hostHeaderBody := hostHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HostHeaderConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							hostHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+					case "http-header":
+						if condition.HttpHeaderConfig != nil {
+							httpHeaderBlock := conditionBody.AppendNewBlock("http_header", nil)
+							httpHeaderBody := httpHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HttpHeaderConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							httpHeaderBody.SetAttributeValue("http_header_name",
+								cty.StringVal(condition.HttpHeaderConfig.HttpHeaderName))
+							httpHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+					case "http-request-method":
+						if condition.HttpRequestMethodConfig != nil {
+							httpReqHeaderBlock := conditionBody.AppendNewBlock("http_request_method", nil)
+							httpReqHeaderBody := httpReqHeaderBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.HttpRequestMethodConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							httpReqHeaderBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
+					case "path-pattern":
+						if condition.PathPatternConfig != nil {
+							ppBlock := conditionBody.AppendNewBlock("path_pattern", nil)
+							ppBody := ppBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.PathPatternConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							ppBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
+					case "query-string":
+						if condition.QueryStringConfig != nil {
+							for _, s := range *condition.QueryStringConfig.Values {
+								qsBlock := conditionBody.AppendNewBlock("query_string", nil)
+								qsBody := qsBlock.Body()
+								qsBody.SetAttributeValue("key",
+									cty.StringVal(s.Key))
+								qsBody.SetAttributeValue("value",
+									cty.StringVal(s.Value))
+							}
+
+						}
+
+					case "source-ip":
+						if condition.SourceIpConfig != nil {
+							sipBlock := conditionBody.AppendNewBlock("source_ip", nil)
+							sipBody := sipBlock.Body()
+							var vals []cty.Value
+							for _, s := range condition.SourceIpConfig.Values {
+								vals = append(vals, cty.StringVal(s))
+							}
+							sipBody.SetAttributeValue("values",
+								cty.ListVal(vals))
+						}
+
 					}
 				}
 			}
