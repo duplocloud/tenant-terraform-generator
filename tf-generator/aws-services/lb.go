@@ -134,7 +134,14 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							Name: resourceName + ".name",
 						},
 					})
-
+					listenerBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "local",
+						},
+						hcl.TraverseAttr{
+							Name: "cert_arn",
+						},
+					})
 					listenerBody.SetAttributeValue("protocol",
 						cty.StringVal(listener.Protocol.Value))
 					listenerBody.SetAttributeValue("port",
@@ -179,7 +186,7 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 						})
 						for _, tgAttr := range *targetGrpAttrs {
 							if len(tgAttr.Key) > 0 && len(tgAttr.Value) > 0 {
-								attrBlock := tgAttrBody.AppendNewBlock("dimension",
+								attrBlock := tgAttrBody.AppendNewBlock("attribute",
 									nil)
 								attrBody := attrBlock.Body()
 								attrBody.SetAttributeValue("key", cty.StringVal(tgAttr.Key))
@@ -277,6 +284,9 @@ func appendListenerRuleResources(listenerArn string, listenerResourceName string
 	}
 	if listenerRules != nil {
 		for i, listenerRule := range *listenerRules {
+			if listenerRule.IsDefault {
+				continue
+			}
 			listenerRuleResourceName := listenerResourceName + "_rule_" + strconv.Itoa(i+1)
 			listenerRuleBlock := body.AppendNewBlock("resource",
 				[]string{"duplocloud_aws_lb_listener_rule", listenerRuleResourceName})

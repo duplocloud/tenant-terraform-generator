@@ -98,6 +98,7 @@ type DuploAwsLbListenerRule struct {
 	Priority    string                             `json:"Priority,omitempty"`
 	Tags        *[]DuploKeyStringValue             `json:"Tags,omitempty"`
 	RuleArn     string                             `json:"RuleArn,omitempty"`
+	IsDefault   bool                               `json:"IsDefault"`
 }
 
 type DuploAwsLbListenerRuleGetReq struct {
