@@ -152,7 +152,7 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			// 		rootBody.AppendNewline()
 			// 	}
 			// }
-			if len(*asgProfile.Volumes) > 0 {
+			if asgProfile.Volumes != nil && len(*asgProfile.Volumes) > 0 {
 				for _, duploObject := range *asgProfile.Volumes {
 					volumeBlock := asgBody.AppendNewBlock("volume",
 						nil)

@@ -108,7 +108,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 				lfBody.SetAttributeValue("runtime",
 					cty.StringVal(lf.Runtime.Value))
 			}
-			if len(*lf.Layers) > 0 {
+			if lf.Layers != nil && len(*lf.Layers) > 0 {
 				var layers []cty.Value
 				for _, l := range *lf.Layers {
 					layers = append(layers, cty.StringVal(l.Arn))

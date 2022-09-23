@@ -69,7 +69,7 @@ func (byoh *BYOH) Generate(config *common.Config, client *duplosdk.Client) (*com
 				cty.StringVal(byoh.DirectAddress))
 			byohBody.SetAttributeValue("agent_platform",
 				cty.NumberIntVal(int64(byoh.AgentPlatform)))
-			if len(*byoh.Tags) > 0 {
+			if byoh.Tags != nil && len(*byoh.Tags) > 0 {
 				for _, tag := range *byoh.Tags {
 					if tag.Key == "AllocationTags" {
 						byohBody.SetAttributeValue("allocation_tag",

@@ -27,7 +27,7 @@ func (tsgrule *TenantSGRule) Generate(config *common.Config, client *duplosdk.Cl
 		return nil, clientErr
 	}
 	tfContext := common.TFContext{}
-	if len(*list) > 0 {
+	if list != nil && len(*list) > 0 {
 		log.Println("[TRACE] <====== Tenant SG rule TF generation started. =====>")
 		// create new empty hcl file object
 		hclFile := hclwrite.NewEmptyFile()

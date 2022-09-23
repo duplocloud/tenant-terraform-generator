@@ -117,7 +117,7 @@ func (k8sIngress *K8sIngress) Generate(config *common.Config, client *duplosdk.C
 				}
 			}
 
-			if len(*k8sIngress.Rules) > 0 {
+			if k8sIngress.Rules != nil && len(*k8sIngress.Rules) > 0 {
 				for _, rule := range *k8sIngress.Rules {
 					ruleBlock := k8sIngressBody.AppendNewBlock("rule",
 						nil)
