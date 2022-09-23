@@ -295,7 +295,7 @@ func appendListenerRuleResources(listenerArn string, listenerResourceName string
 					Name: "duplocloud_aws_load_balancer_listener",
 				},
 				hcl.TraverseAttr{
-					Name: listenerResourceName + ".name",
+					Name: listenerResourceName + ".arn",
 				},
 			})
 			priority, _ := strconv.Atoi(listenerRule.Priority)
