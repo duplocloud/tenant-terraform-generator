@@ -38,7 +38,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 			dynamodbInfo, clientErr := client.DynamoDBTableGetV2(config.TenantId, shortName)
 			if clientErr != nil {
 				fmt.Println(clientErr)
-				return nil, nil
+				continue
 			}
 			varFullPrefix := DYN_DB_VAR_PREFIX + resourceName + "_"
 			// inputVars := generateKafkaVars(clusterInfo, varFullPrefix)
