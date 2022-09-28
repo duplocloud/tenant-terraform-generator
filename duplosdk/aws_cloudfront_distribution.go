@@ -15,6 +15,7 @@ type DuploAwsCloudfrontDefaultCacheBehavior struct {
 	FieldLevelEncryptionId     string                                        `json:"FieldLevelEncryptionId"`
 	OriginRequestPolicyId      string                                        `json:"OriginRequestPolicyId,omitempty"`
 	LambdaFunctionAssociations *DuploAwsCloudfrontLambdaFunctionAssociations `json:"LambdaFunctionAssociations"`
+	FunctionAssociations       *DuploAwsCloudfrontFunctionAssociations       `json:"FunctionAssociations"`
 	MaxTTL                     int                                           `json:"MaxTTL,omitempty"`
 	MinTTL                     int                                           `json:"MinTTL,omitempty"`
 	SmoothStreaming            bool                                          `json:"SmoothStreaming"`
@@ -32,6 +33,7 @@ type DuploAwsCloudfrontCacheBehavior struct {
 	FieldLevelEncryptionId     string                                        `json:"FieldLevelEncryptionId"`
 	OriginRequestPolicyId      string                                        `json:"OriginRequestPolicyId,omitempty"`
 	LambdaFunctionAssociations *DuploAwsCloudfrontLambdaFunctionAssociations `json:"LambdaFunctionAssociations"`
+	FunctionAssociations       *DuploAwsCloudfrontFunctionAssociations       `json:"FunctionAssociations"`
 	MaxTTL                     int                                           `json:"MaxTTL,omitempty"`
 	MinTTL                     int                                           `json:"MinTTL,omitempty"`
 	SmoothStreaming            bool                                          `json:"SmoothStreaming"`
@@ -47,10 +49,20 @@ type DuploAwsCloudfrontLambdaFunctionAssociations struct {
 	Quantity int                                            `json:"Quantity"`
 }
 
+type DuploAwsCloudfrontFunctionAssociations struct {
+	Items    *[]DuploAwsCloudfrontFunctionAssociation `json:"Items"`
+	Quantity int                                      `json:"Quantity"`
+}
+
+type DuploAwsCloudfrontFunctionAssociation struct {
+	EventType   *DuploStringValue `json:"EventType"`
+	FunctionARN string            `json:"FunctionARN"`
+}
+
 type DuploAwsCloudfrontLambdaFunctionAssociation struct {
-	EventType         string `json:"EventType"`
-	LambdaFunctionARN string `json:"LambdaFunctionARN"`
-	IncludeBody       bool   `json:"IncludeBody"`
+	EventType         *DuploStringValue `json:"EventType"`
+	LambdaFunctionARN string            `json:"LambdaFunctionARN"`
+	IncludeBody       bool              `json:"IncludeBody"`
 }
 
 type DuploAwsCloudfrontCacheBehaviors struct {
@@ -250,6 +262,32 @@ type DuploAwsCloudfrontDistributionConfig struct {
 	ViewerCertificate    *DuploAwsCloudfrontDistributionViewerCertificate    `json:"ViewerCertificate,omitempty"`
 	Logging              *DuploAwsCloudfrontDistributionLoggingConfig        `json:"Logging,omitempty"`
 	WebACLId             string                                              `json:"WebACLId"`
+}
+
+func (c *Client) AwsCloudfrontDistributionGet(tenantID string, cfdId string) (*DuploAwsCloudfrontDistributionGetResponse, ClientError) {
+	rp := DuploAwsCloudfrontDistributionGetResponse{}
+	err := c.getAPI(
+		fmt.Sprintf("AwsCloudfrontDistributionGet(%s)", tenantID),
+		fmt.Sprintf("v3/subscriptions/%s/aws/cloudFrontDistribution/%s", tenantID, cfdId),
+		&rp,
+	)
+	return &rp, err
+}
+
+func (c *Client) AwsCloudfrontDistributionGetFromList(tenantID string, cfdId string) (*DuploAwsCloudfrontDistributionConfig, ClientError) {
+	list, err := c.AwsCloudfrontDistributionList(tenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	if list != nil {
+		for _, element := range *list {
+			if element.Id == cfdId {
+				return &element, nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 func (c *Client) AwsCloudfrontDistributionList(tenantID string) (*[]DuploAwsCloudfrontDistributionConfig, ClientError) {

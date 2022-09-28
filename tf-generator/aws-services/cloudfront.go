@@ -338,6 +338,32 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					}
 					dcbBody.SetAttributeValue("trusted_signers", cty.ListVal(trustedSigners))
 				}
+				if cfd.DefaultCacheBehavior.LambdaFunctionAssociations != nil && cfd.DefaultCacheBehavior.LambdaFunctionAssociations.Items != nil && len(*cfd.DefaultCacheBehavior.LambdaFunctionAssociations.Items) > 0 {
+					lflist, clientErr := client.LambdaFunctionGetList(config.TenantId)
+					if clientErr != nil {
+						fmt.Println(clientErr)
+					}
+					for _, lfa := range *cfd.DefaultCacheBehavior.LambdaFunctionAssociations.Items {
+						lfaBlock := dcbBody.AppendNewBlock("lambda_function_association", nil)
+						lfaBody := lfaBlock.Body()
+						lfaBody.SetAttributeValue("event_type", cty.StringVal(lfa.EventType.Value))
+						lfaBody.SetAttributeValue("include_body", cty.BoolVal(lfa.IncludeBody))
+						for _, lf := range *lflist {
+							if strings.Contains(lfa.LambdaFunctionARN, lf.FunctionArn) {
+								lfaBody.SetAttributeTraversal("lambda_arn", hcl.Traversal{
+									hcl.TraverseRoot{
+										Name: "duplocloud_aws_lambda_function." + common.GetResourceName(lf.Name),
+									},
+									hcl.TraverseAttr{
+										Name: "arn",
+									},
+								})
+								break
+							}
+						}
+					}
+				}
+
 				dcbBody.SetAttributeValue("viewer_protocol_policy", cty.StringVal(cfd.DefaultCacheBehavior.ViewerProtocolPolicy.Value))
 			}
 			if cfd.CacheBehaviors != nil && cfd.CacheBehaviors.Quantity > 0 {
@@ -412,7 +438,31 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 						}
 						ocbBody.SetAttributeValue("trusted_signers", cty.ListVal(trustedSigners))
 					}
-
+					if ocb.LambdaFunctionAssociations != nil && ocb.LambdaFunctionAssociations.Items != nil && len(*ocb.LambdaFunctionAssociations.Items) > 0 {
+						lflist, clientErr := client.LambdaFunctionGetList(config.TenantId)
+						if clientErr != nil {
+							fmt.Println(clientErr)
+						}
+						for _, lfa := range *ocb.LambdaFunctionAssociations.Items {
+							lfaBlock := ocbBody.AppendNewBlock("lambda_function_association", nil)
+							lfaBody := lfaBlock.Body()
+							lfaBody.SetAttributeValue("event_type", cty.StringVal(lfa.EventType.Value))
+							lfaBody.SetAttributeValue("include_body", cty.BoolVal(lfa.IncludeBody))
+							for _, lf := range *lflist {
+								if strings.Contains(lfa.LambdaFunctionARN, lf.FunctionArn) {
+									lfaBody.SetAttributeTraversal("lambda_arn", hcl.Traversal{
+										hcl.TraverseRoot{
+											Name: "duplocloud_aws_lambda_function." + common.GetResourceName(lf.Name),
+										},
+										hcl.TraverseAttr{
+											Name: "arn",
+										},
+									})
+									break
+								}
+							}
+						}
+					}
 					ocbBody.SetAttributeValue("path_pattern", cty.StringVal(ocb.PathPattern))
 					ocbBody.SetAttributeValue("viewer_protocol_policy", cty.StringVal(ocb.ViewerProtocolPolicy.Value))
 				}
