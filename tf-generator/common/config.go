@@ -23,6 +23,8 @@ type Config struct {
 	SkipAdminTenant      bool
 	SkipAwsServices      bool
 	SkipApp              bool
+	DuploPlanId          string
+	DuploPlanRegion      string
 }
 
 type TFContext struct {

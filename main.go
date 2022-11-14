@@ -45,12 +45,17 @@ func main() {
 		log.Fatalf("Tenant not found: Tenant Name - %s ", config.TenantName)
 	}
 	config.TenantId = tenantConfig.TenantID
+	config.DuploPlanId = tenantConfig.PlanID
 	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
 	if err != nil {
 		log.Fatalf("error getting aws account id from duplo: %s", err)
 	}
 	config.AccountID = accountID
-
+	infraConfig, err := client.InfrastructureGetConfig(tenantConfig.PlanID)
+	if err != nil {
+		log.Fatalf("error getting duplo plan region from duplo: %s", err)
+	}
+	config.DuploPlanRegion = infraConfig.Region
 	log.Printf("[TRACE] Config ==> %+v\n", config)
 
 	tfGeneratorService := tfgenerator.TfGeneratorService{}

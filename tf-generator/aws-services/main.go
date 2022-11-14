@@ -200,16 +200,16 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 	}
 	log.Println("[TRACE] <====== Aws services main TF generation done. =====>")
 	return &common.TFContext{
-		InputVars: generateVars(),
+		InputVars: generateVars(config),
 	}, nil
 }
 
-func generateVars() []common.VarConfig {
+func generateVars(config *common.Config) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
 	regionVar := common.VarConfig{
 		Name:       "region",
-		DefaultVal: "us-west-2",
+		DefaultVal: config.DuploPlanRegion,
 		TypeVal:    "string",
 	}
 	varConfigs["region"] = regionVar
