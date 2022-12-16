@@ -1,0 +1,12 @@
+services:
+  tenant-tf-generator:
+    image: tenant-tf-generator:latest
+    build: 
+      context: .
+      # target: builder
+    # command: [ "tail", "-f", "/dev/null" ] # use this for debugging
+    tty: true
+    volumes:
+    - ./target:/target
+    env_file:
+    - .envrc

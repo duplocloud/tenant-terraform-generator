@@ -1,0 +1,5 @@
+.*
+target
+*.md
+!.gitignore
+!.envrc
