@@ -260,6 +260,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 					if err != nil {
 						panic(err)
 					}
+					log.Printf("[TRACE] OtherDockerHostConfig *** : %s", service.Template.OtherDockerHostConfig)
 					OtherDockerHostConfigStr, err := duplosdk.JSONMarshal(OtherDockerHostConfigMap)
 					if err != nil {
 						panic(err)
@@ -294,6 +295,7 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				}
 
 				if len(service.HPASpecs) > 0 {
+					log.Printf("[TRACE] HPASpecs *** : %s", service.HPASpecs)
 					hpaSpecsStr, err := duplosdk.JSONMarshal(service.HPASpecs)
 					if err != nil {
 						panic(err)
@@ -308,56 +310,67 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 				if len(service.Template.Volumes) > 0 {
 					//log.Printf("[TRACE] Volume : %s", service.Template.Volumes)
 					//volConfigMap := make(map[string]interface{})
-					var volConfigMapList []interface{}
+
 					// log.Printf("[TRACE] Vol *** : %s", service.Template.Volumes)
-					err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMapList)
-					if err != nil {
-						panic(err)
-					}
-					if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
-						for _, k8sSecret := range *k8sSecretList {
-							for _, result := range volConfigMapList {
-								volMap := result.(map[string]interface{})
-								if volMap["Spec"] != nil {
-									spec := volMap["Spec"].(map[string]interface{})
-									if spec["Secret"] != nil {
-										secretMap := spec["Secret"].(map[string]interface{})
-										if secretMap["SecretName"] == k8sSecret.SecretName {
-											secretMap["SecretName"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
-											// break
+					log.Printf("[TRACE] Volumes *** : %s", service.Template.Volumes)
+					if service.Template.AgentPlatform == 7 {
+						var volConfigMapList []interface{}
+						err := json.Unmarshal([]byte(service.Template.Volumes), &volConfigMapList)
+						if err != nil {
+							panic(err)
+						}
+						if service.Template.AgentPlatform == 7 && k8sSecretList != nil {
+							for _, k8sSecret := range *k8sSecretList {
+								for _, result := range volConfigMapList {
+									volMap := result.(map[string]interface{})
+									if volMap["Spec"] != nil {
+										spec := volMap["Spec"].(map[string]interface{})
+										if spec["Secret"] != nil {
+											secretMap := spec["Secret"].(map[string]interface{})
+											if secretMap["SecretName"] == k8sSecret.SecretName {
+												secretMap["SecretName"] = "${duplocloud_k8_secret." + common.GetResourceName(k8sSecret.SecretName) + ".secret_name}"
+												// break
+											}
 										}
 									}
 								}
 							}
 						}
-					}
-					if service.Template.AgentPlatform == 7 && configMapList != nil {
-						for _, k8sConfigMap := range *configMapList {
-							for _, result := range volConfigMapList {
-								volMap := result.(map[string]interface{})
-								if volMap["Spec"] != nil {
-									spec := volMap["Spec"].(map[string]interface{})
-									if spec["ConfigMap"] != nil {
-										configMap := spec["ConfigMap"].(map[string]interface{})
-										if configMap["Name"] == k8sConfigMap.Name {
-											configMap["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
-											// break
+						if service.Template.AgentPlatform == 7 && configMapList != nil {
+							for _, k8sConfigMap := range *configMapList {
+								for _, result := range volConfigMapList {
+									volMap := result.(map[string]interface{})
+									if volMap["Spec"] != nil {
+										spec := volMap["Spec"].(map[string]interface{})
+										if spec["ConfigMap"] != nil {
+											configMap := spec["ConfigMap"].(map[string]interface{})
+											if configMap["Name"] == k8sConfigMap.Name {
+												configMap["Name"] = "${duplocloud_k8_config_map." + common.GetResourceName(k8sConfigMap.Name) + ".name}"
+												// break
+											}
 										}
 									}
 								}
 							}
 						}
-					}
-					volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMapList)
-					if err != nil {
-						panic(err)
+						log.Printf("[TRACE] VolConfigMapList *** : %s", volConfigMapList)
+						volConfigMapStr, err := duplosdk.JSONMarshal(volConfigMapList)
+						if err != nil {
+							panic(err)
+						}
+
+						svcBody.SetAttributeTraversal("volumes", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "jsonencode(" + volConfigMapStr + ")",
+							},
+						})
 					}
 
-					svcBody.SetAttributeTraversal("volumes", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: "jsonencode(" + volConfigMapStr + ")",
-						},
-					})
+					if service.Template.AgentPlatform == 0 {
+						svcBody.SetAttributeValue("volumes",
+							cty.StringVal(service.Template.Volumes))
+					}
+
 				}
 
 			}
