@@ -114,7 +114,7 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
 1. Following environment variables to be exported in the shell while running this terraform projects.
 ```shell
 export AWS_RUNNER=duplo-admin
-export tenant_id="XXXXXXXXXXXXXXXXXXXXXXXXX"
+export tenant_id="XXXXXXXXXXXXXXXXXXXXXXXXX" # Put default tenant Id here.
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="<duplo-auth-token>"
 export aws_account_id="1234567890"
