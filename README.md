@@ -162,6 +162,7 @@ This infrastructure is divided into terraform sub projects which manages differe
     - ```shell
       scripts/destroy.sh <tenant-name> admin-tenant
       ```
+  **Note** : If you want to import tenant in different environment or infrastructure, You must change `infra_name` variable from `vars.tf`. 
 
 - **Project - aws-services**
 
