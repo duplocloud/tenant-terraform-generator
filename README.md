@@ -26,6 +26,7 @@ You can optionally pass following environment variables.
 
 ```shell
 # Optional Vars
+export duplo_provider_version="0.9.0" # DuploCloud provider version to be used..
 export tenant_project="admin-tenant" # Project name for tenant, Default is admin-tenant.
 export aws_services_project="aws-services" #  Project name for tenant, Default is aws-services.
 export app_project="app" #  Project name for tenant, Default is app.

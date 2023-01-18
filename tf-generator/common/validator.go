@@ -50,7 +50,7 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 
 	duploProviderVersion := os.Getenv("duplo_provider_version")
 	if len(duploProviderVersion) == 0 {
-		duploProviderVersion = "0.8.0"
+		duploProviderVersion = "0.9.0"
 	}
 
 	tfVersion := os.Getenv("tf_version")
