@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -134,14 +135,18 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 							Name: resourceName + ".name",
 						},
 					})
-					listenerBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: "local",
-						},
-						hcl.TraverseAttr{
-							Name: "cert_arn",
-						},
-					})
+
+					if strings.ToLower(listener.Protocol.Value) == "https" {
+						listenerBody.SetAttributeTraversal("certificate_arn", hcl.Traversal{
+							hcl.TraverseRoot{
+								Name: "local",
+							},
+							hcl.TraverseAttr{
+								Name: "cert_arn",
+							},
+						})
+					}
+
 					listenerBody.SetAttributeValue("protocol",
 						cty.StringVal(listener.Protocol.Value))
 					listenerBody.SetAttributeValue("port",
