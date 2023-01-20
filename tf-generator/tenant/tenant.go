@@ -222,9 +222,8 @@ func generateTenantVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.Duplo
 	varConfigs["infra_name"] = infraVar
 
 	certVar := common.VarConfig{
-		Name:       "cert_arn",
-		DefaultVal: config.CertArn,
-		TypeVal:    "string",
+		Name:    "cert_arn",
+		TypeVal: "string",
 	}
 	varConfigs["cert_arn"] = certVar
 

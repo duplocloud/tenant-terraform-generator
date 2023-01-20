@@ -16,7 +16,6 @@ This utility provides a way to export the terraform code that represents the inf
 # Required Vars
 export customer_name="duplo-masp"
 export tenant_name="test"
-export cert_arn="arn:aws:acm:us-west-2:128329325849:certificate/1234567890-aaaa-bbbb-ccc-66e7dcd609e1"
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="xxx-xxxxx-xxxxxxxx"
 export AWS_RUNNER="duplo-admin"
