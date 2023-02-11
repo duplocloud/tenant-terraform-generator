@@ -48,6 +48,9 @@ github.com/hashicorp/terraform-json
 # github.com/mitchellh/go-wordwrap v1.0.1
 ## explicit; go 1.14
 github.com/mitchellh/go-wordwrap
+# github.com/ucarion/jcs v0.1.2
+## explicit; go 1.14
+github.com/ucarion/jcs
 # github.com/zclconf/go-cty v1.10.0
 ## explicit; go 1.12
 github.com/zclconf/go-cty/cty

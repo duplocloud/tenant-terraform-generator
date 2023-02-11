@@ -20,7 +20,11 @@ type AwsServicesMain struct {
 
 func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
-
+	defaultInfraConfig, clientErr := client.InfrastructureGetConfig("default")
+	if clientErr != nil {
+		fmt.Println(clientErr)
+		return nil, clientErr
+	}
 	log.Println("[TRACE] <====== AWS services main TF generation started. =====>")
 
 	//1. ==========================================================================================
@@ -173,10 +177,11 @@ func (asm *AwsServicesMain) Generate(config *common.Config, client *duplosdk.Cli
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{
 				hcl.TraverseRoot{Name: "region"},
 			}),
-			Value: hclwrite.TokensForTraversal(hcl.Traversal{
-				hcl.TraverseRoot{Name: "local"},
-				hcl.TraverseAttr{Name: "region"},
-			}),
+			// Value: hclwrite.TokensForTraversal(hcl.Traversal{
+			// 	hcl.TraverseRoot{Name: "local"},
+			// 	hcl.TraverseAttr{Name: "region"},
+			// }),
+			Value: hclwrite.TokensForValue(cty.StringVal(defaultInfraConfig.Region)),
 		},
 	}
 	tokens := common.TokensForObject(configTokens)

@@ -33,6 +33,10 @@ var AWSServicesGenerators = []Generator{
 	&awsservices.EMR{},
 	&awsservices.CloudwatchMetrics{},
 	&awsservices.ECR{},
+	&awsservices.BatchSP{},
+	&awsservices.BatchCE{},
+	&awsservices.BatchQ{},
+	&awsservices.BatchJD{},
 }
 
 var AppGenerators = []Generator{
