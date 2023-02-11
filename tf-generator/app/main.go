@@ -20,7 +20,11 @@ type AppMain struct {
 
 func (am *AppMain) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	workingDir := filepath.Join(config.TFCodePath, config.AppProject)
-
+	defaultInfraConfig, clientErr := client.InfrastructureGetConfig("default")
+	if clientErr != nil {
+		fmt.Println(clientErr)
+		return nil, clientErr
+	}
 	log.Println("[TRACE] <====== App services main TF generation started. =====>")
 
 	//1. ==========================================================================================
@@ -159,10 +163,11 @@ func (am *AppMain) Generate(config *common.Config, client *duplosdk.Client) (*co
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{
 				hcl.TraverseRoot{Name: "region"},
 			}),
-			Value: hclwrite.TokensForTraversal(hcl.Traversal{
-				hcl.TraverseRoot{Name: "local"},
-				hcl.TraverseAttr{Name: "region"},
-			}),
+			// Value: hclwrite.TokensForTraversal(hcl.Traversal{
+			// 	hcl.TraverseRoot{Name: "local"},
+			// 	hcl.TraverseAttr{Name: "region"},
+			// }),
+			Value: hclwrite.TokensForValue(cty.StringVal(defaultInfraConfig.Region)),
 		},
 	}
 	tokens := common.TokensForObject(configTokens)
