@@ -5,7 +5,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
@@ -158,4 +161,70 @@ func ValidateAndFormatTfCode(tfDir, tfVersion string) {
 	}
 	log.Printf("[TRACE] Formatting of terraform code generated at %s is done.", tfDir)
 	log.Printf("[TRACE] Validation and formatting of terraform code generated at %s is done.", tfDir)
+}
+
+func ExtractResourceNameFromArn(arn string) string {
+	var validID = regexp.MustCompile(`[^:/]*$`)
+	return validID.FindString(arn)
+}
+
+func MakeMapUpperCamelCase(m map[string]interface{}) {
+	for k := range m {
+
+		// Only convert lowercase entries.
+		if unicode.IsLower([]rune(k)[0]) {
+			//nolint:staticcheck // SA1019 ignore this!
+			upper := strings.Title(k)
+
+			// Add the upper camel-case entry, if it doesn't exist.
+			if _, ok := m[upper]; !ok {
+				m[upper] = m[k]
+			}
+
+			// Remove the lower camel-case entry.
+			delete(m, k)
+		}
+	}
+}
+
+// Internal function to reduce empty or nil map entries.
+func ReduceNilOrEmptyMapEntries(m map[string]interface{}) {
+	for k, v := range m {
+		if IsInterfaceNil(v) || IsInterfaceNilOrEmptyMap(v) || IsInterfaceNilOrEmptySlice(v) {
+			delete(m, k)
+		}
+	}
+}
+
+func IsInterfaceNil(v interface{}) bool {
+	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
+}
+
+func IsInterfaceNilOrEmptySlice(v interface{}) bool {
+	if IsInterfaceNil(v) {
+		return true
+	}
+
+	slice := reflect.ValueOf(v)
+	return slice.Kind() == reflect.Slice && slice.IsValid() && (slice.IsNil() || slice.Len() == 0)
+}
+
+func IsInterfaceEmptySlice(v interface{}) bool {
+	slice := reflect.ValueOf(v)
+	return slice.Kind() == reflect.Slice && slice.IsValid() && !slice.IsNil() && slice.Len() == 0
+}
+
+//nolint:deadcode,unused // utility function
+func IsInterfaceEmptyMap(v interface{}) bool {
+	emap := reflect.ValueOf(v)
+	return emap.Kind() == reflect.Map && emap.IsValid() && !emap.IsNil() && emap.Len() == 0
+}
+
+func IsInterfaceNilOrEmptyMap(v interface{}) bool {
+	if IsInterfaceNil(v) {
+		return true
+	}
+
+	emap := reflect.ValueOf(v)
+	return emap.Kind() == reflect.Map && emap.IsValid() && (emap.IsNil() || emap.Len() == 0)
 }
