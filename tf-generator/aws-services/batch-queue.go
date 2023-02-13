@@ -141,6 +141,20 @@ func (bjq *BatchQ) Generate(config *common.Config, client *duplosdk.Client) (*co
 				jqBody.SetAttributeRaw("compute_environments", tokens)
 			}
 
+			if len(q.Tags) > 0 {
+				newMap := make(map[string]cty.Value)
+				for key, element := range q.Tags {
+					if common.Contains(common.GetDuploManagedAwsTags(), key) {
+						continue
+					}
+
+					newMap[key] = cty.StringVal(element)
+				}
+				if len(newMap) > 0 {
+					jqBody.SetAttributeValue("tags", cty.ObjectVal(newMap))
+				}
+			}
+
 			log.Printf("[TRACE] Generating tf file for resource : %s", shortName)
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())

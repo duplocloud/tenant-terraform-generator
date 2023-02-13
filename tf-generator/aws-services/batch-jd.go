@@ -158,6 +158,20 @@ func (bjd *BatchJD) Generate(config *common.Config, client *duplosdk.Client) (*c
 				containerPropsTokens = append(containerPropsTokens, &hclwrite.Token{Type: hclsyntax.TokenEOF, Bytes: []byte(`CONTAINER_PROPERTIES`)})
 				jdBody.SetAttributeRaw("container_properties", containerPropsTokens)
 			}
+
+			if len(jd.Tags) > 0 {
+				newMap := make(map[string]cty.Value)
+				for key, element := range jd.Tags {
+					if common.Contains(common.GetDuploManagedAwsTags(), key) {
+						continue
+					}
+
+					newMap[key] = cty.StringVal(element)
+				}
+				if len(newMap) > 0 {
+					jdBody.SetAttributeValue("tags", cty.ObjectVal(newMap))
+				}
+			}
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {

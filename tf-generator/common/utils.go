@@ -228,3 +228,7 @@ func IsInterfaceNilOrEmptyMap(v interface{}) bool {
 	emap := reflect.ValueOf(v)
 	return emap.Kind() == reflect.Map && emap.IsValid() && (emap.IsNil() || emap.Len() == 0)
 }
+
+func GetDuploManagedAwsTags() []string {
+	return []string{"duplo-project", "TENANT_NAME"}
+}

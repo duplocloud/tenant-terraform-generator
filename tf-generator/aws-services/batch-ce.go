@@ -159,6 +159,20 @@ func (bce *BatchCE) Generate(config *common.Config, client *duplosdk.Client) (*c
 				}
 			}
 
+			if len(ce.Tags) > 0 {
+				newMap := make(map[string]cty.Value)
+				for key, element := range ce.Tags {
+					if common.Contains(common.GetDuploManagedAwsTags(), key) {
+						continue
+					}
+
+					newMap[key] = cty.StringVal(element)
+				}
+				if len(newMap) > 0 {
+					bceBody.SetAttributeValue("tags", cty.ObjectVal(newMap))
+				}
+			}
+
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
