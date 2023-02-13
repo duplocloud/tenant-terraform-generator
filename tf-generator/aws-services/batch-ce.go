@@ -129,7 +129,11 @@ func (bce *BatchCE) Generate(config *common.Config, client *duplosdk.Client) (*c
 				}
 
 				if cr.Ec2Configuration != nil && len(*cr.Ec2Configuration) > 0 {
+					imageType := "ECS_AL2"
 					for _, ec2c := range *cr.Ec2Configuration {
+						if ec2c.ImageType == imageType && len(*cr.Ec2Configuration) > 1 {
+							continue
+						}
 						ec2cBlock := crBody.AppendNewBlock("ec2_configuration",
 							nil)
 						ec2cBody := ec2cBlock.Body()
