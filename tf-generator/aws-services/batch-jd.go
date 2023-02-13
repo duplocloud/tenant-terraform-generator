@@ -34,9 +34,14 @@ func (bjd *BatchJD) Generate(config *common.Config, client *duplosdk.Client) (*c
 	}
 	tfContext := common.TFContext{}
 	importConfigs := []common.ImportConfig{}
+	prevJobDefn := ""
 	if list != nil {
 		log.Println("[TRACE] <====== AWS Batch Job Definition TF generation started. =====>")
 		for _, jd := range *list {
+			if prevJobDefn == jd.JobDefinitionName {
+				continue
+			}
+			prevJobDefn = jd.JobDefinitionName
 			shortName, _ := duplosdk.UnprefixName(prefix, jd.JobDefinitionName)
 			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo AWS Batch Job Definition: %s", shortName)
