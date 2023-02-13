@@ -36,6 +36,9 @@ func (bjd *BatchJD) Generate(config *common.Config, client *duplosdk.Client) (*c
 	importConfigs := []common.ImportConfig{}
 	prevJobDefn := ""
 	if list != nil {
+		sort.Slice(*list, func(i, j int) bool {
+			return (*list)[i].Revision < (*list)[j].Revision
+		})
 		log.Println("[TRACE] <====== AWS Batch Job Definition TF generation started. =====>")
 		for _, jd := range *list {
 			if prevJobDefn == jd.JobDefinitionName {
