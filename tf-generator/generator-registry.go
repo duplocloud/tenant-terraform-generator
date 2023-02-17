@@ -37,6 +37,7 @@ var AWSServicesGenerators = []Generator{
 	&awsservices.BatchCE{},
 	&awsservices.BatchQ{},
 	&awsservices.BatchJD{},
+	&awsservices.TimestreamDB{},
 }
 
 var AppGenerators = []Generator{
