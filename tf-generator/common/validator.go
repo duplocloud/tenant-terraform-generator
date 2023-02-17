@@ -145,7 +145,6 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		AppProject:           appProject,
 		GenerateTfState:      generateTfState,
 		S3Backend:            s3Backend,
-		CertArn:              certArn,
 		ValidateTf:           validateTf,
 		TFVersion:            tfVersion,
 		SkipAdminTenant:      skipTenant,
