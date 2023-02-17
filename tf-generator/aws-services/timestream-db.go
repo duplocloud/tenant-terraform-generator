@@ -106,7 +106,7 @@ func (tdb *TimestreamDB) Generate(config *common.Config, client *duplosdk.Client
 					tblResourceName := common.GetResourceName(tstbl.TableName)
 					tstblBlock := rootBody.AppendNewBlock("resource",
 						[]string{"duplocloud_aws_timestreamwrite_table",
-							tblResourceName})
+							resourceName + "_" + tblResourceName})
 					tstblBody := tstblBlock.Body()
 					tstblBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 						hcl.TraverseRoot{
