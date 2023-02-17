@@ -41,12 +41,12 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		return nil, err
 	}
 
-	certArn := os.Getenv("cert_arn")
-	if len(certArn) == 0 {
-		err := fmt.Errorf("error - please provide \"%s\" as env variable", "cert_arn")
-		log.Printf("[TRACE] - %s", err)
-		return nil, err
-	}
+	// certArn := os.Getenv("cert_arn")
+	// if len(certArn) == 0 {
+	// 	err := fmt.Errorf("error - please provide \"%s\" as env variable", "cert_arn")
+	// 	log.Printf("[TRACE] - %s", err)
+	// 	return nil, err
+	// }
 
 	duploProviderVersion := os.Getenv("duplo_provider_version")
 	if len(duploProviderVersion) == 0 {
