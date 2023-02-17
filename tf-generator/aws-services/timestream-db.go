@@ -195,7 +195,7 @@ func (tdb *TimestreamDB) Generate(config *common.Config, client *duplosdk.Client
 
 					if config.GenerateTfState {
 						importConfigs = append(importConfigs, common.ImportConfig{
-							ResourceAddress: "duplocloud_aws_timestreamwrite_table." + tblResourceName,
+							ResourceAddress: "duplocloud_aws_timestreamwrite_table." + resourceName + "_" + tblResourceName,
 							ResourceId:      config.TenantId + "/" + tstbl.TableName,
 							WorkingDir:      workingDir,
 						})
