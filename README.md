@@ -106,7 +106,13 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
    - `duplocloud_aws_cloudwatch_event_target`
    - `duplocloud_aws_target_group_attributes`
    - `duplocloud_aws_lb_listener_rule`
-
+   - `duplocloud_aws_batch_scheduling_policy`
+   - `duplocloud_aws_batch_job_definition`
+   - `duplocloud_aws_batch_compute_environment`
+   - `duplocloud_aws_batch_job_queue`
+   - `duplocloud_aws_timestreamwrite_database`
+   - `duplocloud_aws_timestreamwrite_table`
+   
 ## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
 ### Prerequisite
