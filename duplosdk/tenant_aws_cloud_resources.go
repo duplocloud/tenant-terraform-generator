@@ -193,6 +193,7 @@ type DuploAwsLbSettings struct {
 	DropInvalidHeaders  bool   `json:"DropInvalidHeaders,omitempty"`
 	WebACLID            string `json:"WebACLId,omitempty"`
 	HttpToHttpsRedirect bool   `json:"HttpToHttpsRedirect,omitempty"`
+	IdleTimeout         int    `json:"IdleTimeout,omitempty"`
 }
 
 // DuploAwsLbListener represents an AWS application load balancer listener

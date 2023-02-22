@@ -508,6 +508,10 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 								cty.BoolVal(settings.DropInvalidHeaders))
 							svcParamBody.SetAttributeValue("http_to_https_redirect",
 								cty.BoolVal(settings.HttpToHttpsRedirect))
+							if settings.IdleTimeout > 0 {
+								svcParamBody.SetAttributeValue("idle_timeout",
+									cty.NumberIntVal(int64(settings.IdleTimeout)))
+							}
 						} else if isError {
 							svcParamBody.SetAttributeValue("enable_access_logs",
 								cty.BoolVal(false))
