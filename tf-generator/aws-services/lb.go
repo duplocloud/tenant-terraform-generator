@@ -101,6 +101,10 @@ func (lb *LoadBalancer) Generate(config *common.Config, client *duplosdk.Client)
 					lbBody.SetAttributeValue("web_acl_id",
 						cty.StringVal(settings.WebACLID))
 				}
+				if settings.IdleTimeout > 0 {
+					lbBody.SetAttributeValue("idle_timeout",
+						cty.NumberIntVal(int64(settings.IdleTimeout)))
+				}
 			}
 
 			// Fetch all listeners
