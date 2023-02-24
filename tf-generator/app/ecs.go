@@ -231,6 +231,32 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					})
 				}
 
+				details, _ := client.TenantGetLbDetailsInService(config.TenantId, ecs.Name)
+				if details != nil && details.LoadBalancerArn != "" {
+
+					settings, _ := client.TenantGetApplicationLbSettings(config.TenantId, details.LoadBalancerArn)
+
+					if settings != nil {
+						if len(settings.WebACLID) > 0 {
+							lbConfigBlockBody.SetAttributeValue("webaclid",
+								cty.StringVal(settings.WebACLID))
+						}
+
+						if settings.EnableAccessLogs {
+							lbConfigBlockBody.SetAttributeValue("enable_access_logs",
+								cty.BoolVal(settings.EnableAccessLogs))
+						}
+						if settings.DropInvalidHeaders {
+							lbConfigBlockBody.SetAttributeValue("drop_invalid_headers",
+								cty.BoolVal(settings.DropInvalidHeaders))
+						}
+						if settings.IdleTimeout > 0 {
+							lbConfigBlockBody.SetAttributeValue("idle_timeout",
+								cty.NumberIntVal(int64(settings.IdleTimeout)))
+						}
+					}
+				}
+
 				// TODO - Add health_check_config block
 				if serviceConfig.HealthCheckConfig != nil && (serviceConfig.HealthCheckConfig.HealthyThresholdCount != 0 || serviceConfig.HealthCheckConfig.UnhealthyThresholdCount != 0 || serviceConfig.HealthCheckConfig.HealthCheckIntervalSeconds != 0 || serviceConfig.HealthCheckConfig.HealthCheckTimeoutSeconds != 0) {
 					lbConfigBlockBody.AppendNewline()
