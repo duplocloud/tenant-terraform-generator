@@ -35,7 +35,7 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for DynamoDB : %s", shortName)
 
-			dynamodbInfo, clientErr := client.DynamoDBTableGetV2(config.TenantId, shortName)
+			dynamodbInfo, clientErr := client.DynamoDBTableGetV2(config.TenantId, dynamodb.Name)
 			if clientErr != nil {
 				fmt.Println(clientErr)
 				continue
