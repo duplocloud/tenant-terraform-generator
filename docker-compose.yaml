@@ -1,12 +1,26 @@
 services:
   tenant-tf-generator:
-    image: tenant-tf-generator:latest
-    build: 
+    image: duplocloud/tenant-tf-generator:latest
+    build: &build
       context: .
       # target: builder
+      tags:
+      - "duplocloud/tenant-tf-generator:${TAG}"
+      x-bake:
+        platforms:
+        - linux/amd64
+        - linux/arm64
+        - linux/arm64/v8
     # command: [ "tail", "-f", "/dev/null" ] # use this for debugging
     tty: true
     volumes:
     - ./target:/target
     env_file:
     - .envrc
+
+
+  tf-manager:
+    image: duplocloud/tf-manager:latest
+    build: 
+      dockerfile: Dockerfile.scripts
+      <<: *build

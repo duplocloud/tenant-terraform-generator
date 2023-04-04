@@ -131,6 +131,11 @@ There are scripts to manage terraform infrastructure. Which will helps to create
 - scripts/apply.sh
 - scripts/destroy.sh
 
+### Docker Images  
+
+Both the scripts and the tf generator have an image. The image build file is the `docker-bake.hcl`
+
+
 #### Arguments to run the scripts.
 
 - **First Argument:** Name of the new tenant to be created.
