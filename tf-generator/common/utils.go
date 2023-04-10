@@ -90,6 +90,9 @@ func Interpolate(body *hclwrite.Body, config Config, resourceName string, attrNa
 
 func GetResourceName(name string) string {
 	replacer := strings.NewReplacer("/", "_", "-", "_", ".", "_", " ", "_")
+	if name[0] >= '0' && name[0] <= '9' {
+		name = "duplo_" + name
+	}
 	return strings.ToLower(replacer.Replace(name))
 }
 
