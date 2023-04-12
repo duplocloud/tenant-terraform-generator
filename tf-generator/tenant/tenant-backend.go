@@ -40,7 +40,7 @@ func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client
 	s3BackendBody := s3Backend.Body()
 
 	s3BackendBody.SetAttributeValue("region",
-		cty.StringVal("us-west-2")) // TODO - Take region from ENV VAR
+		cty.StringVal(config.DuploPlanRegion)) // TODO - Take region from ENV VAR
 	s3BackendBody.SetAttributeValue("key",
 		cty.StringVal("tenant"))
 
