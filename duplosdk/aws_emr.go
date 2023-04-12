@@ -158,16 +158,16 @@ type DuploEmrClusterGetRequest struct {
 		RequestedEc2SubnetIds          []string      `json:"RequestedEc2SubnetIds"`
 		ServiceAccessSecurityGroup     string        `json:"ServiceAccessSecurityGroup"`
 	} `json:"MetaDataObject"`
-	Name                 string           `json:"Name"`
-	CustomAmiId          string           `json:"CustomAmiId"`
-	MasterInstanceType   string           `json:"MasterInstanceType,omitempty"`
-	SlaveInstanceType    string           `json:"SlaveInstanceType,omitempty"`
-	BootstrapActions     *BootstrapAction `json:"BootstrapActions,omitempty"`
-	Configurations       interface{}      `json:"Configurations,omitempty"`
-	Steps                interface{}      `json:"Steps,omitempty"`
-	AdditionalInfo       string           `json:"AdditionalInfo,omitempty"`
-	ManagedScalingPolicy interface{}      `json:"ManagedScalingPolicy,omitempty"`
-	InstanceFleets       interface{}      `json:"InstanceFleets,omitempty"`
+	Name                 string             `json:"Name"`
+	CustomAmiId          string             `json:"CustomAmiId"`
+	MasterInstanceType   string             `json:"MasterInstanceType,omitempty"`
+	SlaveInstanceType    string             `json:"SlaveInstanceType,omitempty"`
+	BootstrapActions     *[]BootstrapAction `json:"BootstrapActions,omitempty"`
+	Configurations       interface{}        `json:"Configurations,omitempty"`
+	Steps                interface{}        `json:"Steps,omitempty"`
+	AdditionalInfo       string             `json:"AdditionalInfo,omitempty"`
+	ManagedScalingPolicy interface{}        `json:"ManagedScalingPolicy,omitempty"`
+	InstanceFleets       interface{}        `json:"InstanceFleets,omitempty"`
 }
 
 type DuploEmrClusterSummary struct {
