@@ -468,15 +468,15 @@ func (cfd *CFD) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				}
 			}
 
-			lifecycleBlock := cfdBody.AppendNewBlock("lifecycle", nil)
-			lifecycleBody := lifecycleBlock.Body()
-			ignoreChanges := "origin, cors_allowed_host_names"
-			ignoreChangesTokens := hclwrite.Tokens{
-				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`[`)},
-				{Type: hclsyntax.TokenIdent, Bytes: []byte(ignoreChanges)},
-				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`]`)},
-			}
-			lifecycleBody.SetAttributeRaw("ignore_changes", ignoreChangesTokens)
+			// lifecycleBlock := cfdBody.AppendNewBlock("lifecycle", nil)
+			// lifecycleBody := lifecycleBlock.Body()
+			// ignoreChanges := "origin, cors_allowed_host_names"
+			// ignoreChangesTokens := hclwrite.Tokens{
+			// 	{Type: hclsyntax.TokenOQuote, Bytes: []byte(`[`)},
+			// 	{Type: hclsyntax.TokenIdent, Bytes: []byte(ignoreChanges)},
+			// 	{Type: hclsyntax.TokenCQuote, Bytes: []byte(`]`)},
+			// }
+			// lifecycleBody.SetAttributeRaw("ignore_changes", ignoreChangesTokens)
 
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
