@@ -58,7 +58,7 @@ type DuploRdsInstanceDeleteProtection struct {
 func (c *Client) RdsInstanceList(tenantID string) (*[]DuploRdsInstance, ClientError) {
 	rp := []DuploRdsInstance{}
 	err := c.getAPI(fmt.Sprintf("RdsInstanceList(%s)", tenantID),
-		fmt.Sprintf("subscriptions/%s/GetRdsInstances", tenantID),
+		fmt.Sprintf("v3/subscriptions/%s/aws/rds/instance", tenantID),
 		&rp)
 	return &rp, err
 }
