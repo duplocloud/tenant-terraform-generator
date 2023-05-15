@@ -4,6 +4,12 @@ import (
 	"fmt"
 )
 
+const (
+	KeyPairType_None    = 0
+	KeyPairType_RSA     = 1
+	KeyPairType_ED25519 = 2
+)
+
 // DuploNativeHost is a Duplo SDK object that represents an nativehost
 type DuploNativeHost struct {
 	InstanceID         string                             `json:"InstanceId"`
@@ -19,6 +25,7 @@ type DuploNativeHost struct {
 	IsEbsOptimized     bool                               `json:"IsEbsOptimized"`
 	AllocatedPublicIP  bool                               `json:"AllocatedPublicIp,omitempty"`
 	Cloud              int                                `json:"Cloud"`
+	KeyPairType        int                                `json:"KeyPairType"`
 	EncryptDisk        bool                               `json:"EncryptDisk,omitempty"`
 	Status             string                             `json:"Status,omitempty"`
 	IdentityRole       string                             `json:"IdentityRole,omitempty"`
@@ -28,6 +35,7 @@ type DuploNativeHost struct {
 	Volumes            *[]DuploNativeHostVolume           `json:"Volumes,omitempty"`
 	MetaData           *[]DuploKeyStringValue             `json:"MetaData,omitempty"`
 	Tags               *[]DuploKeyStringValue             `json:"Tags,omitempty"`
+	TagsEx             *[]DuploKeyStringValue             `json:"TagsEx,omitempty"`
 	MinionTags         *[]DuploKeyStringValue             `json:"MinionTags,omitempty"`
 }
 

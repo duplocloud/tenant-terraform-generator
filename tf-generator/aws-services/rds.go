@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -38,10 +39,6 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo RDS Instance : %s", rds.Identifier)
 
-			varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
-			inputVars := generateRdsVars(rds, varFullPrefix)
-			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
-
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
 
@@ -55,99 +52,180 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			// initialize the body of the new file object
 			rootBody := hclFile.Body()
 
-			if len(rds.MasterPassword) > 0 {
-				randomBlock := rootBody.AppendNewBlock("resource",
-					[]string{"random_password",
-						resourceName + "_password"})
-				randomBody := randomBlock.Body()
-				randomBody.SetAttributeValue("length",
-					cty.NumberIntVal(int64(16)))
-				randomBody.SetAttributeValue("special",
-					cty.BoolVal(false))
-			}
-			// Add duplocloud_rds_instance resource
-			rdsBlock := rootBody.AppendNewBlock("resource",
-				[]string{"duplocloud_rds_instance",
-					resourceName})
-			rdsBody := rdsBlock.Body()
-			rdsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
-				hcl.TraverseRoot{
-					Name: "local",
-				},
-				hcl.TraverseAttr{
-					Name: "tenant_id",
-				},
-			})
-			// rdsBody.SetAttributeValue("tenant_id",
-			// 	cty.StringVal(config.TenantId))
-			name := shortName + "-${local.tenant_name}"
-			rdsNameTokens := hclwrite.Tokens{
-				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
-				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
-				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
-			}
-			rdsBody.SetAttributeRaw("name", rdsNameTokens)
-			// rdsBody.SetAttributeValue("name",
-			// 	cty.StringVal(shortName+"-"+config.TenantName))
-			rdsBody.SetAttributeValue("engine",
-				cty.NumberIntVal(int64(rds.Engine)))
-			rdsBody.SetAttributeTraversal("engine_version", hcl.Traversal{
-				hcl.TraverseRoot{
-					Name: "var",
-				},
-				hcl.TraverseAttr{
-					Name: varFullPrefix + "engine_version",
-				},
-			})
-			rdsBody.SetAttributeTraversal("size", hcl.Traversal{
-				hcl.TraverseRoot{
-					Name: "var",
-				},
-				hcl.TraverseAttr{
-					Name: varFullPrefix + "size",
-				},
-			})
+			if len(rds.ClusterIdentifier) > 0 || len(rds.ReplicationSourceIdentifier) > 0 {
 
-			if len(rds.SnapshotID) > 0 {
-				rdsBody.SetAttributeValue("snapshot_id",
-					cty.StringVal(rds.SnapshotID))
-			} else {
-				rdsBody.SetAttributeTraversal("master_username", hcl.Traversal{
+				varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
+				inputVars := generateRdsRRVars(rds, varFullPrefix)
+				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
+
+				rrBlock := rootBody.AppendNewBlock("resource",
+					[]string{"duplocloud_rds_read_replica",
+						resourceName})
+				rrBody := rrBlock.Body()
+				rrBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "local",
+					},
+					hcl.TraverseAttr{
+						Name: "tenant_id",
+					},
+				})
+
+				clusterIdentifier := rds.ReplicationSourceIdentifier
+				if len(clusterIdentifier) == 0 {
+					clusterIdentifier = rds.ClusterIdentifier
+				}
+				rrBody.SetAttributeTraversal("cluster_identifier", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "duplocloud_rds_instance." + strings.TrimPrefix(clusterIdentifier, "duplo"),
+					},
+					hcl.TraverseAttr{
+						Name: "cluster_identifier",
+					},
+				})
+
+				name := shortName + "-${local.tenant_name}"
+				rdsNameTokens := hclwrite.Tokens{
+					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+					{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+					{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				}
+				rrBody.SetAttributeRaw("name", rdsNameTokens)
+
+				rrBody.SetAttributeTraversal("size", hcl.Traversal{
 					hcl.TraverseRoot{
 						Name: "var",
 					},
 					hcl.TraverseAttr{
-						Name: varFullPrefix + "master_username",
+						Name: varFullPrefix + "size",
 					},
 				})
-				rdsBody.SetAttributeTraversal("master_password", hcl.Traversal{
+
+				outVars := generateRdsOutputVars(varFullPrefix, resourceName)
+				tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
+				// Import all created resources.
+				if config.GenerateTfState {
+					importConfigs = append(importConfigs, common.ImportConfig{
+						ResourceAddress: "duplocloud_rds_read_replica." + resourceName,
+						ResourceId:      "v2/subscriptions/" + config.TenantId + "/RDSDBInstance/" + shortName,
+						WorkingDir:      workingDir,
+					})
+					tfContext.ImportConfigs = importConfigs
+				}
+
+			} else {
+
+				varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
+				inputVars := generateRdsVars(rds, varFullPrefix)
+				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
+
+				if len(rds.MasterPassword) > 0 {
+					randomBlock := rootBody.AppendNewBlock("resource",
+						[]string{"random_password",
+							resourceName + "_password"})
+					randomBody := randomBlock.Body()
+					randomBody.SetAttributeValue("length",
+						cty.NumberIntVal(int64(16)))
+					randomBody.SetAttributeValue("special",
+						cty.BoolVal(false))
+				}
+				// Add duplocloud_rds_instance resource
+				rdsBlock := rootBody.AppendNewBlock("resource",
+					[]string{"duplocloud_rds_instance",
+						resourceName})
+				rdsBody := rdsBlock.Body()
+				rdsBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: " random_password." + resourceName + "_password",
+						Name: "local",
 					},
 					hcl.TraverseAttr{
-						Name: "result",
+						Name: "tenant_id",
 					},
 				})
+				// rdsBody.SetAttributeValue("tenant_id",
+				// 	cty.StringVal(config.TenantId))
+				name := shortName + "-${local.tenant_name}"
+				rdsNameTokens := hclwrite.Tokens{
+					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+					{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+					{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+				}
+				rdsBody.SetAttributeRaw("name", rdsNameTokens)
+				// rdsBody.SetAttributeValue("name",
+				// 	cty.StringVal(shortName+"-"+config.TenantName))
+				rdsBody.SetAttributeValue("engine",
+					cty.NumberIntVal(int64(rds.Engine)))
+				rdsBody.SetAttributeTraversal("engine_version", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "engine_version",
+					},
+				})
+				rdsBody.SetAttributeTraversal("size", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "size",
+					},
+				})
+
+				if len(rds.SnapshotID) > 0 {
+					rdsBody.SetAttributeValue("snapshot_id",
+						cty.StringVal(rds.SnapshotID))
+				} else {
+					rdsBody.SetAttributeTraversal("master_username", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "var",
+						},
+						hcl.TraverseAttr{
+							Name: varFullPrefix + "master_username",
+						},
+					})
+					rdsBody.SetAttributeTraversal("master_password", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: " random_password." + resourceName + "_password",
+						},
+						hcl.TraverseAttr{
+							Name: "result",
+						},
+					})
+				}
+
+				if len(rds.DBParameterGroupName) > 0 {
+					rdsBody.SetAttributeValue("parameter_group_name",
+						cty.StringVal(rds.DBParameterGroupName))
+				}
+				rdsBody.SetAttributeValue("store_details_in_secret_manager",
+					cty.BoolVal(rds.StoreDetailsInSecretManager))
+				rdsBody.SetAttributeTraversal("encrypt_storage", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "encrypt_storage",
+					},
+				})
+				rdsBody.SetAttributeValue("enable_logging",
+					cty.BoolVal(rds.EnableLogging))
+				rdsBody.SetAttributeValue("multi_az",
+					cty.BoolVal(rds.MultiAZ))
+
+				outVars := generateRdsOutputVars(varFullPrefix, resourceName)
+				tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
+				// Import all created resources.
+				if config.GenerateTfState {
+					importConfigs = append(importConfigs, common.ImportConfig{
+						ResourceAddress: "duplocloud_rds_instance." + resourceName,
+						ResourceId:      "v2/subscriptions/" + config.TenantId + "/RDSDBInstance/" + shortName,
+						WorkingDir:      workingDir,
+					})
+					tfContext.ImportConfigs = importConfigs
+				}
 			}
 
-			if len(rds.DBParameterGroupName) > 0 {
-				rdsBody.SetAttributeValue("parameter_group_name",
-					cty.StringVal(rds.DBParameterGroupName))
-			}
-			rdsBody.SetAttributeValue("store_details_in_secret_manager",
-				cty.BoolVal(rds.StoreDetailsInSecretManager))
-			rdsBody.SetAttributeTraversal("encrypt_storage", hcl.Traversal{
-				hcl.TraverseRoot{
-					Name: "var",
-				},
-				hcl.TraverseAttr{
-					Name: varFullPrefix + "encrypt_storage",
-				},
-			})
-			rdsBody.SetAttributeValue("enable_logging",
-				cty.BoolVal(rds.EnableLogging))
-			rdsBody.SetAttributeValue("multi_az",
-				cty.BoolVal(rds.MultiAZ))
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
@@ -156,22 +234,32 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 			}
 			log.Printf("[TRACE] Terraform config is generated for duplo RDS instance : %s", rds.Identifier)
 
-			outVars := generateRdsOutputVars(varFullPrefix, resourceName)
-			tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
-			// Import all created resources.
-			if config.GenerateTfState {
-				importConfigs = append(importConfigs, common.ImportConfig{
-					ResourceAddress: "duplocloud_rds_instance." + resourceName,
-					ResourceId:      "v2/subscriptions/" + config.TenantId + "/RDSDBInstance/" + shortName,
-					WorkingDir:      workingDir,
-				})
-				tfContext.ImportConfigs = importConfigs
-			}
 		}
 		log.Println("[TRACE] <====== RDS TF generation done. =====>")
 	}
 
 	return &tfContext, nil
+}
+
+func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+
+	size := duplo.SizeEx
+	if len(size) == 0 {
+		size = "db.t2.medium"
+	}
+	var1 := common.VarConfig{
+		Name:       prefix + "size",
+		DefaultVal: size,
+		TypeVal:    "string",
+	}
+	varConfigs["size"] = var1
+
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
 }
 
 func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.VarConfig {

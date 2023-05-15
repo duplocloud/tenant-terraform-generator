@@ -29,6 +29,7 @@ type DuploAsgProfile struct {
 	Tags              *[]DuploKeyStringValue             `json:"Tags,omitempty"`
 	MinionTags        *[]DuploKeyStringValue             `json:"MinionTags,omitempty"`
 	CustomDataTags    *[]DuploKeyStringValue             `json:"CustomDataTags,omitempty"`
+	KeyPairType       int                                `json:"KeyPairType,omitempty"`
 }
 
 type DuploAsgProfileDeleteReq struct {

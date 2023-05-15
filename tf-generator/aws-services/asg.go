@@ -122,6 +122,8 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.BoolVal(asgProfile.AllocatedPublicIP))
 			asgBody.SetAttributeValue("cloud",
 				cty.NumberIntVal(int64(asgProfile.Cloud)))
+			asgBody.SetAttributeValue("keypair_type",
+				cty.NumberIntVal(int64(asgProfile.KeyPairType)))
 			if len(asgProfile.Base64UserData) > 0 {
 				asgBody.SetAttributeValue("base64_user_data",
 					cty.StringVal(asgProfile.Base64UserData))

@@ -105,6 +105,8 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.BoolVal(host.AllocatedPublicIP))
 			hostBody.SetAttributeValue("cloud",
 				cty.NumberIntVal(int64(host.Cloud)))
+			hostBody.SetAttributeValue("keypair_type",
+				cty.NumberIntVal(int64(host.KeyPairType)))
 			if len(host.Base64UserData) > 0 {
 				hostBody.SetAttributeValue("base64_user_data",
 					cty.StringVal(host.Base64UserData))
