@@ -56,6 +56,12 @@ func main() {
 		log.Fatalf("error getting duplo plan region from duplo: %s", err)
 	}
 	config.DuploPlanRegion = infraConfig.Region
+	defaultInfraConfig, err := client.InfrastructureGetConfig("default")
+	if err != nil || defaultInfraConfig == nil {
+		log.Fatalf("error getting default duplo plan region from duplo: %s", err)
+	}
+	config.DuploDefaultPlanRegion = defaultInfraConfig.Region
+
 	log.Printf("[TRACE] Config ==> %+v\n", config)
 
 	tfGeneratorService := tfgenerator.TfGeneratorService{}

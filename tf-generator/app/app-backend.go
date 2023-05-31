@@ -40,7 +40,7 @@ func (ab *AppBackend) Generate(config *common.Config, client *duplosdk.Client) (
 	s3BackendBody := s3Backend.Body()
 
 	s3BackendBody.SetAttributeValue("region",
-		cty.StringVal(config.DuploPlanRegion))
+		cty.StringVal(config.DuploDefaultPlanRegion))
 	s3BackendBody.SetAttributeValue("key",
 		cty.StringVal(config.AppProject))
 

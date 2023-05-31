@@ -40,7 +40,7 @@ func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.
 	s3BackendBody := s3Backend.Body()
 
 	s3BackendBody.SetAttributeValue("region",
-		cty.StringVal(config.DuploPlanRegion)) // TODO - Take region from ENV VAR
+		cty.StringVal(config.DuploDefaultPlanRegion)) // TODO - Take region from ENV VAR
 	s3BackendBody.SetAttributeValue("key",
 		cty.StringVal(config.AwsServicesProject))
 
