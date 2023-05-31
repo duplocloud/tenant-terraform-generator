@@ -23,7 +23,7 @@ type ImportConfig struct {
 func (i *Importer) Import(config *Config, importConfig *ImportConfig) {
 	log.Println("[TRACE] <================================== TF Import in progress. ==================================>")
 	log.Printf("[TRACE] Importing terraform resource  : (%s, %s).", importConfig.ResourceAddress, importConfig.ResourceId)
-	tfVersion := GetEnv("tf_version", "0.14.11")
+	tfVersion := GetEnv("tf_version", TF_DEFAULT_VERSION)
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
 		Version: version.Must(version.NewVersion(tfVersion)),

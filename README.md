@@ -8,7 +8,7 @@ This utility provides a way to export the terraform code that represents the inf
 
 1. Install [Go](https://go.dev/doc/install) 1.15 or later.
 2. Install [make](https://www.gnu.org/software/make) tool.
-3. Install [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) version greater than or equals to `v0.14.11`
+3. Install [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) version greater than or equals to `v1.4.2`
 4. Install [jq](https://stedolan.github.io/jq/download/)
 5. Following environment variables to be exported in the shell while running this projects.
 
@@ -32,7 +32,7 @@ export app_project="app" #  Project name for tenant, Default is app.
 export skip_admin_tenant="true" # Whether to skip tf generation for admin-tenant, Default is false.
 export skip_aws_services="true" # Whether to skip tf generation for aws_services, Default is false.
 export skip_app="true" # Whether to skip tf generation for app, Default is false.
-export tf_version=0.14.11  # Terraform version to be used, Default is 0.14.11.
+export tf_version=v1.4.2  # Terraform version to be used, Default is v1.4.2.
 export validate_tf="false" # Whether to validate generated tf code, Default is true.
 export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
                                  # If true please use 'AWS_PROFILE' environment variable, This is required for s3 backend.

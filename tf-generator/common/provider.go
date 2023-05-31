@@ -52,7 +52,7 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 	tfBlock := rootBody.AppendNewBlock("terraform",
 		nil)
 	tfBlockBody := tfBlock.Body()
-	tfVersion := GetEnv("tf_version", "0.14.11")
+	tfVersion := GetEnv("tf_version", TF_DEFAULT_VERSION)
 	tfBlockBody.SetAttributeValue("required_version",
 		cty.StringVal(">= "+tfVersion))
 

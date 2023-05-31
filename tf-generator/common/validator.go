@@ -55,7 +55,7 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 
 	tfVersion := os.Getenv("tf_version")
 	if len(tfVersion) == 0 {
-		tfVersion = "0.14.11"
+		tfVersion = TF_DEFAULT_VERSION
 	}
 
 	tenantProject := os.Getenv("tenant_project")
