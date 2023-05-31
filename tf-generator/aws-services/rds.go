@@ -77,7 +77,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				}
 				rrBody.SetAttributeTraversal("cluster_identifier", hcl.Traversal{
 					hcl.TraverseRoot{
-						Name: "duplocloud_rds_instance." + strings.TrimPrefix(common.GetResourceName(clusterIdentifier), "duplo"),
+						Name: "duplocloud_rds_instance." + strings.TrimPrefix(strings.TrimSuffix(common.GetResourceName(clusterIdentifier), "_cluster"), "duplo"),
 					},
 					hcl.TraverseAttr{
 						Name: "cluster_identifier",
