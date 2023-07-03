@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -32,7 +33,10 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	if list != nil {
 		log.Println("[TRACE] <====== Hosts TF generation started. =====>")
 		for _, host := range *list {
-			shortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
+			shortName := host.FriendlyName
+			if strings.Contains(host.FriendlyName, "duploservices-"+config.TenantName+"-") {
+				shortName = host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
+			}
 			resourceName := common.GetResourceName(shortName)
 			log.Printf("[TRACE] Generating terraform config for duplo host : %s", host.FriendlyName)
 			if isPartOfAsg(host) {
