@@ -22,7 +22,7 @@ type SQS struct {
 func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	log.Println("[TRACE] <====== SQS TF generation started. =====>")
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
-	list, clientErr := client.TenantListSQS(config.TenantId)
+	list, clientErr := client.DuploSQSQueueListV2(config.TenantId)
 
 	if clientErr != nil {
 		fmt.Println(clientErr)
@@ -70,6 +70,36 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				sqsBody.SetAttributeValue("fifo_queue",
 					cty.BoolVal(strings.HasSuffix(sqs.Name, ".fifo")))
 			}
+			if strings.HasSuffix(sqs.Name, ".fifo") {
+				sqsBody.SetAttributeValue("fifo_queue",
+					cty.BoolVal(strings.HasSuffix(sqs.Name, ".fifo")))
+			}
+			if sqs.MessageRetentionPeriod > 0 {
+				sqsBody.SetAttributeValue("message_retention_seconds", cty.NumberIntVal(int64(sqs.MessageRetentionPeriod)))
+			}
+			if sqs.VisibilityTimeout > 0 {
+				sqsBody.SetAttributeValue("visibility_timeout_seconds", cty.NumberIntVal(int64(sqs.VisibilityTimeout)))
+			}
+			if sqs.ContentBasedDeduplication {
+				sqsBody.SetAttributeValue("content_based_deduplication",
+					cty.BoolVal(true))
+			}
+			if sqs.QueueType == 1 {
+				if sqs.DeduplicationScope == 0 {
+					sqsBody.SetAttributeValue("deduplication_scope",
+						cty.StringVal("queue"))
+				} else {
+					sqsBody.SetAttributeValue("deduplication_scope",
+						cty.StringVal("messageGroup"))
+				}
+				if sqs.FifoThroughputLimit == 0 {
+					sqsBody.SetAttributeValue("fifo_throughput_limit",
+						cty.StringVal("perQueue"))
+				} else {
+					sqsBody.SetAttributeValue("fifo_throughput_limit",
+						cty.StringVal("perMessageGroupId"))
+				}
+			}
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
@@ -97,7 +127,7 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 	return &tfContext, nil
 }
 
-func generateSQSOutputVars(duplo duplosdk.DuploAwsResource, prefix, resourceName string) []common.OutputVarConfig {
+func generateSQSOutputVars(duplo duplosdk.DuploSQSQueue, prefix, resourceName string) []common.OutputVarConfig {
 	outVarConfigs := make(map[string]common.OutputVarConfig)
 
 	urlVar := common.OutputVarConfig{
@@ -124,11 +154,10 @@ func extractSqsName(client *duplosdk.Client, tenantID string, sqsUrl string) (st
 	if err != nil {
 		return "", err
 	}
+
 	parts := strings.Split(sqsUrl, "/"+accountID+"/")
-	fullname := parts[1]
-	if strings.HasSuffix(fullname, ".fifo") {
-		fullname = strings.TrimSuffix(fullname, ".fifo")
-	}
+	fullname := parts[0]
+	fullname = strings.TrimSuffix(fullname, ".fifo")
 	name, _ := duplosdk.UnwrapName(prefix, accountID, fullname, true)
 	return name, nil
 }

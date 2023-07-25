@@ -307,6 +307,24 @@ func (c *Client) TenantListAwsCloudResources(tenantID string) (*[]DuploAwsCloudR
 	return &list, nil
 }
 
+func (c *Client) TenantListAwsCloudResourcesV3(tenantID string) (*[]DuploAwsCloudResource, ClientError) {
+	apiName := fmt.Sprintf("TenantListAwsCloudResourcesV3(%s)", tenantID)
+	list := []DuploAwsCloudResource{}
+
+	// Get the list from Duplo
+	err := c.getAPI(apiName, fmt.Sprintf("v3/subscriptions/%s/aws/sqs", tenantID), &list)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the tenant ID to each element and return the list.
+	log.Printf("[TRACE] %s: %d items", apiName, len(list))
+	for i := range list {
+		list[i].TenantID = tenantID
+	}
+	return &list, nil
+}
+
 // TenantGetAwsCloudResource retrieves a cloud resource by type and name
 func (c *Client) TenantGetAwsCloudResource(tenantID string, resourceType int, name string) (*DuploAwsCloudResource, ClientError) {
 	allResources, err := c.TenantListAwsCloudResources(tenantID)
