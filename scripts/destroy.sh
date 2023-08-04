@@ -40,7 +40,7 @@ function tf_destroy() {
 
   local tf_args=( -auto-approve -input=false "$@" )
 
-  local varfile="configs/$ws/$project.tfvars.json"
+  local varfile="config/$ws/$project.tfvars.json"
   [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
 
   echo "Project: $project"
