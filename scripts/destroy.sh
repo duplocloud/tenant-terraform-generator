@@ -39,7 +39,7 @@ function tf_destroy() {
   local ws="$tenant"
 
   # '-parallelism=1' slows down requests to DuploCloud, which reduces the odds of timeouts when managing many resources.
-  local tf_args=( -auto-approve -input=false -parallelism=1 "$@" )
+  local tf_args=( -input=false -parallelism=1 "$@" )
 
   local varfile="config/$ws/$project.tfvars.json"
   [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
