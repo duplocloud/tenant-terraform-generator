@@ -118,6 +118,22 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		skipTenant, _ = strconv.ParseBool(skipTenantStr)
 	}
 
+	enableSecretPlaceholder := false
+	enableSecretPlaceholderStr := os.Getenv("enable_k8s_secret_placeholder")
+	if len(enableSecretPlaceholderStr) == 0 {
+		enableSecretPlaceholder = false
+	} else {
+		enableSecretPlaceholder, _ = strconv.ParseBool(enableSecretPlaceholderStr)
+	}
+
+	k8sSecretPlaceholder := "replace-me"
+	k8sSecretPlaceholderStr := os.Getenv("k8s_secret_placeholder")
+	if len(k8sSecretPlaceholderStr) == 0 {
+		k8sSecretPlaceholder = "replace-me"
+	} else {
+		k8sSecretPlaceholder = k8sSecretPlaceholderStr
+	}
+
 	skipAwsServices := false
 	skipAwsServicesStr := os.Getenv("skip_aws_services")
 	if len(skipAwsServicesStr) == 0 {
@@ -135,20 +151,22 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 	}
 
 	return &Config{
-		DuploHost:            host,
-		DuploToken:           token,
-		TenantName:           tenantName,
-		CustomerName:         custName,
-		DuploProviderVersion: duploProviderVersion,
-		TenantProject:        tenantProject,
-		AwsServicesProject:   awsServicesProject,
-		AppProject:           appProject,
-		GenerateTfState:      generateTfState,
-		S3Backend:            s3Backend,
-		ValidateTf:           validateTf,
-		TFVersion:            tfVersion,
-		SkipAdminTenant:      skipTenant,
-		SkipAwsServices:      skipAwsServices,
-		SkipApp:              skipApp,
+		DuploHost:               host,
+		DuploToken:              token,
+		TenantName:              tenantName,
+		CustomerName:            custName,
+		DuploProviderVersion:    duploProviderVersion,
+		TenantProject:           tenantProject,
+		AwsServicesProject:      awsServicesProject,
+		AppProject:              appProject,
+		GenerateTfState:         generateTfState,
+		S3Backend:               s3Backend,
+		ValidateTf:              validateTf,
+		TFVersion:               tfVersion,
+		SkipAdminTenant:         skipTenant,
+		SkipAwsServices:         skipAwsServices,
+		SkipApp:                 skipApp,
+		EnableSecretPlaceholder: enableSecretPlaceholder,
+		K8sSecretPlaceholder:    k8sSecretPlaceholder,
 	}, nil
 }

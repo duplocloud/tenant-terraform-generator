@@ -84,7 +84,17 @@ func (k8sSecret *K8sSecret) Generate(config *common.Config, client *duplosdk.Cli
 			}
 
 			if len(k8sSecret.SecretData) > 0 {
-				secretDataStr, err := duplosdk.JSONMarshal(k8sSecret.SecretData)
+				var secretDataStr string
+				secretData := map[string]interface{}{}
+				if config.EnableSecretPlaceholder {
+					for key := range k8sSecret.SecretData {
+						secretData[key] = config.K8sSecretPlaceholder
+					}
+					secretDataStr, err = duplosdk.JSONMarshal(secretData)
+				} else {
+					secretDataStr, err = duplosdk.JSONMarshal(k8sSecret.SecretData)
+				}
+
 				if err != nil {
 					panic(err)
 				}

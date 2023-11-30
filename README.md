@@ -34,6 +34,8 @@ export skip_aws_services="true" # Whether to skip tf generation for aws_services
 export skip_app="true" # Whether to skip tf generation for app, Default is false.
 export tf_version=v1.4.2  # Terraform version to be used, Default is v1.4.2.
 export validate_tf="false" # Whether to validate generated tf code, Default is true.
+export enable_k8s_secret_placeholder="false" # Whether to put 'replace-me' placeholder for k8s secret instead of actual value.
+export k8s_secret_placeholder="replace-me" # Placeholder for k8s secret when enable_k8s_secret_placeholder is true.
 export generate_tf_state="false" # Whether to import generated tf resources, Default is false. 
                                  # If true please use 'AWS_PROFILE' environment variable, This is required for s3 backend.
 ```
