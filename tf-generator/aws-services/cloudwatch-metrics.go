@@ -110,9 +110,10 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 							if dim.Value == host.InstanceID {
 								valAssigned = true
 								hostShortName := host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
+								hostResourceName := common.GetResourceName(hostShortName)
 								dimBody.SetAttributeTraversal("value", hcl.Traversal{
 									hcl.TraverseRoot{
-										Name: "duplocloud_aws_host." + hostShortName,
+										Name: "duplocloud_aws_host." + hostResourceName,
 									},
 									hcl.TraverseAttr{
 										Name: "instance_id",
@@ -127,9 +128,10 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 							if dim.Value == rds.Identifier {
 								valAssigned = true
 								rdsShortName := rds.Identifier[len("duplo"):len(rds.Identifier)]
+								rdsResourceName := common.GetResourceName(rdsShortName)
 								dimBody.SetAttributeTraversal("value", hcl.Traversal{
 									hcl.TraverseRoot{
-										Name: "duplocloud_rds_instance." + rdsShortName,
+										Name: "duplocloud_rds_instance." + rdsResourceName,
 									},
 									hcl.TraverseAttr{
 										Name: "fullname	",
@@ -144,9 +146,10 @@ func (cwm *CloudwatchMetrics) Generate(config *common.Config, client *duplosdk.C
 							if dim.Value == dynamodb.Name {
 								valAssigned = true
 								dynamoDBShortName, _ := extractDynamoDBName(client, config.TenantId, dynamodb.Name)
+								ddbResourceName := common.GetResourceName(dynamoDBShortName)
 								dimBody.SetAttributeTraversal("value", hcl.Traversal{
 									hcl.TraverseRoot{
-										Name: "duplocloud_aws_dynamodb_table_v2." + dynamoDBShortName,
+										Name: "duplocloud_aws_dynamodb_table_v2." + ddbResourceName,
 									},
 									hcl.TraverseAttr{
 										Name: "name	",
