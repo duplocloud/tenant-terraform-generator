@@ -225,7 +225,6 @@ End user can pass external configurations like RDS instance type, ES version, Do
   - This file is used while running **Project - admin-tenant**, You can create file **admin-tenant.tfvars.json** and pass required configuration.
 - File - **aws-services.tfvars.json**
   - This file is used while running **Project - aws-services**, You can create file **aws-services.tfvars.json** and pass required configuration.
-
 - File - **app.tfvars.json**
   - This file is used while running **Project - app**, You can create file **app.tfvars.json** and pass required configuration.
 
@@ -239,6 +238,8 @@ End user can pass external configurations like RDS instance type, ES version, Do
     │             ├── aws-services.tfvars.json  # aws-services project variables.
     │             ├── app.tfvars.json           # app project variables.
     ```  
+
+> Note: Both json and tfvar Terraform file extensions are supported.  See Terraform [documentation](https://developer.hashicorp.com/terraform/language/values/variables#variable-definitions-tfvars-files) for more details about the structure of each file type.
 
 ### Contributing
 
