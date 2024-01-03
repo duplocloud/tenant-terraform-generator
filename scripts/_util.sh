@@ -30,6 +30,28 @@ logged() {
   "$@"
 }
 
+# check to see how duplo_token will be loaded here, _util is loaded before _env in the TF action scripts
+## if non interactive, die if duplo_token is not set
+## if interactive, if duplo_token is set, proceed
+## if interactive, if duplo_token is not set, if duplo-jit installed, proceed
+
+# check if STDIN is a terminal, if it is assume we are being run by a user interactively
+if [ -t 0 ]
+then
+  if [ -z "${duplo_token:-}" ]; then
+    if ! command -v duplo-jit &> /dev/null
+    then
+        die "duplo-jit command not found and duplo_token not set"
+    else
+      duplo_token="$(duplo-jit duplo --host "$duplo_host" --interactive | jq -r '.DuploToken')"
+    fi
+  fi
+else
+  if [ -z "${duplo_token:-}" ]; then
+    die "error: duplo_token: environment variable missing or empty"
+  fi
+fi
+
 # Utility function to make a duplo API call with curl, and output JSON.
 duplo_api() {
     local path="${1:-}"
