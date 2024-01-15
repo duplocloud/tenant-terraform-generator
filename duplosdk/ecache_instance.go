@@ -16,12 +16,14 @@ type DuploEcacheInstance struct {
 	Arn                 string `json:"Arn"`
 	Endpoint            string `json:"Endpoint,omitempty"`
 	CacheType           int    `json:"CacheType,omitempty"`
+	EngineVersion       string `json:"EngineVersion,omitempty"`
 	Size                string `json:"Size,omitempty"`
 	Replicas            int    `json:"Replicas,omitempty"`
 	EncryptionAtRest    bool   `json:"EnableEncryptionAtRest,omitempty"`
 	EncryptionInTransit bool   `json:"EnableEncryptionAtTransit,omitempty"`
 	KMSKeyID            string `json:"KmsKeyId,omitempty"`
 	AuthToken           string `json:"AuthToken,omitempty"`
+	ParameterGroupName  string `json:"ParameterGroupName,omitempty"`
 	InstanceStatus      string `json:"InstanceStatus,omitempty"`
 }
 
