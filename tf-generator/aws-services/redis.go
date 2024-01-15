@@ -107,6 +107,14 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				redisBody.SetAttributeValue("auth_token",
 					cty.StringVal(redis.AuthToken))
 			}
+			if len(redis.EngineVersion) > 0 {
+				redisBody.SetAttributeValue("engine_version",
+					cty.StringVal(redis.EngineVersion))
+			}
+			if len(redis.ParameterGroupName) > 0 {
+				redisBody.SetAttributeValue("parameter_group_name",
+					cty.StringVal(redis.ParameterGroupName))
+			}
 			if len(redis.KMSKeyID) > 0 {
 				if kms != nil && kmsClientErr == nil && (redis.KMSKeyID == kms.KeyArn || redis.KMSKeyID == kms.KeyID) {
 					redisBody.SetAttributeTraversal("kms_key_id", hcl.Traversal{
