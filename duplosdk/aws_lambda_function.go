@@ -30,23 +30,37 @@ type DuploLambdaConfiguration struct {
 	// NOTE: The Name field does not come from the backend - we synthesize it
 	Name string `json:"Name"`
 
-	CodeSha256    string                    `json:"CodeSha256"`
-	CodeSize      int                       `json:"CodeSize"`
-	Description   string                    `json:"Description,omitempty"`
-	Environment   *DuploLambdaEnvironment   `json:"Environment,omitempty"`
-	FunctionArn   string                    `json:"FunctionArn,omitempty"`
-	FunctionName  string                    `json:"FunctionName,omitempty"`
-	Handler       string                    `json:"Handler,omitempty"`
-	LastModified  string                    `json:"LastModified,omitempty"`
-	MemorySize    int                       `json:"MemorySize"`
-	Role          string                    `json:"Role,omitempty"`
-	PackageType   *DuploStringValue         `json:"PackageType,omitempty"`
-	Runtime       *DuploStringValue         `json:"Runtime,omitempty"`
-	Timeout       int                       `json:"Timeout,omitempty"`
-	TracingConfig *DuploLambdaTracingConfig `json:"TracingConfig,omitempty"`
-	Version       string                    `json:"Version,omitempty"`
-	VpcConfig     *DuploLambdaVpcConfig     `json:"VpcConfig,omitempty"`
-	Layers        *[]DuploLambdaLayerGet    `json:"Layers,omitempty"`
+	CodeSha256          string                       `json:"CodeSha256"`
+	CodeSize            int                          `json:"CodeSize"`
+	Description         string                       `json:"Description,omitempty"`
+	Environment         *DuploLambdaEnvironment      `json:"Environment,omitempty"`
+	FunctionArn         string                       `json:"FunctionArn,omitempty"`
+	FunctionName        string                       `json:"FunctionName,omitempty"`
+	Handler             string                       `json:"Handler,omitempty"`
+	LastModified        string                       `json:"LastModified,omitempty"`
+	MemorySize          int                          `json:"MemorySize"`
+	Role                string                       `json:"Role,omitempty"`
+	PackageType         *DuploStringValue            `json:"PackageType,omitempty"`
+	Runtime             *DuploStringValue            `json:"Runtime,omitempty"`
+	Timeout             int                          `json:"Timeout,omitempty"`
+	TracingConfig       *DuploLambdaTracingConfig    `json:"TracingConfig,omitempty"`
+	Version             string                       `json:"Version,omitempty"`
+	VpcConfig           *DuploLambdaVpcConfig        `json:"VpcConfig,omitempty"`
+	Layers              *[]DuploLambdaLayerGet       `json:"Layers,omitempty"`
+	ImageConfigResponse *ImageConfigResponse         `json:"ImageConfigResponse,omitempty"`
+	EphemeralStorage    *DuploLambdaEphemeralStorage `json:"EphemeralStorage,omitempty"`
+}
+type ImageConfigResponse struct {
+	ImageConfig *DuploLambdaImageConfig `json:"ImageConfig,omitempty"`
+}
+type DuploLambdaImageConfig struct {
+	Command    []string `json:"Command,omitempty"`
+	EntryPoint []string `json:"EntryPoint,omitempty"`
+	WorkingDir string   `json:"WorkingDirectory,omitempty"`
+}
+
+type DuploLambdaEphemeralStorage struct {
+	Size int `json:"Size"`
 }
 
 // DuploLambdaCode is a Duplo SDK object that represents a lambda function's code.
