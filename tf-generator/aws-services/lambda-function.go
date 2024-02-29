@@ -126,6 +126,37 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 				envBody.SetAttributeValue("variables", cty.MapVal(newMap))
 			}
 
+			if lf.EphemeralStorage != nil {
+				envBlock := lfBody.AppendNewBlock("ephemeral_storage", nil)
+				envBody := envBlock.Body()
+				envBody.SetAttributeValue("size", cty.NumberIntVal(int64(lf.EphemeralStorage.Size)))
+			}
+
+			if lf.ImageConfigResponse != nil && lf.ImageConfigResponse.ImageConfig != nil {
+				imageConfig := lf.ImageConfigResponse.ImageConfig
+				envBlock := lfBody.AppendNewBlock("image_config", nil)
+				envBody := envBlock.Body()
+				var vals []cty.Value
+				for _, val := range imageConfig.Command {
+					vals = append(vals, cty.StringVal(val))
+				}
+				envBody.SetAttributeValue("command", cty.ListVal(vals))
+				vals = nil
+				for _, val := range imageConfig.EntryPoint {
+					vals = append(vals, cty.StringVal(val))
+				}
+				envBody.SetAttributeValue("entry_point", cty.ListVal(vals))
+				envBody.SetAttributeValue("working_directory", cty.StringVal(imageConfig.WorkingDir))
+			}
+
+			if lf.TracingConfig != nil {
+				tracingBlock := lfBody.AppendNewBlock("tracing_config", nil)
+				tracingBody := tracingBlock.Body()
+
+				modeBlock := tracingBody.AppendNewBlock("mode", nil)
+				modeBody := modeBlock.Body()
+				modeBody.SetAttributeValue("value", cty.StringVal(lf.TracingConfig.Mode.Value))
+			}
 			// Lambda Permission Resource
 			lfPermission, _ := client.LambdaPermissionGet(config.TenantId, lf.FunctionName)
 			if lfPermission != nil && len(*lfPermission) > 0 {
