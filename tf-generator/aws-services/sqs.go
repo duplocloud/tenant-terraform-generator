@@ -100,6 +100,7 @@ func (sqs *SQS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 						cty.StringVal("perMessageGroupId"))
 				}
 			}
+			sqsBody.SetAttributeValue("delay_seconds", cty.NumberIntVal(int64(sqs.DelaySeconds)))
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
