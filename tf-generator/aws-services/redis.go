@@ -130,7 +130,11 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 						cty.StringVal(redis.KMSKeyID))
 				}
 			}
-
+			if redis.EnableClusterMode {
+				redisBody.SetAttributeValue("enable_cluster_mode",
+					cty.BoolVal(redis.EnableClusterMode))
+				redisBody.SetAttributeValue("number_of_shards", cty.NumberIntVal(int64(redis.NumberOfShards)))
+			}
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
