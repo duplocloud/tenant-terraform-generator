@@ -117,8 +117,8 @@ func (ssmParams *SsmParams) Generate(config *common.Config, client *duplosdk.Cli
 				}
 			}
 
-			if ssmParam.Type == "SecureString" && config.EnableSecretPlaceholder {
-				ssmParamBody.SetAttributeValue("value" , cty.StringVal(config.K8sSecretPlaceholder))
+			if ssmParam.Type == "SecureString" {
+				ssmParamBody.SetAttributeValue("value", cty.StringVal(ssmParam.Value))
 			}
 
 			if len(ssmDetails.Description) > 0 {
