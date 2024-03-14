@@ -172,6 +172,11 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					rootBody.AppendNewline()
 				}
 			}
+
+			asgBody.SetAttributeValue("use_spot_instances", cty.BoolVal(asgProfile.UseSpotInstances))
+			if asgProfile.MaxSpotPrice != "" {
+				asgBody.SetAttributeValue("max_spot_price", cty.StringVal(asgProfile.MaxSpotPrice))
+			}
 			// TODO - Handle tags, network_interface
 			//fmt.Printf("%s", hclFile.Bytes())
 			_, err = tfFile.Write(hclFile.Bytes())
