@@ -50,6 +50,7 @@ type DuploRdsInstance struct {
 	DuploRdsRole                string   `json:"DuploRdsRole,omitempty"`
 	StorageType                 string   `json:"StorageType,omitempty"`
 	Iops                        int      `json:"Iops,omitempty"`
+	EnableIamAuth               bool     `json:"EnableIamAuth"`
 }
 
 // DuploRdsInstancePasswordChange is a Duplo SDK object that represents an RDS instance password change

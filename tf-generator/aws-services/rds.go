@@ -215,6 +215,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 				rdsBody.SetAttributeValue("storage_type", cty.StringVal(rds.StorageType))
 				rdsBody.SetAttributeValue("iops", cty.NumberIntVal(int64(rds.Iops)))
+				rdsBody.SetAttributeValue("enable_iam_auth", cty.BoolVal(rds.EnableIamAuth))
 				outVars := generateRdsOutputVars(varFullPrefix, resourceName, "duplocloud_rds_instance")
 				tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 				// Import all created resources.
