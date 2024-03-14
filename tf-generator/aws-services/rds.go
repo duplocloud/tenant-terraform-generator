@@ -213,6 +213,8 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				rdsBody.SetAttributeValue("multi_az",
 					cty.BoolVal(rds.MultiAZ))
 
+				rdsBody.SetAttributeValue("storage_type", cty.StringVal(rds.StorageType))
+				rdsBody.SetAttributeValue("iops", cty.NumberIntVal(int64(rds.Iops)))
 				outVars := generateRdsOutputVars(varFullPrefix, resourceName, "duplocloud_rds_instance")
 				tfContext.OutputVars = append(tfContext.OutputVars, outVars...)
 				// Import all created resources.

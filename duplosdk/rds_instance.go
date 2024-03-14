@@ -48,6 +48,8 @@ type DuploRdsInstance struct {
 	DBSubnetGroupName           string   `json:"DBSubnetGroupName,omitempty"`
 	ReadReplicaIdentifiers      []string `json:"ReadReplicaIdentifiers,omitempty"`
 	DuploRdsRole                string   `json:"DuploRdsRole,omitempty"`
+	StorageType                 string   `json:"StorageType,omitempty"`
+	Iops                        int      `json:"Iops,omitempty"`
 }
 
 // DuploRdsInstancePasswordChange is a Duplo SDK object that represents an RDS instance password change
