@@ -48,4 +48,6 @@ var AppGenerators = []Generator{
 	&app.K8sSecret{},
 	&app.K8sIngress{},
 	&app.K8sSecretProviderClass{},
+	&app.K8sCronJob{},
+	&app.K8sJob{},
 }
