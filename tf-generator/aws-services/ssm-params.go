@@ -118,7 +118,7 @@ func (ssmParams *SsmParams) Generate(config *common.Config, client *duplosdk.Cli
 			}
 
 			if ssmParam.Type == "SecureString" {
-				ssmParamBody.SetAttributeValue("value", cty.StringVal(ssmParam.Value))
+				ssmParamBody.SetAttributeValue("value", cty.StringVal(ssmDetails.Value))
 			}
 
 			if len(ssmDetails.Description) > 0 {
