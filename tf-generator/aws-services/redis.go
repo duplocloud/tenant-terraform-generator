@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -186,9 +187,16 @@ func generateRedisVars(duplo duplosdk.DuploEcacheInstance, prefix string) []comm
 	}
 	varConfigs["size"] = var2
 
+	ver := duplo.EngineVersion
+	if duplo.CacheType == 0 {
+		verSplit := strings.Split(duplo.EngineVersion, ".")
+		if verSplit[1] == "0" || verSplit[2] == "0" {
+			ver = verSplit[0] + "." + verSplit[1]
+		}
+	}
 	var3 := common.VarConfig{
 		Name:       prefix + "engine_version",
-		DefaultVal: duplo.EngineVersion,
+		DefaultVal: ver,
 		TypeVal:    "string",
 	}
 	varConfigs["engine_version"] = var3
