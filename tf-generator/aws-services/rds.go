@@ -84,7 +84,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 					},
 				})
 
-				name := shortName + "-${local.tenant_name}"
+				name := shortName
 				rdsNameTokens := hclwrite.Tokens{
 					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 					{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
@@ -144,7 +144,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				})
 				// rdsBody.SetAttributeValue("tenant_id",
 				// 	cty.StringVal(config.TenantId))
-				name := shortName + "-${local.tenant_name}"
+				name := shortName
 				rdsNameTokens := hclwrite.Tokens{
 					{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
 					{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
