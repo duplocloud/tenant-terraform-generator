@@ -108,8 +108,15 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					cty.StringVal(redis.AuthToken))
 			}
 			if len(redis.EngineVersion) > 0 {
-				redisBody.SetAttributeValue("engine_version",
-					cty.StringVal(redis.EngineVersion))
+
+				redisBody.SetAttributeTraversal("engine_version", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "engine_version",
+					},
+				})
 			}
 			if len(redis.ParameterGroupName) > 0 {
 				redisBody.SetAttributeValue("parameter_group_name",
@@ -178,6 +185,13 @@ func generateRedisVars(duplo duplosdk.DuploEcacheInstance, prefix string) []comm
 		TypeVal:    "string",
 	}
 	varConfigs["size"] = var2
+
+	var3 := common.VarConfig{
+		Name:       prefix + "engine_version",
+		DefaultVal: duplo.EngineVersion,
+		TypeVal:    "string",
+	}
+	varConfigs["engine_version"] = var3
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
