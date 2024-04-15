@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/terraform-exec/tfexec"
+	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -234,4 +235,20 @@ func IsInterfaceNilOrEmptyMap(v interface{}) bool {
 
 func GetDuploManagedAwsTags() []string {
 	return []string{"duplo-project", "TENANT_NAME"}
+}
+
+func StringSliceToListVal(ele []string) []cty.Value {
+	var ctyValues []cty.Value
+	for _, v := range ele {
+		ctyValues = append(ctyValues, cty.StringVal(v))
+	}
+	return ctyValues
+}
+
+func Int64SliceToListVal(ele []int64) []cty.Value {
+	var ctyValues []cty.Value
+	for _, v := range ele {
+		ctyValues = append(ctyValues, cty.NumberIntVal(v))
+	}
+	return ctyValues
 }
