@@ -42,7 +42,7 @@ func (k8sCronJob *K8sCronJob) Generate(config *common.Config, client *duplosdk.C
 		resourceName := common.GetResourceName(d.Metadata.Name)
 		rootBody := hclFile.Body()
 		cronJobBlock := rootBody.AppendNewBlock("resource",
-			[]string{"duplocloud_cron_job",
+			[]string{"duplocloud_k8s_cron_job",
 				resourceName})
 		cronjobBody := cronJobBlock.Body()
 		cronjobBody.SetAttributeTraversal("tenant_id", hcl.Traversal{
