@@ -35,3 +35,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 target/**
+
+ .idea/
+ env.sh
+ test_export.sh

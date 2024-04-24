@@ -26,21 +26,23 @@ type DuploDynamoDBTableV2 struct {
 	// NOTE: The TenantID field does not come from the backend - we synthesize it
 	TenantID string `json:"-"`
 
-	TableName              string                                      `json:"TableName"`
-	TableId                string                                      `json:"TableId"`
-	TableArn               string                                      `json:"TableArn,omitempty"`
-	KeySchema              *[]DuploDynamoDBKeySchema                   `json:"KeySchema,omitempty"`
-	AttributeDefinitions   *[]DuploDynamoDBAttributeDefinion           `json:"AttributeDefinitions,omitempty"`
-	TableStatus            *DuploStringValue                           `json:"TableStatus,omitempty"`
-	TableSizeBytes         int                                         `json:"TableSizeBytes,omitempty"`
-	LocalSecondaryIndexes  *[]DuploDynamoDBTableV2LocalSecondaryIndex  `json:"LocalSecondaryIndexes,omitempty"`
-	GlobalSecondaryIndexes *[]DuploDynamoDBTableV2GlobalSecondaryIndex `json:"GlobalSecondaryIndexes,omitempty"`
-	LatestStreamArn        string                                      `json:"LatestStreamArn,omitempty"`
-	LatestStreamLabel      string                                      `json:"LatestStreamLabel,omitempty"`
-	ProvisionedThroughput  *DuploDynamoDBProvisionedThroughput         `json:"ProvisionedThroughput,omitempty"`
-	SSEDescription         *DuploDynamoDBTableV2SSESpecification       `json:"SSEDescription,omitempty"`
-	StreamSpecification    *DuploDynamoDBTableV2StreamSpecification    `json:"StreamSpecification,omitempty"`
-	BillingModeSummary     *DuploDynamoDBTableV2BillingModeSummary     `json:"BillingModeSummary,omitempty"`
+	TableName                 string                                      `json:"TableName"`
+	TableId                   string                                      `json:"TableId"`
+	TableArn                  string                                      `json:"TableArn,omitempty"`
+	KeySchema                 *[]DuploDynamoDBKeySchema                   `json:"KeySchema,omitempty"`
+	AttributeDefinitions      *[]DuploDynamoDBAttributeDefinion           `json:"AttributeDefinitions,omitempty"`
+	TableStatus               *DuploStringValue                           `json:"TableStatus,omitempty"`
+	TableSizeBytes            int                                         `json:"TableSizeBytes,omitempty"`
+	LocalSecondaryIndexes     *[]DuploDynamoDBTableV2LocalSecondaryIndex  `json:"LocalSecondaryIndexes,omitempty"`
+	GlobalSecondaryIndexes    *[]DuploDynamoDBTableV2GlobalSecondaryIndex `json:"GlobalSecondaryIndexes,omitempty"`
+	LatestStreamArn           string                                      `json:"LatestStreamArn,omitempty"`
+	LatestStreamLabel         string                                      `json:"LatestStreamLabel,omitempty"`
+	ProvisionedThroughput     *DuploDynamoDBProvisionedThroughput         `json:"ProvisionedThroughput,omitempty"`
+	SSEDescription            *DuploDynamoDBTableV2SSESpecification       `json:"SSEDescription,omitempty"`
+	StreamSpecification       *DuploDynamoDBTableV2StreamSpecification    `json:"StreamSpecification,omitempty"`
+	BillingModeSummary        *DuploDynamoDBTableV2BillingModeSummary     `json:"BillingModeSummary,omitempty"`
+	DeletionProtectionEnabled bool                                        `json:"DeletionProtectionEnabled,omitempty"`
+	PointInTimeRecoveryStatus string                                      `json:"PointInTimeRecoveryStatus,omitempty"`
 }
 
 type DuploDynamoDBProvisionedThroughput struct {
