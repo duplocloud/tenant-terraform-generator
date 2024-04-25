@@ -82,13 +82,15 @@ func (k8sCronJob *K8sCronJob) Generate(config *common.Config, client *duplosdk.C
 }
 
 func flattenMetadata(meta metav1.ObjectMeta, metaBody *hclwrite.Body) {
-
-	metaBody.SetAttributeValue("name", cty.StringVal(meta.Name))
-	metaBody.SetAttributeValue("resource_version", cty.StringVal(meta.ResourceVersion))
-	uid := fmt.Sprintf("%v", meta.UID)
-	metaBody.SetAttributeValue("uid", cty.StringVal(uid))
-	metaBody.SetAttributeValue("generate_name", cty.StringVal(meta.GenerateName))
-	metaBody.SetAttributeValue("namespace", cty.StringVal(meta.Namespace))
+	if meta.Name != "" {
+		metaBody.SetAttributeValue("name", cty.StringVal(meta.Name))
+	}
+	if meta.GenerateName != "" {
+		metaBody.SetAttributeValue("generate_name", cty.StringVal(meta.GenerateName))
+	}
+	if meta.Namespace != "" {
+		metaBody.SetAttributeValue("namespace", cty.StringVal(meta.Namespace))
+	}
 	m := make(map[string]cty.Value)
 	if meta.Annotations != nil {
 		for key, val := range meta.Annotations {
@@ -277,15 +279,20 @@ func flattenPodSpec(spec corev1.PodSpec, specBody *hclwrite.Body) {
 	}
 	serviceAccountRegex := fmt.Sprintf("%s-token-([a-z0-9]{5})", serviceAccountName)
 	//containers
-	containerBody := specBody.AppendNewBlock("container", nil).Body()
-	flattenContainers(spec.Containers, containerBody, serviceAccountRegex)
+	if len(spec.Containers) > 0 {
+		containerBody := specBody.AppendNewBlock("container", nil).Body()
+		flattenContainers(spec.Containers, containerBody, serviceAccountRegex)
+	}
 	//gates
-	gatesBody := specBody.AppendNewBlock("readiness_gate", nil).Body()
-	flattenReadinessGates(spec.ReadinessGates, gatesBody)
+	if len(spec.ReadinessGates) > 0 {
+		gatesBody := specBody.AppendNewBlock("readiness_gate", nil).Body()
+		flattenReadinessGates(spec.ReadinessGates, gatesBody)
+	}
 	//init_container
-	initContainerBody := specBody.AppendNewBlock("container", nil).Body()
-	flattenContainers(spec.InitContainers, initContainerBody, serviceAccountRegex)
-
+	if len(spec.InitContainers) > 0 {
+		initContainerBody := specBody.AppendNewBlock("init_container", nil).Body()
+		flattenContainers(spec.InitContainers, initContainerBody, serviceAccountRegex)
+	}
 	//image_pull_secrets
 	if len(spec.ImagePullSecrets) > 0 {
 		specBody.SetAttributeValue("image_pull_secrets", cty.ListVal(flattenLocalObjectReferenceArray(spec.ImagePullSecrets)))
@@ -417,8 +424,12 @@ func flattenReadinessGates(in []corev1.PodReadinessGate, gateBody *hclwrite.Body
 
 func flattenContainers(container []corev1.Container, containerBody *hclwrite.Body, serviceAccountRegex string) {
 	for _, v := range container {
-		containerBody.SetAttributeValue("image", cty.StringVal(v.Image))
-		containerBody.SetAttributeValue("name", cty.StringVal(v.Name))
+		if v.Image != "" {
+			containerBody.SetAttributeValue("image", cty.StringVal(v.Image))
+		}
+		if v.Name != "" {
+			containerBody.SetAttributeValue("name", cty.StringVal(v.Name))
+		}
 		if len(v.Command) > 0 {
 			containerBody.SetAttributeValue("command", cty.ListVal(common.StringSliceToListVal(v.Command)))
 		}
