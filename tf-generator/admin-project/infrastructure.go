@@ -113,32 +113,6 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 	return &tfContext, nil
 }
 
-func generateInfraOutputVars(duplo duplosdk.DuploInfrastructureConfig, prefix, resourceName string) []common.OutputVarConfig {
-	outVarConfigs := make(map[string]common.OutputVarConfig)
-
-	fullNameVar := common.OutputVarConfig{
-		Name:          prefix + "fullname",
-		ActualVal:     "duplocloud_s3_bucket." + resourceName + ".fullname",
-		DescVal:       "The full name of the S3 bucket.",
-		RootTraversal: true,
-	}
-	outVarConfigs["fullname"] = fullNameVar
-
-	arnVar := common.OutputVarConfig{
-		Name:          prefix + "arn",
-		ActualVal:     "duplocloud_s3_bucket." + resourceName + ".arn",
-		DescVal:       "The ARN of the S3 bucket.",
-		RootTraversal: true,
-	}
-	outVarConfigs["arn"] = arnVar
-
-	outVars := make([]common.OutputVarConfig, len(outVarConfigs))
-	for _, v := range outVarConfigs {
-		outVars = append(outVars, v)
-	}
-	return outVars
-}
-
 func generateInfraVars(duplo *duplosdk.DuploInfrastructureConfig, prefix string) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig)
 
