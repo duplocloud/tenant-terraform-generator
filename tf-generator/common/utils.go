@@ -252,3 +252,12 @@ func Int64SliceToListVal(ele []int64) []cty.Value {
 	}
 	return ctyValues
 }
+
+func MapStringToMapVal(m map[string]string) map[string]cty.Value {
+	mp := make(map[string]cty.Value)
+	for key, val := range m {
+		mp[key] = cty.StringVal(val)
+	}
+	return mp
+
+}

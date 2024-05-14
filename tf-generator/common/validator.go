@@ -72,7 +72,10 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 	if len(appProject) == 0 {
 		appProject = "app"
 	}
-
+	adminProject := os.Getenv("admin_project")
+	if len(adminProject) == 0 {
+		adminProject = "admin-project"
+	}
 	generateTfState := false
 
 	generateTfStateStr := os.Getenv("generate_tf_state")
@@ -150,6 +153,14 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		skipApp, _ = strconv.ParseBool(skipAppStr)
 	}
 
+	skipAdminProject := false
+	skipAdminProjectStr := os.Getenv("skip_admin_project")
+	if len(skipAdminProjectStr) == 0 {
+		skipAdminProject = false
+	} else {
+		skipAdminProject, _ = strconv.ParseBool(skipAdminProjectStr)
+	}
+
 	return &Config{
 		DuploHost:               host,
 		DuploToken:              token,
@@ -168,5 +179,6 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		SkipApp:                 skipApp,
 		EnableSecretPlaceholder: enableSecretPlaceholder,
 		K8sSecretPlaceholder:    k8sSecretPlaceholder,
+		SkipAdminProject:        skipAdminProject,
 	}, nil
 }

@@ -22,16 +22,19 @@ type DuploEksCredentials struct {
 
 // DuploInfrastructure represents a Duplo infrastructure
 type DuploInfrastructure struct {
-	Name               string                 `json:"Name"`
-	AccountId          string                 `json:"AccountId"`
-	Cloud              int                    `json:"Cloud"`
-	Region             string                 `json:"Region"`
-	AzCount            int                    `json:"AzCount"`
-	EnableK8Cluster    bool                   `json:"EnableK8Cluster"`
-	AddressPrefix      string                 `json:"AddressPrefix"`
-	SubnetCidr         int                    `json:"SubnetCidr"`
-	ProvisioningStatus string                 `json:"ProvisioningStatus"`
-	CustomData         *[]DuploKeyStringValue `json:"CustomData,omitempty"`
+	Name                    string                 `json:"Name"`
+	AccountId               string                 `json:"AccountId"`
+	Cloud                   int                    `json:"Cloud"`
+	Region                  string                 `json:"Region"`
+	AzCount                 int                    `json:"AzCount"`
+	EnableK8Cluster         bool                   `json:"EnableK8Cluster"`
+	AddressPrefix           string                 `json:"AddressPrefix"`
+	SubnetCidr              int                    `json:"SubnetCidr"`
+	ProvisioningStatus      string                 `json:"ProvisioningStatus"`
+	CustomData              *[]DuploKeyStringValue `json:"CustomData,omitempty"`
+	IsServerlessKubernetes  bool                   `json:"IsServerlessKubernetes,omitempty"`
+	EnableECSCluster        bool                   `json:"EnableECSCluster,omitempty"`
+	EnableContainerInsights bool                   `json:"EnableContainerInsights,omitempty"`
 }
 
 // DuploInfrastructureVnet represents a Duplo infrastructure VNET subnet
@@ -83,14 +86,18 @@ type DuploInfrastructureVnet struct {
 
 // DuploInfrastructure represents extended information about a Duplo infrastructure
 type DuploInfrastructureConfig struct {
-	Name               string                   `json:"Name"`
-	AccountId          string                   `json:"AccountId"`
-	Cloud              int                      `json:"Cloud"`
-	Region             string                   `json:"Region"`
-	AzCount            int                      `json:"AzCount"`
-	EnableK8Cluster    bool                     `json:"EnableK8Cluster"`
-	Vnet               *DuploInfrastructureVnet `json:"Vnet"`
-	ProvisioningStatus string                   `json:"ProvisioningStatus"`
+	Name                    string                   `json:"Name"`
+	AccountId               string                   `json:"AccountId"`
+	Cloud                   int                      `json:"Cloud"`
+	Region                  string                   `json:"Region"`
+	AzCount                 int                      `json:"AzCount"`
+	EnableK8Cluster         bool                     `json:"EnableK8Cluster"`
+	EnableECSCluster        bool                     `json:"EnableECSCluster"`
+	EnableContainerInsights bool                     `json:"EnableContainerInsights"`
+	IsServerlessKubernetes  bool                     `json:"IsServerlessKubernetes"`
+	Vnet                    *DuploInfrastructureVnet `json:"Vnet"`
+	ProvisioningStatus      string                   `json:"ProvisioningStatus"`
+	CustomData              *[]DuploKeyStringValue   `json:"CustomData,omitempty"`
 }
 
 // InfrastructureGetList retrieves a list of infrastructures via the Duplo API.

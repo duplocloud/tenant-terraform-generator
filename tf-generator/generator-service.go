@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
+	adminproject "tenant-terraform-generator/tf-generator/admin-project"
 	"tenant-terraform-generator/tf-generator/app"
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
@@ -76,9 +77,10 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 		log.Fatal(err)
 	}
 	var mapToRepalce = map[string]string{
-		"<--admin-tenant-->": config.TenantProject,
-		"<--aws-services-->": config.AwsServicesProject,
-		"<--app-->":          config.AppProject,
+		"<--admin-tenant-->":  config.TenantProject,
+		"<--aws-services-->":  config.AwsServicesProject,
+		"<--app-->":           config.AppProject,
+		"<--admin-project-->": config.AdminProject,
 	}
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "plan.sh"), mapToRepalce)
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "apply.sh"), mapToRepalce)
@@ -100,6 +102,45 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 	if _, err := envFile.WriteString("\nexport tenant_id=\"" + config.TenantId + "\""); err != nil {
 		log.Fatal(err)
 	}
+	//========
+
+	config.AdminProjectPath = filepath.Join("target", config.CustomerName, "admin-project")
+	adminProject := filepath.Join(config.AdminProjectPath + "/terraform")
+	err = os.RemoveAll(config.AdminProjectPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//	err = os.RemoveAll(filepath.Join("target", config.CustomerName))
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	err = os.RemoveAll(adminProject)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	err = os.MkdirAll(adminProject, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	adminScriptsPath := filepath.Join(config.AdminProjectPath, "/scripts")
+	err = os.RemoveAll(adminScriptsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.MkdirAll(adminScriptsPath, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = duplosdk.CopyDirectory("./scripts", adminScriptsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "plan.sh"), mapToRepalce)
+	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "apply.sh"), mapToRepalce)
+	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "destroy.sh"), mapToRepalce)
+
+	config.AdminProjectDir = adminProject
+
 	log.Println("[TRACE] <====== Initialized target directory with customer name and tenant id. =====>")
 	return nil
 }
@@ -156,6 +197,21 @@ func (tfg *TfGeneratorService) StartTFGeneration(config *common.Config, client *
 		}
 		log.Println("[TRACE] <====== End TF generation for app project. =====>")
 	}
+
+	if !config.SkipAdminProject {
+		log.Println("[TRACE] <====== Start TF generation for Admin project. =====>")
+		// Register New TF generator for Admin Services project
+		adminProjectGeneratorList := AdminProjectGenerator
+		if config.S3Backend {
+			adminProjectGeneratorList = append(adminProjectGeneratorList, &adminproject.Infra{})
+		}
+		fmt.Println("adminProjectGeneratorList ", adminProjectGeneratorList)
+		starTFGenerationForProject(config, client, adminProjectGeneratorList, config.AdminProjectDir)
+		if config.ValidateTf {
+			common.ValidateAndFormatTfCode(config.AdminProjectDir, config.TFVersion)
+		}
+		log.Println("[TRACE] <====== End TF generation for Admin project. =====>")
+	}
 	return nil
 }
 
@@ -166,13 +222,14 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 		InputVars:      []common.VarConfig{},
 		OutputVars:     []common.OutputVarConfig{},
 	}
-
+	fmt.Println("TF context ", tfContext)
 	// 1. Generate Duplo TF resources.
 	for _, g := range generatorList {
 		c, err := g.Generate(config, client)
 		if err != nil {
 			log.Fatalf("error running admin tenant tf generation: %s", err)
 		}
+		fmt.Println("Checking tf context ", c)
 		if c != nil {
 			if len(c.InputVars) > 0 {
 				tfContext.InputVars = append(tfContext.InputVars, c.InputVars...)
@@ -185,12 +242,15 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 			}
 		}
 	}
+	fmt.Println("Checking tf context input vars")
+
 	// 2. Generate input vars.
 	if len(tfContext.InputVars) > 0 {
 		varsGenerator := common.Vars{
 			TargetLocation: tfContext.TargetLocation,
 			Vars:           tfContext.InputVars,
 		}
+		fmt.Println("\n*************\nInput Vars Generator ", varsGenerator, "\n************")
 		varsGenerator.Generate()
 	}
 	// 3. Generate output vars.
