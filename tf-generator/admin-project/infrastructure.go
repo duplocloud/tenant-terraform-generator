@@ -49,7 +49,7 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 
 			// initialize the body of the new file object
 			infraBlock := rootBody.AppendNewBlock("resource",
-				[]string{"duplocloud_infrastructure", resourceName})
+				[]string{"duplocloud_infrastructure", "infra"})
 
 			infraBody := infraBlock.Body()
 			infraBody.SetAttributeValue("infra_name", cty.StringVal(infra.Name))
@@ -94,6 +94,15 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 			}
 
 			_, err = tfFile.Write(hclFile.Bytes())
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			is := InfraSubnet{
+				InfraName: v.Name,
+				Subnets:   *infra.Vnet.Subnets,
+			}
+			_, err = is.Generate(config, nil)
 			if err != nil {
 				fmt.Println(err)
 				return nil, err
