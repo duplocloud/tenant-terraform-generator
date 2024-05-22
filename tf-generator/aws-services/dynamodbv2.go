@@ -74,6 +74,14 @@ func (dynamodb *DynamoDB) Generate(config *common.Config, client *duplosdk.Clien
 			dynamodbBody.SetAttributeValue("name",
 				cty.StringVal(shortName))
 
+			if dynamodbInfo.DeletionProtectionEnabled {
+				dynamodbBody.SetAttributeValue("deletion_protection_enabled", cty.BoolVal(true))
+			}
+
+			if dynamodbInfo.PointInTimeRecoveryStatus == "ENABLED" {
+				dynamodbBody.SetAttributeValue("is_point_in_time_recovery", cty.BoolVal(true))
+			}
+
 			if dynamodbInfo.BillingModeSummary != nil && dynamodbInfo.BillingModeSummary.BillingMode != nil {
 				dynamodbBody.SetAttributeValue("billing_mode",
 					cty.StringVal(dynamodbInfo.BillingModeSummary.BillingMode.Value))
