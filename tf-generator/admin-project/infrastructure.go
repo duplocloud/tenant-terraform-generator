@@ -107,6 +107,14 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 				fmt.Println(err)
 				return nil, err
 			}
+			p := PlanConfig{
+				InfraName: v.Name,
+			}
+			_, err = p.Generate(config, client)
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
@@ -141,7 +149,7 @@ func generateInfraVars(duplo *duplosdk.DuploInfrastructureConfig, prefix string)
 
 	var3 := common.VarConfig{
 		Name:       prefix + "address_prefix",
-		DefaultVal: duplo.Region,
+		DefaultVal: duplo.Vnet.AddressPrefix,
 		TypeVal:    "string",
 	}
 	varConfigs["address_prefix"] = var3
