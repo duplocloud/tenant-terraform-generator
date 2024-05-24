@@ -56,40 +56,31 @@ func (p PlanWaf) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	}
 	resourceName := common.GetResourceName(p.InfraName)
 	rootBody := hclFile.Body()
+	for _, waf := range *planWAF {
+		// initialize the body of the new file object
+		planBlock := rootBody.AppendNewBlock("resource",
+			[]string{"duplocloud_plan_waf", "plan_waf" + waf.WebAclName})
 
-	// initialize the body of the new file object
-	planBlock := rootBody.AppendNewBlock("resource",
-		[]string{"duplocloud_plan_waf", "plan_waf"})
+		palnBody := planBlock.Body()
+		palnBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
+		palnBody.SetAttributeValue("waf_arn", cty.StringVal(waf.WebAclId))
+		palnBody.SetAttributeValue("waf_name", cty.StringVal(waf.WebAclName))
+		palnBody.SetAttributeValue("dashboard_url", cty.StringVal(waf.DashboardUrl))
 
-	palnBody := planBlock.Body()
-	palnBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
-	if planWAF != nil && len(*planWAF) > 0 {
-		vals := make([]cty.Value, 0, len(*planWAF))
-		for _, v := range *planWAF {
-			m := make(map[string]string)
-			m["waf_name"] = v.WebAclName
-			m["waf_arn"] = v.WebAclId
-			m["dashboard_url"] = v.DashboardUrl
-			om := common.MapStringToMapVal(m)
-			val := cty.ObjectVal(om)
-			vals = append(vals, val)
+		_, err = tfFile.Write(hclFile.Bytes())
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
 		}
-		palnBody.SetAttributeValue("waf", cty.ListVal(vals))
+		if config.GenerateTfState {
+			importConfigs := []common.ImportConfig{}
+			importConfigs = append(importConfigs, common.ImportConfig{
+				ResourceAddress: "duplocloud_plan_waf." + resourceName,
+				ResourceId:      p.InfraName,
+				WorkingDir:      workingDir,
+			})
+			tfContext.ImportConfigs = importConfigs
+		}
 	}
-	_, err = tfFile.Write(hclFile.Bytes())
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	if config.GenerateTfState {
-		importConfigs := []common.ImportConfig{}
-		importConfigs = append(importConfigs, common.ImportConfig{
-			ResourceAddress: "duplocloud_plan_waf." + resourceName,
-			ResourceId:      p.InfraName,
-			WorkingDir:      workingDir,
-		})
-		tfContext.ImportConfigs = importConfigs
-	}
-
 	return &tfContext, nil
 }
