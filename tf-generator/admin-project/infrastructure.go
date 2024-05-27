@@ -133,6 +133,16 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 				fmt.Println(err)
 				return nil, err
 			}
+
+			ps := PlanSetting{
+				InfraName: v.Name,
+			}
+			_, err = ps.Generate(config, client)
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+
 			if config.GenerateTfState {
 				importConfigs := []common.ImportConfig{}
 				importConfigs = append(importConfigs, common.ImportConfig{
