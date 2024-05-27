@@ -82,3 +82,20 @@ func (c *Client) PlanMetadataGetList(planID string) (*[]DuploKeyStringValue, Cli
 	}
 	return &list, nil
 }
+
+type DuploPlanImage struct {
+	Name     string                 `json:"Name"`
+	ImageId  string                 `json:"ImageId,omitempty"`
+	OS       string                 `json:"OS,omitempty"`
+	Tags     *[]DuploKeyStringValue `json:"Tags,omitempty"`
+	Username string                 `json:"Username,omitempty"`
+}
+
+func (c *Client) PlanImageGetList(planID string) (*[]DuploPlanImage, ClientError) {
+	list := []DuploPlanImage{}
+	err := c.getAPI(fmt.Sprintf("PlanImageGetList(%s)", planID), fmt.Sprintf("v3/admin/plans/%s/images", planID), &list)
+	if err != nil {
+		return nil, err
+	}
+	return &list, nil
+}
