@@ -62,21 +62,17 @@ func (p PlanConfig) Generate(config *common.Config, client *duplosdk.Client) (*c
 	planBlock := rootBody.AppendNewBlock("resource",
 		[]string{"duplocloud_plan_configs", "plan_config"})
 
-	palnBody := planBlock.Body()
-	palnBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
-	palnBody.SetAttributeValue("delete_unspecified_configs", cty.BoolVal(false))
+	planBody := planBlock.Body()
+	planBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
+	planBody.SetAttributeValue("delete_unspecified_configs", cty.BoolVal(false))
 	if planConfig != nil && len(*planConfig) > 0 {
-		vals := make([]cty.Value, 0, len(*planConfig))
 		for _, v := range *planConfig {
-			m := make(map[string]string)
-			m["key"] = v.Key
-			m["value"] = v.Value
-			m["type"] = v.Type
-			om := common.MapStringToMapVal(m)
-			val := cty.ObjectVal(om)
-			vals = append(vals, val)
+			conf := planBody.AppendNewBlock("config", nil).Body()
+			conf.SetAttributeValue("key", cty.StringVal(v.Key))
+			conf.SetAttributeValue("value", cty.StringVal(v.Value))
+			conf.SetAttributeValue("type", cty.StringVal(v.Type))
+
 		}
-		palnBody.SetAttributeValue("config", cty.ListVal(vals))
 	}
 	_, err = tfFile.Write(hclFile.Bytes())
 	if err != nil {
