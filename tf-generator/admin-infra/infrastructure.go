@@ -1,4 +1,4 @@
-package adminproject
+package admininfra
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ const INFRA_VAR_PREFIX = "infra_"
 func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
 	infras, _ := client.InfrastructureGetList()
-	workingDir := filepath.Join(config.AdminProjectDir, config.AdminProject)
+	workingDir := filepath.Join(config.AdminInfraDir, config.AdminInfra)
 
 	tfContext := common.TFContext{}
 	if infras != nil {

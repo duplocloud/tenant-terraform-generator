@@ -28,10 +28,10 @@ type Config struct {
 	DuploDefaultPlanRegion  string
 	EnableSecretPlaceholder bool
 	K8sSecretPlaceholder    string
-	AdminProject            string
-	AdminProjectPath        string
-	AdminProjectDir         string
-	SkipAdminProject        bool
+	AdminInfra              string
+	AdminInfraPath          string
+	AdminInfraDir           string
+	SkipAdminInfra          bool
 }
 
 type TFContext struct {

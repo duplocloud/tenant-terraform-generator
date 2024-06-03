@@ -1,4 +1,4 @@
-package adminproject
+package admininfra
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ const INFRASUBNET_VAR_PREFIX = "infra_subnet_"
 
 func (i InfraSubnet) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
-	workingDir := filepath.Join(config.AdminProjectDir, config.AdminProject)
+	workingDir := filepath.Join(config.AdminInfraDir, config.AdminInfra)
 
 	tfContext := common.TFContext{}
 	if i.Subnets != nil {

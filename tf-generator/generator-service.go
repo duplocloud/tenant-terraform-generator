@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
-	adminproject "tenant-terraform-generator/tf-generator/admin-project"
+	adminInfra "tenant-terraform-generator/tf-generator/admin-infra"
 	"tenant-terraform-generator/tf-generator/app"
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
@@ -77,10 +77,10 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 		log.Fatal(err)
 	}
 	var mapToRepalce = map[string]string{
-		"<--admin-tenant-->":  config.TenantProject,
-		"<--aws-services-->":  config.AwsServicesProject,
-		"<--app-->":           config.AppProject,
-		"<--admin-project-->": config.AdminProject,
+		"<--admin-tenant-->": config.TenantProject,
+		"<--aws-services-->": config.AwsServicesProject,
+		"<--app-->":          config.AppProject,
+		"<--admin-infra-->":  config.AdminInfra,
 	}
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "plan.sh"), mapToRepalce)
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "apply.sh"), mapToRepalce)
@@ -104,9 +104,9 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 	}
 	//========
 
-	config.AdminProjectPath = filepath.Join("target", config.CustomerName, "admin-project")
-	adminProject := filepath.Join(config.AdminProjectPath + "/terraform")
-	err = os.RemoveAll(config.AdminProjectPath)
+	config.AdminInfraPath = filepath.Join("target", config.CustomerName, "admin-infra")
+	adminInfra := filepath.Join(config.AdminInfraPath + "/terraform")
+	err = os.RemoveAll(config.AdminInfraPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,15 +114,15 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 	//	if err != nil {
 	//		log.Fatal(err)
 	//	}
-	//	err = os.RemoveAll(adminProject)
+	//	err = os.RemoveAll(adminInfra)
 	//	if err != nil {
 	//		log.Fatal(err)
 	//	}
-	err = os.MkdirAll(adminProject, os.ModePerm)
+	err = os.MkdirAll(adminInfra, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
-	adminScriptsPath := filepath.Join(config.AdminProjectPath, "/scripts")
+	adminScriptsPath := filepath.Join(config.AdminInfraPath, "/scripts")
 	err = os.RemoveAll(adminScriptsPath)
 	if err != nil {
 		log.Fatal(err)
@@ -139,7 +139,7 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "apply.sh"), mapToRepalce)
 	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "destroy.sh"), mapToRepalce)
 
-	config.AdminProjectDir = adminProject
+	config.AdminInfraDir = adminInfra
 
 	log.Println("[TRACE] <====== Initialized target directory with customer name and tenant id. =====>")
 	return nil
@@ -198,17 +198,17 @@ func (tfg *TfGeneratorService) StartTFGeneration(config *common.Config, client *
 		log.Println("[TRACE] <====== End TF generation for app project. =====>")
 	}
 
-	if !config.SkipAdminProject {
+	if !config.SkipAdminInfra {
 		log.Println("[TRACE] <====== Start TF generation for Admin project. =====>")
 		// Register New TF generator for Admin Services project
-		adminProjectGeneratorList := AdminProjectGenerator
+		adminInfraGeneratorList := AdminInfraGenerator
 		if config.S3Backend {
-			adminProjectGeneratorList = append(adminProjectGeneratorList, &adminproject.Infra{})
+			adminInfraGeneratorList = append(adminInfraGeneratorList, &adminInfra.Infra{})
 		}
-		fmt.Println("adminProjectGeneratorList ", adminProjectGeneratorList)
-		starTFGenerationForProject(config, client, adminProjectGeneratorList, config.AdminProjectDir)
+		fmt.Println("adminInfraGeneratorList ", adminInfraGeneratorList)
+		starTFGenerationForProject(config, client, adminInfraGeneratorList, config.AdminInfraDir)
 		if config.ValidateTf {
-			common.ValidateAndFormatTfCode(config.AdminProjectDir, config.TFVersion)
+			common.ValidateAndFormatTfCode(config.AdminInfraDir, config.TFVersion)
 		}
 		log.Println("[TRACE] <====== End TF generation for Admin project. =====>")
 	}

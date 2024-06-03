@@ -1,4 +1,4 @@
-package adminproject
+package admininfra
 
 import (
 	"errors"
@@ -18,7 +18,7 @@ type PlanSetting struct {
 
 func (p PlanSetting) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
-	workingDir := filepath.Join(config.AdminProjectDir, config.AdminProject)
+	workingDir := filepath.Join(config.AdminInfraDir, config.AdminInfra)
 	planSetting, clientErr := client.PlanGetSettings(p.InfraName)
 	if clientErr != nil {
 		return nil, errors.New(clientErr.Error())

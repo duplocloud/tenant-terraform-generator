@@ -1,4 +1,4 @@
-package adminproject
+package admininfra
 
 import (
 	"errors"
@@ -12,34 +12,13 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-/*
-"plan_id": {
-	Description: "The ID of the plan to configure.",
-	Type:        schema.TypeString,
-	Required:    true,
-	ForceNew:    true,
-},
-"config": {
-	Description: "A list of configs to manage.",
-	Type:        schema.TypeList,
-	Optional:    true,
-	Elem:        CustomDataExSchema(),
-},
-"delete_unspecified_configs": {
-	Description: "Whether or not this resource should delete any configs not specified by this resource. " +
-		"**WARNING:**  It is not recommended to change the default value of `false`.",
-	Type:     schema.TypeBool,
-	Optional: true,
-	Default:  false,
-*/
-
 type PlanConfig struct {
 	InfraName string
 }
 
 func (p PlanConfig) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
-	workingDir := filepath.Join(config.AdminProjectDir, config.AdminProject)
+	workingDir := filepath.Join(config.AdminInfraDir, config.AdminInfra)
 	planConfig, clientErr := client.PlanConfigGetList(p.InfraName)
 	if clientErr != nil {
 		return nil, errors.New(clientErr.Error())

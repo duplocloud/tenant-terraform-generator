@@ -72,9 +72,9 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 	if len(appProject) == 0 {
 		appProject = "app"
 	}
-	adminProject := os.Getenv("admin_project")
-	if len(adminProject) == 0 {
-		adminProject = "admin-project"
+	admininfra := os.Getenv("admin_infra")
+	if len(admininfra) == 0 {
+		admininfra = "admin-infra"
 	}
 	generateTfState := false
 
@@ -153,12 +153,12 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		skipApp, _ = strconv.ParseBool(skipAppStr)
 	}
 
-	skipAdminProject := false
-	skipAdminProjectStr := os.Getenv("skip_admin_project")
-	if len(skipAdminProjectStr) == 0 {
-		skipAdminProject = false
+	skipAdminInfra := false
+	skipAdminInfraStr := os.Getenv("skip_admin_infra")
+	if len(skipAdminInfraStr) == 0 {
+		skipAdminInfra = false
 	} else {
-		skipAdminProject, _ = strconv.ParseBool(skipAdminProjectStr)
+		skipAdminInfra, _ = strconv.ParseBool(skipAdminInfraStr)
 	}
 
 	return &Config{
@@ -179,6 +179,6 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		SkipApp:                 skipApp,
 		EnableSecretPlaceholder: enableSecretPlaceholder,
 		K8sSecretPlaceholder:    k8sSecretPlaceholder,
-		SkipAdminProject:        skipAdminProject,
+		SkipAdminInfra:          skipAdminInfra,
 	}, nil
 }

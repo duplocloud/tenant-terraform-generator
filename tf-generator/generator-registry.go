@@ -1,7 +1,7 @@
 package tfgenerator
 
 import (
-	adminproject "tenant-terraform-generator/tf-generator/admin-project"
+	adminInfra "tenant-terraform-generator/tf-generator/admin-infra"
 	"tenant-terraform-generator/tf-generator/app"
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/tenant"
@@ -53,6 +53,6 @@ var AppGenerators = []Generator{
 	&app.K8sJob{},
 }
 
-var AdminProjectGenerator = []Generator{
-	&adminproject.Infra{},
+var AdminInfraGenerator = []Generator{
+	&adminInfra.Infra{},
 }

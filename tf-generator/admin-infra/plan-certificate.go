@@ -1,4 +1,4 @@
-package adminproject
+package admininfra
 
 import (
 	"errors"
@@ -12,14 +12,14 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-type PlanImage struct {
+type PlanCertificate struct {
 	InfraName string
 }
 
-func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
+func (p PlanCertificate) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
-	workingDir := filepath.Join(config.AdminProjectDir, config.AdminProject)
-	planImg, clientErr := client.PlanImageGetList(p.InfraName)
+	workingDir := filepath.Join(config.AdminInfraDir, config.AdminInfra)
+	planCert, clientErr := client.PlanCertificateGetList(p.InfraName)
 	if clientErr != nil {
 		return nil, errors.New(clientErr.Error())
 	}
@@ -36,23 +36,18 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 	resourceName := common.GetResourceName(p.InfraName)
 	rootBody := hclFile.Body()
 	// initialize the body of the new file object
-	for _, val := range *planImg {
-		planBlock := rootBody.AppendNewBlock("resource",
-			[]string{"duplocloud_plan_image", "image-" + val.Name})
-		planBody := planBlock.Body()
-		planBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
-		planBody.SetAttributeValue("delete_unspecified_images", cty.BoolVal(false))
-		image := planBody.AppendNewBlock("image", nil).Body()
-		image.SetAttributeValue("name", cty.StringVal(val.Name))
-		image.SetAttributeValue("image_id", cty.StringVal(val.ImageId))
-		image.SetAttributeValue("os", cty.StringVal(val.OS))
-		image.SetAttributeValue("username", cty.StringVal(val.Username))
-		for _, v := range *val.Tags {
-			tag := planBody.AppendNewBlock("tags", nil).Body()
-			tag.SetAttributeValue("key", cty.StringVal(v.Key))
-			tag.SetAttributeValue("value", cty.StringVal(v.Value))
-		}
+	planBlock := rootBody.AppendNewBlock("resource",
+		[]string{"duplocloud_plan_certificate", "plan_cert"})
 
+	planBody := planBlock.Body()
+	planBody.SetAttributeValue("plan_id", cty.StringVal(p.InfraName))
+	planBody.SetAttributeValue("delete_unspecified_certificates", cty.BoolVal(false))
+	if planCert != nil && len(*planCert) > 0 {
+		for _, v := range *planCert {
+			cert := planBody.AppendNewBlock("certificate", nil).Body()
+			cert.SetAttributeValue("name", cty.StringVal(v.CertificateName))
+			cert.SetAttributeValue("id", cty.StringVal(v.CertificateArn))
+		}
 	}
 
 	_, err = tfFile.Write(hclFile.Bytes())
