@@ -79,14 +79,14 @@ func (t *Tenant) Generate(config *common.Config, client *duplosdk.Client) (*comm
 			Name: "infra_name",
 		},
 	})
-	//localsBlockBody.SetAttributeTraversal("cert_arn", hcl.Traversal{
-	//	hcl.TraverseRoot{
-	//		Name: "var",
-	//	},
-	//	hcl.TraverseAttr{
-	//		Name: "cert_arn",
-	//	},
-	//})
+	localsBlockBody.SetAttributeTraversal("cert_arn", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "var",
+		},
+		hcl.TraverseAttr{
+			Name: "cert_arn",
+		},
+	})
 	localsBlockBody.SetAttributeTraversal("tenant_name", hcl.Traversal{
 		hcl.TraverseRoot{
 			Name: "terraform",
@@ -222,12 +222,11 @@ func generateTenantVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.Duplo
 	}
 	varConfigs["infra_name"] = infraVar
 
-	//certVar := common.VarConfig{
-	//	Name:    "cert_arn",
-	//	TypeVal: "string",
-	//
-	//}
-	//varConfigs["cert_arn"] = certVar
+	certVar := common.VarConfig{
+		Name:    "cert_arn",
+		TypeVal: "string",
+	}
+	varConfigs["cert_arn"] = certVar
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
@@ -261,13 +260,13 @@ func generateTenantOutputVars(workingDir string) []common.OutputVarConfig {
 	}
 	outVarConfigs["tenant_id"] = tenantIdVar
 
-	//certVar := common.OutputVarConfig{
-	//	Name:          "cert_arn",
-	//	ActualVal:     "var.cert_arn",
-	//	DescVal:       "The duplo plan certificate arn.",
-	//	RootTraversal: true,
-	//}
-	//outVarConfigs["cert_arn"] = certVar
+	certVar := common.OutputVarConfig{
+		Name:          "cert_arn",
+		ActualVal:     "var.cert_arn",
+		DescVal:       "The duplo plan certificate arn.",
+		RootTraversal: true,
+	}
+	outVarConfigs["cert_arn"] = certVar
 
 	regionVar := common.OutputVarConfig{
 		Name:          "region",
