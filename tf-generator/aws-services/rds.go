@@ -25,7 +25,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 	workingDir := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	list, clientErr := client.RdsInstanceList(config.TenantId)
 	//Get tenant from duplo
-
+	log.Printf("[TRACE] RDS generate")
 	if clientErr != nil {
 		fmt.Println(clientErr)
 		return nil, clientErr
