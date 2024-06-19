@@ -83,6 +83,10 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					Name: varFullPrefix + "image_id",
 				},
 			})
+			lifecycleBody := hostBody.AppendNewBlock("lifecycle_policy", nil).Body()
+			lifecycle := common.StringSliceToListVal([]string{"image_id"})
+			lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
+
 			hostBody.SetAttributeTraversal("capacity", hcl.Traversal{
 				hcl.TraverseRoot{
 					Name: "var",
