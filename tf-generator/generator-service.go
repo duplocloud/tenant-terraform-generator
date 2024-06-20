@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	adminInfra "tenant-terraform-generator/tf-generator/admin-infra"
 	"tenant-terraform-generator/tf-generator/app"
@@ -26,20 +27,36 @@ type TfGeneratorService struct {
 func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosdk.Client) error {
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
 	config.TFCodePath = filepath.Join("target", config.CustomerName, config.TenantName, "terraform")
+	config.ConfigVars = filepath.Join("target", config.CustomerName, config.TenantName, "config", config.TenantName)
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
 	err := os.RemoveAll(filepath.Join("target", config.CustomerName, config.TenantName))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = os.RemoveAll(tenantProject)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = os.MkdirAll(tenantProject, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 	config.AdminTenantDir = tenantProject
+
+	err = os.RemoveAll(config.ConfigVars)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Remove Completed \n Creating ", config.ConfigVars)
+
+	err = os.MkdirAll(config.ConfigVars, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Created")
+	fmt.Println("Creating env folder under config")
 
 	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject)
 	err = os.RemoveAll(awsServicesProject)
@@ -221,6 +238,7 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 		TargetLocation: targetLocation,
 		InputVars:      []common.VarConfig{},
 		OutputVars:     []common.OutputVarConfig{},
+		ConfgiVars:     common.ConfigVars{},
 	}
 	fmt.Println("TF context ", tfContext)
 	// 1. Generate Duplo TF resources.
@@ -261,7 +279,18 @@ func starTFGenerationForProject(config *common.Config, client *duplosdk.Client, 
 		}
 		outVarsGenerator.Generate()
 	}
-	// 4. Import all resources
+	// 4. Generate json for config folder
+	token := strings.Split(tfContext.TargetLocation, "/")
+	projectName := token[len(token)-1]
+
+	configVarsGenerator := common.ConfigVars{
+		TargetLocation: config.ConfigVars,
+		Config:         common.ConstructConfigVars(tfContext.InputVars),
+		Project:        projectName,
+	}
+	configVarsGenerator.Generate()
+
+	// 5. Import all resources
 	if config.GenerateTfState && len(tfContext.ImportConfigs) > 0 {
 		tfInitializer := common.TfInitializer{
 			WorkingDir: targetLocation,

@@ -253,6 +253,15 @@ func Int64SliceToListVal(ele []int64) []cty.Value {
 	return ctyValues
 }
 
+func ConstructConfigVars(vars []VarConfig) map[string]interface{} {
+	m := make(map[string]interface{})
+	for _, v := range vars {
+		if v.Name != "" {
+			m[v.Name] = v.DefaultVal
+		}
+	}
+	return m
+}
 func MapStringToMapVal(m map[string]string) map[string]cty.Value {
 	mp := make(map[string]cty.Value)
 	for key, val := range m {
