@@ -262,3 +262,11 @@ func ConstructConfigVars(vars []VarConfig) map[string]interface{} {
 	}
 	return m
 }
+func MapStringToMapVal(m map[string]string) map[string]cty.Value {
+	mp := make(map[string]cty.Value)
+	for key, val := range m {
+		mp[key] = cty.StringVal(val)
+	}
+	return mp
+
+}

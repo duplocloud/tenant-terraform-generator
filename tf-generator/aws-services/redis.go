@@ -118,6 +118,10 @@ func (r *Redis) Generate(config *common.Config, client *duplosdk.Client) (*commo
 						Name: varFullPrefix + "engine_version",
 					},
 				})
+				lifecycleBody := redisBody.AppendNewBlock("lifecycle_policy", nil).Body()
+				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
+				lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
+
 			}
 			if len(redis.ParameterGroupName) > 0 {
 				redisBody.SetAttributeValue("parameter_group_name",

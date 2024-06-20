@@ -29,7 +29,10 @@ type Config struct {
 	EnableSecretPlaceholder bool
 	K8sSecretPlaceholder    string
 	ConfigVars              string
-	//ConfigEnv               []string
+	AdminInfra              string
+	AdminInfraPath          string
+	AdminInfraDir           string
+	SkipAdminInfra          bool
 }
 
 type TFContext struct {
