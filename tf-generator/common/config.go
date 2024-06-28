@@ -28,6 +28,11 @@ type Config struct {
 	DuploDefaultPlanRegion  string
 	EnableSecretPlaceholder bool
 	K8sSecretPlaceholder    string
+	ConfigVars              string
+	AdminInfra              string
+	AdminInfraPath          string
+	AdminInfraDir           string
+	SkipAdminInfra          bool
 }
 
 type TFContext struct {
@@ -35,4 +40,5 @@ type TFContext struct {
 	InputVars      []VarConfig
 	OutputVars     []OutputVarConfig
 	ImportConfigs  []ImportConfig
+	ConfgiVars     ConfigVars
 }

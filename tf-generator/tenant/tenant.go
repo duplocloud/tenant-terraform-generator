@@ -216,8 +216,9 @@ func generateTenantVars(duplo *duplosdk.DuploTenant, infraConfig *duplosdk.Duplo
 	varConfigs["region"] = regionVar
 
 	infraVar := common.VarConfig{
-		Name:    "infra_name",
-		TypeVal: "string",
+		Name:       "infra_name",
+		TypeVal:    "string",
+		DefaultVal: infraConfig.Name,
 	}
 	varConfigs["infra_name"] = infraVar
 
