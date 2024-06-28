@@ -162,7 +162,7 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				}
 			}
 
-			lifecycleBody := hostBody.AppendNewBlock("lifecycle_policy", nil).Body()
+			lifecycleBody := hostBody.AppendNewBlock("lifecycle", nil).Body()
 			lifecycle := common.StringSliceToListVal([]string{"image_id"})
 			lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
 
