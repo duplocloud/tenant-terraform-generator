@@ -43,7 +43,7 @@ func (ecr *ECR) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			hclFile := hclwrite.NewEmptyFile()
 
 			// create new file on system
-			path := filepath.Join(workingDir, "ecr-"+shortName+".tf")
+			path := filepath.Join(workingDir, duplosdk.EncodePathParamForFileName("ecr-"+shortName+".tf"))
 			tfFile, err := os.Create(path)
 			if err != nil {
 				fmt.Println(err)
