@@ -51,6 +51,14 @@ func EncodePathParam(param string) string {
 	return url.PathEscape(url.PathEscape(param))
 }
 
+func EncodePathParamForFileName(param string) string {
+	replaceSymbol := "_" // Replace "/" with this symbol
+
+	// Replace "/" with userSymbol
+	return strings.ReplaceAll(param, "/", replaceSymbol)
+
+}
+
 // GetDuploServicesPrefix builds a duplo resource name, given a tenant ID.
 func (c *Client) GetDuploServicesPrefix(tenantID string) (string, ClientError) {
 	return c.GetResourcePrefix("duploservices", tenantID)
