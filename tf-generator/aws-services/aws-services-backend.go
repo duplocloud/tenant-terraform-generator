@@ -45,7 +45,7 @@ func (asb *AwsServicesBackend) Generate(config *common.Config, client *duplosdk.
 		cty.StringVal(config.AwsServicesProject))
 
 	s3BackendBody.SetAttributeValue("workspace_key_prefix",
-		cty.StringVal("tenant:"))
+		cty.StringVal("tenants"))
 	s3BackendBody.SetAttributeValue("encrypt",
 		cty.True)
 

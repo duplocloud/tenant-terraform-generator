@@ -151,13 +151,13 @@ func (am *AppMain) Generate(config *common.Config, client *duplosdk.Client) (*co
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{
 				hcl.TraverseRoot{Name: "workspace_key_prefix"},
 			}),
-			Value: hclwrite.TokensForValue(cty.StringVal("admin:")),
+			Value: hclwrite.TokensForValue(cty.StringVal("admin")),
 		},
 		{
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{
 				hcl.TraverseRoot{Name: "key"},
 			}),
-			Value: hclwrite.TokensForValue(cty.StringVal("tenant")),
+			Value: hclwrite.TokensForValue(cty.StringVal("tenants")),
 		},
 		{
 			Name: hclwrite.TokensForTraversal(hcl.Traversal{

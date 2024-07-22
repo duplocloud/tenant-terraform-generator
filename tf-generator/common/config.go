@@ -29,9 +29,9 @@ type Config struct {
 	EnableSecretPlaceholder bool
 	K8sSecretPlaceholder    string
 	ConfigVars              string
-	AdminInfra              string
-	AdminInfraPath          string
-	AdminInfraDir           string
+	Infra                   string
+	InfraProject            string
+	InfraDir                string
 	SkipAdminInfra          bool
 }
 

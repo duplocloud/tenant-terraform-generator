@@ -99,3 +99,18 @@ func (c *Client) PlanImageGetList(planID string) (*[]DuploPlanImage, ClientError
 	}
 	return &list, nil
 }
+
+type DuploPlanKmsKeyInfo struct {
+	KeyName string `json:"KeyName,omitempty"`
+	KeyArn  string `json:"KeyArn,omitempty"`
+	KeyId   string `json:"KeyId,omitempty"`
+}
+
+func (c *Client) PlanKMSGetList(planID string) (*[]DuploPlanKmsKeyInfo, ClientError) {
+	list := []DuploPlanKmsKeyInfo{}
+	err := c.getAPI("PlanKMSGetList()", fmt.Sprintf("v3/admin/plans/%s/kmskeys", planID), &list)
+	if err != nil {
+		return nil, err
+	}
+	return &list, nil
+}

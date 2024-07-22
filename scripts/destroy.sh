@@ -69,17 +69,5 @@ tf_output() {
         tf output -json )
 }
 
-if [ "$selection" = "admin-infra" ]; then
-  case "$tenant" in
-  prod*|nonprod*)
-    tf_destroy admin-infra "$@"
-    ;;
-  *)
-    die "$tenant: not an expected infrastructure name"
-    ;;
-  esac
-else
-  tf_destroy <--app--> "$@"
-  tf_destroy <--aws-services--> "$@"
-  tf_destroy <--admin-tenant--> "$@"
-fi
+
+tf_destroy "$selection" "$@"

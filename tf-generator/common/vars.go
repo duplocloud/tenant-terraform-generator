@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -53,7 +54,7 @@ func (v *Vars) Generate() {
 						if varConfig.TypeVal == "string" {
 							varBody.SetAttributeValue("default",
 								cty.StringVal(varConfig.DefaultVal))
-						} else if varConfig.TypeVal == "number" || varConfig.TypeVal == "bool" {
+						} else if varConfig.TypeVal == "number" || varConfig.TypeVal == "bool" || strings.Contains(varConfig.TypeVal, "list") || strings.Contains(varConfig.TypeVal, "object") {
 							varBody.SetAttributeTraversal("default", hcl.Traversal{
 								hcl.TraverseRoot{
 									Name: varConfig.DefaultVal,

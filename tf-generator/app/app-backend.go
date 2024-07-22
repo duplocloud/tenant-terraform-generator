@@ -45,7 +45,7 @@ func (ab *AppBackend) Generate(config *common.Config, client *duplosdk.Client) (
 		cty.StringVal(config.AppProject))
 
 	s3BackendBody.SetAttributeValue("workspace_key_prefix",
-		cty.StringVal("tenant:"))
+		cty.StringVal("tenants"))
 	s3BackendBody.SetAttributeValue("encrypt",
 		cty.True)
 

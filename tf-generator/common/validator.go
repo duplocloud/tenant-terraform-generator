@@ -3,8 +3,10 @@ package common
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type IValidator interface {
@@ -34,7 +36,7 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		log.Printf("[TRACE] - %s", err)
 		return nil, err
 	}
-	custName := os.Getenv("customer_name")
+	custName := extractCustomerName(host)
 	if len(custName) == 0 {
 		err := fmt.Errorf("error - please provide \"%s\" as env variable", "customer_name")
 		log.Printf("[TRACE] - %s", err)
@@ -50,7 +52,7 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 
 	duploProviderVersion := os.Getenv("duplo_provider_version")
 	if len(duploProviderVersion) == 0 {
-		duploProviderVersion = "0.9.0"
+		duploProviderVersion = "0.10.0"
 	}
 
 	tfVersion := os.Getenv("tf_version")
@@ -60,12 +62,12 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 
 	tenantProject := os.Getenv("tenant_project")
 	if len(tenantProject) == 0 {
-		tenantProject = "admin-tenant"
+		tenantProject = "tenant"
 	}
 
 	awsServicesProject := os.Getenv("aws_services_project")
 	if len(awsServicesProject) == 0 {
-		awsServicesProject = "aws-services"
+		awsServicesProject = "services"
 	}
 
 	appProject := os.Getenv("app_project")
@@ -74,7 +76,7 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 	}
 	admininfra := os.Getenv("admin_infra")
 	if len(admininfra) == 0 {
-		admininfra = "admin-infra"
+		admininfra = "infra"
 	}
 	generateTfState := false
 
@@ -180,5 +182,18 @@ func (envVar *EnvVarValidator) Validate() (*Config, error) {
 		EnableSecretPlaceholder: enableSecretPlaceholder,
 		K8sSecretPlaceholder:    k8sSecretPlaceholder,
 		SkipAdminInfra:          skipAdminInfra,
+		InfraProject:            admininfra,
 	}, nil
+}
+
+func extractCustomerName(host string) string {
+	parsedUrl, err := url.Parse(host)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return ""
+	}
+
+	hostname := parsedUrl.Hostname()
+	parts := strings.Split(hostname, ".")
+	return parts[0]
 }

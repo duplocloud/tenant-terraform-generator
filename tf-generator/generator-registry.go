@@ -1,7 +1,7 @@
 package tfgenerator
 
 import (
-	adminInfra "tenant-terraform-generator/tf-generator/admin-infra"
+	admininfra "tenant-terraform-generator/tf-generator/admin-infra"
 	"tenant-terraform-generator/tf-generator/app"
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/tenant"
@@ -54,5 +54,11 @@ var AppGenerators = []Generator{
 }
 
 var AdminInfraGenerator = []Generator{
-	&adminInfra.Infra{},
+	&admininfra.Infra{},
+	&admininfra.PlanCertificate{},
+	&admininfra.PlanImage{},
+	&admininfra.PlanSetting{},
+	&admininfra.PlanConfig{},
+	// &admininfra.PlanKms{},
+	// &admininfra.PlanWaf{},
 }
