@@ -1,7 +1,6 @@
 package admininfra
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -150,34 +149,6 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 		},
 	})
 
-	if infra.CustomData != nil && len(*infra.CustomData) > 0 {
-		content := infraBody.AppendNewBlock("dynamic", []string{"setting"}).Body()
-		setting := content.AppendNewBlock("content", nil).Body()
-		setting.SetAttributeTraversal("key", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "setting",
-			},
-			hcl.TraverseAttr{
-				Name: "value.key",
-			},
-		})
-		setting.SetAttributeTraversal("value", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "setting",
-			},
-			hcl.TraverseAttr{
-				Name: "value.value",
-			},
-		})
-		content.SetAttributeTraversal("for_each", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "var",
-			},
-			hcl.TraverseAttr{
-				Name: INFRA_VAR_PREFIX + "setting",
-			},
-		})
-	}
 	rootBody.AppendNewline()
 	_, err = tfFile.Write(hclFile.Bytes())
 	if err != nil {
@@ -247,21 +218,6 @@ func generateInfraVars(duplo *duplosdk.DuploInfrastructureConfig, prefix string)
 	}
 	varConfigs["cloud"] = var5
 
-	keyval := setKeyValueVar(*duplo.CustomData)
-	arr, err := json.Marshal(&keyval)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var6 := common.VarConfig{
-		Name:       prefix + "setting",
-		DefaultVal: string(arr),
-		TypeVal: `list(object({
-			key = string
-			value = string
-		  }))`,
-	}
-	varConfigs[prefix+"setting"] = var6
-
 	var7 := common.VarConfig{
 		Name:       prefix + "subnet_cidr",
 		DefaultVal: strconv.Itoa(duplo.Cloud),
@@ -310,17 +266,4 @@ func generateInfraVars(duplo *duplosdk.DuploInfrastructureConfig, prefix string)
 	}
 
 	return vars
-}
-
-type keyValue struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-func setKeyValueVar(duplo []duplosdk.DuploKeyStringValue) []keyValue {
-	ar := []keyValue{}
-	for _, data := range duplo {
-		ar = append(ar, keyValue{Key: data.Key, Value: data.Value})
-	}
-	return ar
 }

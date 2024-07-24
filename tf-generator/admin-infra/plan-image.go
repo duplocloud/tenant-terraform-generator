@@ -1,8 +1,10 @@
 package admininfra
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"tenant-terraform-generator/duplosdk"
@@ -16,7 +18,7 @@ import (
 type PlanImage struct {
 }
 
-var varFullPrefix = "image_"
+var varFullPrefix = "plan_image"
 
 func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*common.TFContext, error) {
 	// create new empty hcl file object
@@ -26,7 +28,13 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 	if clientErr != nil {
 		return nil, errors.New(clientErr.Error())
 	}
+	if len(*planImg) == 0 {
+		return nil, nil
+	}
 	tfContext := common.TFContext{}
+	inputVars := generateImageVars(*planImg, varFullPrefix)
+	tfContext.InputVars = append(tfContext.InputVars, inputVars...)
+
 	hclFile := hclwrite.NewEmptyFile()
 
 	// create new file on system
@@ -39,68 +47,74 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 	resourceName := common.GetResourceName(infraName)
 	rootBody := hclFile.Body()
 	// initialize the body of the new file object
-	for _, val := range *planImg {
-		planBlock := rootBody.AppendNewBlock("resource",
-			[]string{"duplocloud_plan_image", "image-" + val.Name})
-		planBody := planBlock.Body()
-		planBody.SetAttributeTraversal("plan_id", hcl.Traversal{
+	planBlock := rootBody.AppendNewBlock("resource",
+		[]string{"duplocloud_plan_image", varFullPrefix})
+	planBody := planBlock.Body()
+	planBody.SetAttributeTraversal("plan_id", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "duplocloud_infrastructure",
+		},
+		hcl.TraverseAttr{
+			Name: "infra",
+		},
+		hcl.TraverseAttr{
+			Name: "infra_name",
+		},
+	})
+	planBody.SetAttributeValue("delete_unspecified_images", cty.BoolVal(false))
+
+	if planImg != nil && len(*planImg) > 0 {
+		content := planBody.AppendNewBlock("dynamic", []string{"image"}).Body()
+		imgs := content.AppendNewBlock("content", nil).Body()
+		imgs.SetAttributeTraversal("name", hcl.Traversal{
 			hcl.TraverseRoot{
-				Name: "duplocloud_infrastructure",
+				Name: "image",
 			},
 			hcl.TraverseAttr{
-				Name: "infra",
-			},
-			hcl.TraverseAttr{
-				Name: "infra_name",
+				Name: "value.name",
 			},
 		})
-		planBody.SetAttributeValue("delete_unspecified_images", cty.BoolVal(false))
-		image := planBody.AppendNewBlock("image", nil).Body()
-		image.SetAttributeTraversal("name", hcl.Traversal{
+		imgs.SetAttributeTraversal("image_id", hcl.Traversal{
+			hcl.TraverseRoot{
+				Name: "image",
+			},
+			hcl.TraverseAttr{
+				Name: "value.image_id",
+			},
+		})
+		imgs.SetAttributeTraversal("os", hcl.Traversal{
+			hcl.TraverseRoot{
+				Name: "os",
+			},
+			hcl.TraverseAttr{
+				Name: "value.os",
+			},
+		})
+		imgs.SetAttributeTraversal("username", hcl.Traversal{
+			hcl.TraverseRoot{
+				Name: "username",
+			},
+			hcl.TraverseAttr{
+				Name: "value.username",
+			},
+		})
+		content.SetAttributeTraversal("for_each", hcl.Traversal{
 			hcl.TraverseRoot{
 				Name: "var",
 			},
 			hcl.TraverseAttr{
-				Name: varFullPrefix + "name",
+				Name: varFullPrefix,
 			},
 		})
-		image.SetAttributeTraversal("image_id", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "var",
-			},
-			hcl.TraverseAttr{
-				Name: "image_id",
-			},
-		})
-
-		image.SetAttributeTraversal("os", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "var",
-			},
-			hcl.TraverseAttr{
-				Name: varFullPrefix + "os",
-			},
-		})
-
-		image.SetAttributeTraversal("username", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "var",
-			},
-			hcl.TraverseAttr{
-				Name: varFullPrefix + "username",
-			},
-		})
-
-		planBody.SetAttributeTraversal("depends_on", hcl.Traversal{
-			hcl.TraverseRoot{
-				Name: "[duplocloud_infrastructure",
-			},
-			hcl.TraverseAttr{
-				Name: "infra]",
-			},
-		})
-
 	}
+	planBody.SetAttributeTraversal("depends_on", hcl.Traversal{
+		hcl.TraverseRoot{
+			Name: "[duplocloud_infrastructure",
+		},
+		hcl.TraverseAttr{
+			Name: "infra]",
+		},
+	})
 
 	rootBody.AppendNewline()
 
@@ -122,15 +136,41 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 	return &tfContext, nil
 }
 
-func generateImageVars(duplo []duplosdk.DuploCustomDataEx, prefix string) []common.VarConfig {
+type varImage struct {
+	Name     string `json:"name"`
+	ImageId  string `json:"image_id"`
+	OS       string `json:"os"`
+	UserName string `json:"username"`
+}
+
+func setVarImage(duplo []duplosdk.DuploPlanImage) []varImage {
+	imageVars := []varImage{}
+	for _, v := range duplo {
+		imageVars = append(imageVars, varImage{
+			Name:     v.Name,
+			ImageId:  v.ImageId,
+			OS:       v.OS,
+			UserName: v.Username,
+		})
+	}
+	return imageVars
+}
+func generateImageVars(duplo []duplosdk.DuploPlanImage, prefix string) []common.VarConfig {
 	varConfigs := make(map[string]common.VarConfig, 0)
+	value := setVarImage(duplo)
+	image, err := json.Marshal(&value)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var1 := common.VarConfig{
 		Name:       prefix,
-		DefaultVal: string(conf),
+		DefaultVal: string(image),
 		TypeVal: `list(object({
-			key = string
-			type = string
-			value = string
+			name = string
+			image_id = string
+			os = string
+			username=string
 		  }))`,
 	}
 	varConfigs[prefix] = var1

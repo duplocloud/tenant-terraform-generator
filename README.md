@@ -14,12 +14,9 @@ This utility provides a way to export the terraform code that represents the inf
 
 ```shell
 # Required Vars
-export customer_name="duplo-masp"
 export tenant_name="test"
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="xxx-xxxxx-xxxxxxxx"
-export AWS_RUNNER="duplo-admin"
-export aws_account_id="1234567890"
 ```
 You can optionally pass following environment variables.
 
@@ -56,21 +53,38 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
 - **Output** : target folder is created along with customer name and tenant name as mentioned in the environment variables. This folder will contain all terraform projects as mentioned below.
   
     ```
-    ├── target                   # Target folder for terraform code
-    │   ├── customer-name        # Folder with customer name
-    │     ├── tenant-name        # Folder with tenant name
-    │       ├── scripts          # Wrapper scripts to plan, apply and destroy terarform infrastructure.
-    │       ├── terraform        # Terraform code generated using this utility.
-    │          ├── admin-tenant  # Terraform code for tenant and tenant related resources.
-    │          ├── aws-services  # Terraform code for AWS services.
-    │          ├── app           # Terraform code for DuploCloud services and ECS.
+    ├── target                # Target folder for terraform code
+    │   ├── customer-name       # Folder with customer name
+    |      ├── config           # Folder contains tfvars file for workspace
+    |          ├── infra01                      # Infra related to tenant specific config folder.
+    │             ├── infra.tfvars.json         # infra project variables
+    |          ├── dev01                        # Tenant specific config folder.
+    │             ├── tenant.tfvars.json        # tenant project variables.
+    │             ├── services.tfvars.json      # services project variables.
+    │             ├── app.tfvars.json           # app project variables.
+    │      ├── scripts          # Wrapper scripts to plan, apply and destroy terarform infrastructure.
+    │      ├── terraform        # Terraform code generated using this utility.
+    |         ├── infra           # Terraform code for infra and plan related resources.
+    │         ├── tenant          # Terraform code for tenant and tenant related resources.
+    │         ├── services        # Terraform code for AWS services.
+    │         ├── app             # Terraform code for DuploCloud services and ECS.
     ```
 
-  - **Project : admin-tenant** This projects manages creation of DuploCloud tenant and tenant related resources.
-  - **Project : aws-services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside DuploCloud.
+  - **Project : tenant** This projects manages creation of DuploCloud tenant and tenant related resources.
+  - **Project : services** This project manages data services like Redis, RDS, Kafka, S3 buckets, Cloudfront, EMR, Elastic Search inside DuploCloud.
   - **Project : app** This project manages DuploCloud services like EKS, ECS etc.
+  - **Project : infra** This project manages DuploCloud services like infrastructure, plan_certificates etc.
 
 ## Following DuploCloud resources are supported.
+   - `duplocloud_infrastructure`
+   - `duplocloud_infrastructure_setting`
+   - `duplocloud_infrastructure_subnet`
+   - `duplocloud_plan_certificates`
+   - `duplocloud_plan_configs`
+   - `duplocloud_plan_image`
+   - `duplocloud_plan_kms_v2`
+   - `duplocloud_plan_settings`
+   - `duplocloud_plan_waf_v2`
    - `duplocloud_tenant`
    - `duplocloud_tenant_network_security_rule`
    - `duplocloud_asg_profile`
@@ -114,21 +128,21 @@ export generate_tf_state="false" # Whether to import generated tf resources, Def
    - `duplocloud_aws_batch_job_queue`
    - `duplocloud_aws_timestreamwrite_database`
    - `duplocloud_aws_timestreamwrite_table`
+   - `duplocloud_k8s_cron_job`
+   - `duplocloud_k8s_job`
    
 ## How to use generated terraform code to create a new DuploCloud Tenant, and its resources?
 
 ### Prerequisite
 1. Following environment variables to be exported in the shell while running this terraform projects.
 ```shell
-export AWS_RUNNER=duplo-admin
-export tenant_id="XXXXXXXXXXXXXXXXXXXXXXXXX" # Put default tenant Id here.
+export tenant_name="tenant for which app, infra, services and tenant resource need to be fetched"
 export duplo_host="https://msp.duplocloud.net"
 export duplo_token="<duplo-auth-token>"
-export aws_account_id="1234567890"
 ```
-2. To run terraform projects you must be in `tenant-name` directory.
+2. To run terraform projects you must be in `customer-name` directory.
 ```shell
-cd target/customer-name/tenant-name
+cd target/customer-name
 ```
 
 ### Wrapper Scripts
@@ -142,13 +156,13 @@ There are scripts to manage terraform infrastructure. Which will helps to create
 #### Arguments to run the scripts.
 
 - **First Argument:** Name of the new tenant to be created.
-- **Second Argument:** Terraform project name. Valid values are - `admin-tenant`, `aws-services` and `app`.
+- **Second Argument:** Terraform project name. Valid values are - `infra`, `tenant`, `services` and `app`.
 
 ### Terraform Projects
 
 This infrastructure is divided into terraform sub projects which manages different managed DuploCloud resources like tenant, AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search and DuploCloud services which are containerized.
 
-- **Project - admin-tenant**
+- **Project - tenant**
 
   This projects manages DuploCloud infrastructure and tenant, Run this project using following command using tenant-name and project name.
 
@@ -171,7 +185,7 @@ This infrastructure is divided into terraform sub projects which manages differe
       ```
   **Note** : Please provide required variables `infra_name` and `cert_arn` in `vars.tf`.
 
-- **Project - aws-services**
+- **Project - services**
 
   This project manages AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search, etc. inside DuploCloud.
 
@@ -213,31 +227,32 @@ This infrastructure is divided into terraform sub projects which manages differe
       scripts/destroy.sh <tenant-name> app
       ```
 
+- **Project - infra**
+
+  This project manages infrastructure and plan related to tenant name passed via environment variable.
+
+  - Dry-run
+
+    - ```shell
+       scripts/plan.sh <infra-name> infra
+      ```
+
+  - Actual Deployment
+
+    - ```shell
+      scripts/apply.sh <infra-name> infra
+      ```
+
+  - Destroy created infrastructure
+
+    - ```shell
+      scripts/destroy.sh <infra-name> infra
+      ```
+
 ### External Configurations (Manual Step)
 
 End user can pass external configurations like RDS instance type, ES version, Docker image version etc. while running these projects.
 
-#### How to create configuration file
-
-- Create configuration folder inside config folder with the name of tenant, Example, Tenant Name is `dev01` then `dev01` folder is created inside config folder first.
-
-- File - **admin-tenant.tfvars.json**
-  - This file is used while running **Project - admin-tenant**, You can create file **admin-tenant.tfvars.json** and pass required configuration.
-- File - **aws-services.tfvars.json**
-  - This file is used while running **Project - aws-services**, You can create file **aws-services.tfvars.json** and pass required configuration.
-- File - **app.tfvars.json**
-  - This file is used while running **Project - app**, You can create file **app.tfvars.json** and pass required configuration.
-
-    ```
-    ├── target                                  # Target folder for terraform code
-    │   ├── customer-name                       # Folder with customer name
-    │     ├── tenant-name                       # Folder with tenant name
-    │       ├── config                          # External configuration folder.
-    │          ├── dev01                        # Tenant specific config folder.
-    │             ├── admin-tenant.tfvars.json  # admin-tenant project variables.
-    │             ├── aws-services.tfvars.json  # aws-services project variables.
-    │             ├── app.tfvars.json           # app project variables.
-    ```  
 
 > Note: Both json and tfvar Terraform file extensions are supported.  See Terraform [documentation](https://developer.hashicorp.com/terraform/language/values/variables#variable-definitions-tfvars-files) for more details about the structure of each file type.
 

@@ -59,6 +59,7 @@ var AdminInfraGenerator = []Generator{
 	&admininfra.PlanImage{},
 	&admininfra.PlanSetting{},
 	&admininfra.PlanConfig{},
-	// &admininfra.PlanKms{},
-	// &admininfra.PlanWaf{},
+	&admininfra.PlanKms{},
+	&admininfra.PlanWaf{},
+	&admininfra.InfraSetting{},
 }

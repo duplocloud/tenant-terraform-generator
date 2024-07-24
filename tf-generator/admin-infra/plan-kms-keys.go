@@ -44,7 +44,7 @@ func (p PlanKms) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	resourceName := common.GetResourceName(infraName)
 	rootBody := hclFile.Body()
 	planBlock := rootBody.AppendNewBlock("resource",
-		[]string{"duplocloud_plan_kms", "kms"})
+		[]string{"duplocloud_plan_kms_v2", "kms"})
 
 	planBody := planBlock.Body()
 	planBody.SetAttributeTraversal("plan_id", hcl.Traversal{

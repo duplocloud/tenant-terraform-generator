@@ -20,7 +20,7 @@ usage() {
 
   $0 ACCT TENANT [PROJECT]
 
-  Where, ACCT must be 'dev' or 'prod', and PROJECT (if given) must be the name of a Terraform project
+  Where, ACCT must be 'workspace name' , and PROJECT (if given) must be the name of a Terraform project
 "
 }
 

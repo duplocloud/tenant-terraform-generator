@@ -44,7 +44,7 @@ func (p PlanWaf) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	resourceName := common.GetResourceName(infraName)
 	rootBody := hclFile.Body()
 	planBlock := rootBody.AppendNewBlock("resource",
-		[]string{"duplocloud_plan_waf", "waf"})
+		[]string{"duplocloud_plan_waf_v2", "waf"})
 
 	planBody := planBlock.Body()
 	planBody.SetAttributeTraversal("plan_id", hcl.Traversal{
@@ -60,7 +60,7 @@ func (p PlanWaf) Generate(config *common.Config, client *duplosdk.Client) (*comm
 	})
 
 	if planWAF != nil && len(*planWAF) > 0 {
-		content := planBody.AppendNewBlock("dynamic", []string{WAF_PREFIX}).Body()
+		content := planBody.AppendNewBlock("dynamic", []string{"waf"}).Body()
 		w := content.AppendNewBlock("content", nil).Body()
 		w.SetAttributeTraversal("name", hcl.Traversal{
 			hcl.TraverseRoot{
