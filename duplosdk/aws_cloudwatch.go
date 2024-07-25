@@ -1,6 +1,9 @@
 package duplosdk
 
-import "fmt"
+import (
+	"encoding/base64"
+	"fmt"
+)
 
 type DuploCloudWatchEventRule struct {
 	Name               string                 `json:"Name"`
@@ -88,7 +91,7 @@ func (c *Client) DuploCloudWatchMetricAlarmGet(tenantID, resourceId string) (*Du
 	rp := []DuploCloudWatchMetricAlarm{}
 	err := c.getAPI(
 		fmt.Sprintf("DuploCloudWatchMetricAlarmGet(%s, %s)", tenantID, resourceId),
-		fmt.Sprintf("subscriptions/%s/%s/GetAlarms", tenantID, EncodePathParam(resourceId)),
+		fmt.Sprintf("subscriptions/%s/%s/GetAlarms", tenantID, EncodePathParam(base64.StdEncoding.EncodeToString([]byte(resourceId)))),
 		&rp,
 	)
 	if len(rp) == 0 {
@@ -101,7 +104,7 @@ func (c *Client) DuploCloudWatchMetricAlarmList(tenantID string) (*[]DuploCloudW
 	rp := []DuploCloudWatchMetricAlarm{}
 	err := c.getAPI(
 		fmt.Sprintf("DuploCloudWatchMetricAlarmList(%s)", tenantID),
-		fmt.Sprintf("subscriptions/%s/*/GetAlarms", tenantID),
+		fmt.Sprintf("subscriptions/%s/%s/GetAlarms", tenantID, base64.StdEncoding.EncodeToString([]byte("*"))),
 		&rp,
 	)
 	if len(rp) == 0 {
