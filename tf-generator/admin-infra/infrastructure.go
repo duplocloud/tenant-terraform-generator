@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -217,10 +218,11 @@ func generateInfraVars(duplo *duplosdk.DuploInfrastructureConfig, prefix string)
 		TypeVal:    "number",
 	}
 	varConfigs["cloud"] = var5
-
+	subnets := *duplo.Vnet.Subnets
+	cidr := strings.Split(subnets[0].AddressPrefix, "/")[1]
 	var7 := common.VarConfig{
 		Name:       prefix + "subnet_cidr",
-		DefaultVal: strconv.Itoa(duplo.Cloud),
+		DefaultVal: cidr,
 		TypeVal:    "number",
 	}
 	varConfigs["subnet_cidr"] = var7

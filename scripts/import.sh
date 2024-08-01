@@ -24,8 +24,8 @@ export acct tenant
 # shellcheck disable=SC1091   # VS code can't follow the below file
 source "$(dirname "${BASH_SOURCE[0]}")/_env.sh"
 
-# Utility function to run "terraform apply" with proper arguments, and clean state.
-tf_apply() {
+# Utility function to run "terraform import" with proper arguments, and clean state.
+tf_import() {
   local project="$1" ; shift
 
   [ -z "${backend:-}" ] && die "internal error: backend should have been configured by _env.sh"
@@ -39,11 +39,11 @@ tf_apply() {
   local ws="$tenant"
 
   # '-parallelism=1' slows down requests to DuploCloud, which reduces the odds of timeouts when managing many resources.
-  local tf_args=( -auto-approve -input=false -parallelism=1 "$@" )
+  local tf_args=( -input=false -parallelism=1 "$@" )
   local varfile="config/$ws/$project.tfvars.json"
-  [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
+  [ -f "$varfile" ] && tf_args=( "-var-file=../../$varfile" "${tf_args[@]}" )
   local varfile="config/$ws/$project.tfvars"
-  [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
+  [ -f "$varfile" ] && tf_args=( "-var-file=../../$varfile" "${tf_args[@]}" )
 
   echo "Project: $project"
 
@@ -51,7 +51,7 @@ tf_apply() {
   (cd "terraform/$project" &&
     tf_init $backend &&
     ( tf workspace select "$ws" || tf workspace new "$ws" ) &&
-    tf apply "${tf_args[@]}" )
+    tf import "${tf_args[@]}" )
 }
 
 tf_output() {
@@ -67,4 +67,4 @@ tf_output() {
     tf output -json )
 }
 
-tf_apply "$selection" "$@"
+tf_import "$selection" $@

@@ -48,7 +48,7 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 	rootBody := hclFile.Body()
 	// initialize the body of the new file object
 	planBlock := rootBody.AppendNewBlock("resource",
-		[]string{"duplocloud_plan_image", varFullPrefix})
+		[]string{"duplocloud_plan_images", varFullPrefix})
 	planBody := planBlock.Body()
 	planBody.SetAttributeTraversal("plan_id", hcl.Traversal{
 		hcl.TraverseRoot{
@@ -103,7 +103,7 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 				Name: "var",
 			},
 			hcl.TraverseAttr{
-				Name: varFullPrefix,
+				Name: "images",
 			},
 		})
 	}
@@ -164,7 +164,7 @@ func generateImageVars(duplo []duplosdk.DuploPlanImage, prefix string) []common.
 	}
 
 	var1 := common.VarConfig{
-		Name:       prefix,
+		Name:       "images",
 		DefaultVal: string(image),
 		TypeVal: `list(object({
 			name = string
@@ -173,7 +173,7 @@ func generateImageVars(duplo []duplosdk.DuploPlanImage, prefix string) []common.
 			username=string
 		  }))`,
 	}
-	varConfigs[prefix] = var1
+	varConfigs["images"] = var1
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {

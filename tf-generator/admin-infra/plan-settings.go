@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
@@ -163,21 +164,21 @@ func generateSettingVars(duplo duplosdk.DuploPlanDnsConfig, prefix string) []com
 
 	var2 := common.VarConfig{
 		Name:       prefix + "internal_dns_suffix",
-		DefaultVal: duplo.DomainId,
+		DefaultVal: duplo.InternalDnsSuffix,
 		TypeVal:    "string",
 	}
 	varConfigs["internal_dns_suffix"] = var2
 
 	var3 := common.VarConfig{
 		Name:       prefix + "external_dns_suffix",
-		DefaultVal: duplo.DomainId,
+		DefaultVal: duplo.ExternalDnsSuffix,
 		TypeVal:    "string",
 	}
 	varConfigs["external_dns_suffix"] = var3
 
 	var4 := common.VarConfig{
 		Name:       prefix + "ignore_global_dns",
-		DefaultVal: duplo.DomainId,
+		DefaultVal: strconv.FormatBool(duplo.IgnoreGlobalDNS),
 		TypeVal:    "bool",
 	}
 	varConfigs["ignore_global_dns"] = var4
