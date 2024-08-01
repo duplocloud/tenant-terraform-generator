@@ -70,12 +70,12 @@ func (p PlanWaf) Generate(config *common.Config, client *duplosdk.Client) (*comm
 				Name: "value.name",
 			},
 		})
-		w.SetAttributeTraversal("id", hcl.Traversal{
+		w.SetAttributeTraversal("arn", hcl.Traversal{
 			hcl.TraverseRoot{
 				Name: "waf",
 			},
 			hcl.TraverseAttr{
-				Name: "value.id",
+				Name: "value.arn",
 			},
 		})
 		w.SetAttributeTraversal("dashboard_url", hcl.Traversal{
@@ -126,7 +126,7 @@ func (p PlanWaf) Generate(config *common.Config, client *duplosdk.Client) (*comm
 }
 
 type varWaf struct {
-	Id           string `json:"id"`
+	Id           string `json:"arn"`
 	Name         string `json:"name"`
 	DashboardUrl string `json:"dashboard_url"`
 }
@@ -150,7 +150,7 @@ func generateWAFVars(duplo []duplosdk.PlanWAF, prefix string) []common.VarConfig
 		Name:       prefix,
 		DefaultVal: string(certs),
 		TypeVal: `list(object({
-			id = string
+			arn = string
 			name = string
 			dashboard_url=string
 		  }))`,

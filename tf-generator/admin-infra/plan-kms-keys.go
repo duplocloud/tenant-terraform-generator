@@ -78,6 +78,14 @@ func (p PlanKms) Generate(config *common.Config, client *duplosdk.Client) (*comm
 				Name: "value.id",
 			},
 		})
+		kms.SetAttributeTraversal("arn", hcl.Traversal{
+			hcl.TraverseRoot{
+				Name: "kms",
+			},
+			hcl.TraverseAttr{
+				Name: "value.arn",
+			},
+		})
 		content.SetAttributeTraversal("for_each", hcl.Traversal{
 			hcl.TraverseRoot{
 				Name: "var",
@@ -144,6 +152,7 @@ func generateKMSVars(duplo []duplosdk.DuploPlanKmsKeyInfo, prefix string) []comm
 		TypeVal: `list(object({
 			id = string
 			name = string
+			arn=string
 		  }))`,
 	}
 	varConfigs[prefix] = var1
