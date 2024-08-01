@@ -84,7 +84,7 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 		})
 		imgs.SetAttributeTraversal("os", hcl.Traversal{
 			hcl.TraverseRoot{
-				Name: "os",
+				Name: "image",
 			},
 			hcl.TraverseAttr{
 				Name: "value.os",
@@ -92,7 +92,7 @@ func (p PlanImage) Generate(config *common.Config, client *duplosdk.Client) (*co
 		})
 		imgs.SetAttributeTraversal("username", hcl.Traversal{
 			hcl.TraverseRoot{
-				Name: "username",
+				Name: "image",
 			},
 			hcl.TraverseAttr{
 				Name: "value.username",
