@@ -28,6 +28,8 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject, "providers.tf")
 	awsServicesProject := filepath.Join(config.TFCodePath, config.AwsServicesProject, "providers.tf")
 	appProject := filepath.Join(config.TFCodePath, config.AppProject, "providers.tf")
+	infraProject := filepath.Join(config.TFCodePath, config.InfraProject, "providers.tf")
+
 	tenantProjectFile, err := os.Create(tenantProject)
 	if err != nil {
 		fmt.Println(err)
@@ -45,6 +47,11 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		return
 	}
 
+	infraProjectFile, err := os.Create(infraProject)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	// initialize the body of the new file object
 	rootBody := hclFile.Body()
 
@@ -97,6 +104,11 @@ func (p *Provider) Generate(config *Config, client *duplosdk.Client) {
 		return
 	}
 	_, err = appProjectFile.Write(hclFile.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = infraProjectFile.Write(hclFile.Bytes())
 	if err != nil {
 		fmt.Println(err)
 		return

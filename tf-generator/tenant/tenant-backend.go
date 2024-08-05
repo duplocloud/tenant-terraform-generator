@@ -42,10 +42,10 @@ func (tb *TenantBackend) Generate(config *common.Config, client *duplosdk.Client
 	s3BackendBody.SetAttributeValue("region",
 		cty.StringVal(config.DuploDefaultPlanRegion)) // TODO - Take region from ENV VAR
 	s3BackendBody.SetAttributeValue("key",
-		cty.StringVal("tenant"))
+		cty.StringVal("tenants"))
 
 	s3BackendBody.SetAttributeValue("workspace_key_prefix",
-		cty.StringVal("admin:"))
+		cty.StringVal("admin"))
 	s3BackendBody.SetAttributeValue("encrypt",
 		cty.True)
 

@@ -20,7 +20,7 @@ usage() {
 
   $0 ACCT TENANT [PROJECT]
 
-  Where, ACCT must be 'dev' or 'prod', and PROJECT (if given) must be the name of a Terraform project
+  Where, ACCT must be 'workspace name' , and PROJECT (if given) must be the name of a Terraform project
 "
 }
 
@@ -70,7 +70,7 @@ with_aws() {
   [ -z "$duplo_tenant_id" ] && duplo_tenant_id="${duplo_default_tenant_id:-}"
 
   # Run the command in the configured way.
-  case "${AWS_RUNNER:-duplo-admin}" in
+  case "duplo-admin" in
   env)
     [ -z "${profile:-}" ] && die "internal error: no AWS profile selected"
     env AWS_PROFILE="$profile" AWS_SDK_LOAD_CONFIG=1 "$@"

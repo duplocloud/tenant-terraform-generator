@@ -9,7 +9,6 @@ import (
 	"strings"
 	"tenant-terraform-generator/duplosdk"
 	adminInfra "tenant-terraform-generator/tf-generator/admin-infra"
-	"tenant-terraform-generator/tf-generator/app"
 	awsservices "tenant-terraform-generator/tf-generator/aws-services"
 	"tenant-terraform-generator/tf-generator/common"
 	"tenant-terraform-generator/tf-generator/tenant"
@@ -26,8 +25,8 @@ type TfGeneratorService struct {
 
 func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosdk.Client) error {
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
-	config.TFCodePath = filepath.Join("target", config.CustomerName, config.TenantName, "terraform")
-	config.ConfigVars = filepath.Join("target", config.CustomerName, config.TenantName, "config", config.TenantName)
+	config.TFCodePath = filepath.Join("target", config.CustomerName, "terraform")
+	config.ConfigVars = filepath.Join("target", config.CustomerName, "config")
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
 	err := os.RemoveAll(filepath.Join("target", config.CustomerName, config.TenantName))
 	if err != nil {
@@ -80,7 +79,18 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 	}
 	config.AppDir = appProject
 
-	scriptsPath := filepath.Join("target", config.CustomerName, config.TenantName, "scripts")
+	infraProject := filepath.Join(config.TFCodePath, config.InfraProject)
+	err = os.RemoveAll(infraProject)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.MkdirAll(infraProject, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.InfraDir = infraProject
+
+	scriptsPath := filepath.Join("target", config.CustomerName, "scripts")
 	err = os.RemoveAll(scriptsPath)
 	if err != nil {
 		log.Fatal(err)
@@ -97,21 +107,20 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 		"<--admin-tenant-->": config.TenantProject,
 		"<--aws-services-->": config.AwsServicesProject,
 		"<--app-->":          config.AppProject,
-		"<--admin-infra-->":  config.AdminInfra,
 	}
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "plan.sh"), mapToRepalce)
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "apply.sh"), mapToRepalce)
 	common.RepalceStringInFile(filepath.Join(scriptsPath, "destroy.sh"), mapToRepalce)
 
-	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, config.TenantName, ".gitignore"))
+	err = duplosdk.Copy(".gitignore", filepath.Join("target", config.CustomerName, ".gitignore"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = duplosdk.Copy(".envrc", filepath.Join("target", config.CustomerName, config.TenantName, ".envrc"))
+	err = duplosdk.Copy(".envrc", filepath.Join("target", config.CustomerName, ".envrc"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	envFile, err := os.OpenFile(filepath.Join("target", config.CustomerName, config.TenantName, ".envrc"), os.O_APPEND|os.O_WRONLY, 0644)
+	envFile, err := os.OpenFile(filepath.Join("target", config.CustomerName, ".envrc"), os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,43 +129,6 @@ func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosd
 		log.Fatal(err)
 	}
 	//========
-
-	config.AdminInfraPath = filepath.Join("target", config.CustomerName, "admin-infra")
-	adminInfra := filepath.Join(config.AdminInfraPath + "/terraform")
-	err = os.RemoveAll(config.AdminInfraPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//	err = os.RemoveAll(filepath.Join("target", config.CustomerName))
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	err = os.RemoveAll(adminInfra)
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	err = os.MkdirAll(adminInfra, os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	adminScriptsPath := filepath.Join(config.AdminInfraPath, "/scripts")
-	err = os.RemoveAll(adminScriptsPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = os.MkdirAll(adminScriptsPath, os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = duplosdk.CopyDirectory("./scripts", adminScriptsPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "plan.sh"), mapToRepalce)
-	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "apply.sh"), mapToRepalce)
-	common.RepalceStringInFile(filepath.Join(adminScriptsPath, "destroy.sh"), mapToRepalce)
-
-	config.AdminInfraDir = adminInfra
 
 	log.Println("[TRACE] <====== Initialized target directory with customer name and tenant id. =====>")
 	return nil
@@ -171,9 +143,15 @@ func (tfg *TfGeneratorService) StartTFGeneration(config *common.Config, client *
 	// 	tf := tfInit(config, config.AdminTenantDir)
 	// 	tfNewWorkspace(config, tf)
 	// }
-
+	configVarsBase := config.ConfigVars
 	if !config.SkipAdminTenant {
 		log.Println("[TRACE] <====== Start TF generation for tenant project. =====>")
+		config.ConfigVars = filepath.Join(config.ConfigVars, config.TenantName)
+		err := os.MkdirAll(config.ConfigVars, os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Register New TF generator for Tenant Project
 		tenantGeneratorList := TenantGenerators
 		if config.S3Backend {
@@ -184,12 +162,14 @@ func (tfg *TfGeneratorService) StartTFGeneration(config *common.Config, client *
 		if config.ValidateTf {
 			common.ValidateAndFormatTfCode(config.AdminTenantDir, config.TFVersion)
 		}
+		config.ConfigVars = configVarsBase
 		log.Println("[TRACE] <====== End TF generation for tenant project. =====>")
 	}
 
 	if !config.SkipAwsServices {
 		log.Println("[TRACE] <====== Start TF generation for aws services project. =====>")
 		// Register New TF generator for AWS Services project
+		config.ConfigVars = filepath.Join(config.ConfigVars, config.TenantName)
 		awsServcesGeneratorList := AWSServicesGenerators
 		if config.S3Backend {
 			awsServcesGeneratorList = append(awsServcesGeneratorList, &awsservices.AwsServicesBackend{})
@@ -198,35 +178,46 @@ func (tfg *TfGeneratorService) StartTFGeneration(config *common.Config, client *
 		if config.ValidateTf {
 			common.ValidateAndFormatTfCode(config.AwsServicesDir, config.TFVersion)
 		}
+		config.ConfigVars = configVarsBase
 		log.Println("[TRACE] <====== End TF generation for aws services project. =====>")
 	}
 
 	if !config.SkipApp {
 		log.Println("[TRACE] <====== Start TF generation for app project. =====>")
 		// Register New TF generator for App Services project
+		config.ConfigVars = filepath.Join(config.ConfigVars, config.TenantName)
 		appGeneratorList := AppGenerators
-		if config.S3Backend {
-			appGeneratorList = append(appGeneratorList, &app.AppBackend{})
-		}
+		//if config.S3Backend { //talk with tahir
+		//	appGeneratorList = append(appGeneratorList, &app.AppBackend{})
+		//}
 		starTFGenerationForProject(config, client, appGeneratorList, config.AppDir)
 		if config.ValidateTf {
 			common.ValidateAndFormatTfCode(config.AppDir, config.TFVersion)
 		}
+		config.ConfigVars = configVarsBase
 		log.Println("[TRACE] <====== End TF generation for app project. =====>")
 	}
 
 	if !config.SkipAdminInfra {
 		log.Println("[TRACE] <====== Start TF generation for Admin project. =====>")
+		config.ConfigVars = filepath.Join(config.ConfigVars, config.DuploPlanId)
+		err := os.MkdirAll(config.ConfigVars, os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Register New TF generator for Admin Services project
 		adminInfraGeneratorList := AdminInfraGenerator
 		if config.S3Backend {
-			adminInfraGeneratorList = append(adminInfraGeneratorList, &adminInfra.Infra{})
+			adminInfraGeneratorList = append(adminInfraGeneratorList, &adminInfra.InfraBackend{})
 		}
 		fmt.Println("adminInfraGeneratorList ", adminInfraGeneratorList)
-		starTFGenerationForProject(config, client, adminInfraGeneratorList, config.AdminInfraDir)
+		config.ConfigVars = strings.Split(config.ConfigVars, "/"+config.TenantName)[0]
+		starTFGenerationForProject(config, client, adminInfraGeneratorList, config.InfraDir)
 		if config.ValidateTf {
-			common.ValidateAndFormatTfCode(config.AdminInfraDir, config.TFVersion)
+			common.ValidateAndFormatTfCode(config.InfraDir, config.TFVersion)
 		}
+		config.ConfigVars = configVarsBase
 		log.Println("[TRACE] <====== End TF generation for Admin project. =====>")
 	}
 	return nil

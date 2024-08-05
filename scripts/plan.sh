@@ -67,17 +67,4 @@ tf_output() {
         tf output -json )
 }
 
-if [ "$selection" = "admin-infra" ]; then
-  case "$tenant" in
-  prod*|nonprod*)
-    tf_plan admin-infra "$@"
-    ;;
-  *)
-    die "$tenant: not an expected infrastructure name"
-    ;;
-  esac
-else
-  tf_plan <--admin-tenant--> "$@"
-  tf_plan <--aws-services--> "$@"
-  tf_plan <--app--> "$@"
-fi
+tf_plan "$selection" $@

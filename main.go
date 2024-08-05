@@ -44,22 +44,29 @@ func main() {
 	if tenantConfig == nil {
 		log.Fatalf("Tenant not found: Tenant Name - %s ", config.TenantName)
 	}
+	log.Printf("GetTenantByNameForUser response \n%+v\n tags %+v", tenantConfig, *tenantConfig.Tags)
 	config.TenantId = tenantConfig.TenantID
 	config.DuploPlanId = tenantConfig.PlanID
 	accountID, err := client.TenantGetAwsAccountID(config.TenantId)
 	if err != nil {
 		log.Fatalf("error getting aws account id from duplo: %s", err)
 	}
+	log.Printf("TenantGetAwsAccountID response \n%+v", accountID)
+
 	config.AccountID = accountID
 	infraConfig, err := client.InfrastructureGetConfig(tenantConfig.PlanID)
 	if err != nil {
 		log.Fatalf("error getting duplo plan region from duplo: %s", err)
 	}
+	log.Printf("InfrastructureGetConfig(%s) response \n%+v", tenantConfig.PlanID, infraConfig)
+
 	config.DuploPlanRegion = infraConfig.Region
 	defaultInfraConfig, err := client.InfrastructureGetConfig("default")
 	if err != nil || defaultInfraConfig == nil {
 		log.Fatalf("error getting default duplo plan region from duplo: %s", err)
 	}
+	log.Printf("InfrastructureGetConfig(default) response \n%+v", defaultInfraConfig)
+
 	config.DuploDefaultPlanRegion = defaultInfraConfig.Region
 
 	log.Printf("[TRACE] Config ==> %+v\n", config)

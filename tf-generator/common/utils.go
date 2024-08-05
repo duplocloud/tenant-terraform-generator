@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"os"
@@ -257,7 +258,14 @@ func ConstructConfigVars(vars []VarConfig) map[string]interface{} {
 	m := make(map[string]interface{})
 	for _, v := range vars {
 		if v.Name != "" {
-			m[v.Name] = v.DefaultVal
+			objects := []map[string]interface{}{} // Slice to hold objects
+			err := json.Unmarshal([]byte(v.DefaultVal), &objects)
+			if err != nil {
+				m[v.Name] = v.DefaultVal
+			} else {
+				m[v.Name] = objects
+			}
+
 		}
 	}
 	return m

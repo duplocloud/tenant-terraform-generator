@@ -39,7 +39,7 @@ tf_apply() {
   local ws="$tenant"
 
   # '-parallelism=1' slows down requests to DuploCloud, which reduces the odds of timeouts when managing many resources.
-  local tf_args=( -input=false -parallelism=1 "$@" )
+  local tf_args=( -auto-approve -input=false -parallelism=1 "$@" )
   local varfile="config/$ws/$project.tfvars.json"
   [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
   local varfile="config/$ws/$project.tfvars"
@@ -67,17 +67,4 @@ tf_output() {
     tf output -json )
 }
 
-if [ "$selection" = "admin-infra" ]; then
-  case "$tenant" in
-  prod*|nonprod*)
-    tf_apply admin-infra "$@"
-    ;;
-  *)
-    die "$tenant: not an expected infrastructure name"
-    ;;
-  esac
-else
-  tf_apply <--admin-tenant--> "$@"
-  tf_apply <--aws-services--> "$@"
-  tf_apply <--app--> "$@"
-fi
+tf_apply "$selection" "$@"
