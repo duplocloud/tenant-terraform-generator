@@ -127,9 +127,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 			}
 
 			if lf.EphemeralStorage != nil {
-				envBlock := lfBody.AppendNewBlock("ephemeral_storage", nil)
-				envBody := envBlock.Body()
-				envBody.SetAttributeValue("size", cty.NumberIntVal(int64(lf.EphemeralStorage.Size)))
+				lfBody.SetAttributeValue("ephemeral_storage", cty.NumberIntVal(int64(lf.EphemeralStorage.Size)))
 			}
 
 			if lf.ImageConfigResponse != nil && lf.ImageConfigResponse.ImageConfig != nil {
@@ -152,10 +150,7 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 			if lf.TracingConfig != nil {
 				tracingBlock := lfBody.AppendNewBlock("tracing_config", nil)
 				tracingBody := tracingBlock.Body()
-
-				modeBlock := tracingBody.AppendNewBlock("mode", nil)
-				modeBody := modeBlock.Body()
-				modeBody.SetAttributeValue("value", cty.StringVal(lf.TracingConfig.Mode.Value))
+				tracingBody.SetAttributeValue("mode", cty.StringVal(lf.TracingConfig.Mode.Value))
 			}
 			// Lambda Permission Resource
 			lfPermission, _ := client.LambdaPermissionGet(config.TenantId, lf.FunctionName)

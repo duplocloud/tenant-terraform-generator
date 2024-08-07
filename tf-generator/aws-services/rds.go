@@ -100,7 +100,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						Name: varFullPrefix + "size",
 					},
 				})
-				lifecycleBody := rrBody.AppendNewBlock("lifecycle_policy", nil).Body()
+				lifecycleBody := rrBody.AppendNewBlock("lifecycle", nil).Body()
 				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
 				lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
 				outVars := generateRdsOutputVars(varFullPrefix, resourceName, "duplocloud_rds_read_replica")
@@ -222,7 +222,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				}
 
 				rdsBody.SetAttributeValue("enable_iam_auth", cty.BoolVal(rds.EnableIamAuth))
-				lifecycleBody := rdsBody.AppendNewBlock("lifecycle_policy", nil).Body()
+				lifecycleBody := rdsBody.AppendNewBlock("lifecycle", nil).Body()
 				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
 				lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
 				outVars := generateRdsOutputVars(varFullPrefix, resourceName, "duplocloud_rds_instance")
