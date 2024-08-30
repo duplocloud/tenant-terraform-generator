@@ -25,32 +25,41 @@ type DuploRdsInstance struct {
 	// NOTE: The Name field does not come from the backend - we synthesize it
 	Name string `json:"Name"`
 
-	Identifier                  string   `json:"Identifier"`
-	ClusterIdentifier           string   `json:"ClusterIdentifier,omitempty"`
-	ReplicationSourceIdentifier string   `json:"ReplicationSourceIdentifier,omitempty"`
-	Arn                         string   `json:"Arn"`
-	Endpoint                    string   `json:"Endpoint,omitempty"`
-	MasterUsername              string   `json:"MasterUsername,omitempty"`
-	MasterPassword              string   `json:"MasterPassword,omitempty"`
-	Engine                      int      `json:"Engine,omitempty"`
-	EngineVersion               string   `json:"EngineVersion,omitempty"`
-	SnapshotID                  string   `json:"SnapshotId,omitempty"`
-	DBParameterGroupName        string   `json:"DBParameterGroupName,omitempty"`
-	StoreDetailsInSecretManager bool     `json:"StoreDetailsInSecretManager,omitempty"`
-	Cloud                       int      `json:"Cloud,omitempty"`
-	SizeEx                      string   `json:"SizeEx,omitempty"`
-	EncryptStorage              bool     `json:"EncryptStorage,omitempty"`
-	AllocatedStorage            int      `json:"AllocatedStorage,omitempty"`
-	EncryptionKmsKeyId          string   `json:"EncryptionKmsKeyId,omitempty"`
-	EnableLogging               bool     `json:"EnableLogging,omitempty"`
-	MultiAZ                     bool     `json:"MultiAZ,omitempty"`
-	InstanceStatus              string   `json:"InstanceStatus,omitempty"`
-	DBSubnetGroupName           string   `json:"DBSubnetGroupName,omitempty"`
-	ReadReplicaIdentifiers      []string `json:"ReadReplicaIdentifiers,omitempty"`
-	DuploRdsRole                string   `json:"DuploRdsRole,omitempty"`
-	StorageType                 string   `json:"StorageType,omitempty"`
-	Iops                        int      `json:"Iops,omitempty"`
-	EnableIamAuth               bool     `json:"EnableIamAuth"`
+	Identifier                         string                  `json:"Identifier"`
+	ClusterIdentifier                  string                  `json:"ClusterIdentifier,omitempty"`
+	ReplicationSourceIdentifier        string                  `json:"ReplicationSourceIdentifier,omitempty"`
+	Arn                                string                  `json:"Arn"`
+	Endpoint                           string                  `json:"Endpoint,omitempty"`
+	MasterUsername                     string                  `json:"MasterUsername,omitempty"`
+	MasterPassword                     string                  `json:"MasterPassword,omitempty"`
+	Engine                             int                     `json:"Engine,omitempty"`
+	EngineVersion                      string                  `json:"EngineVersion,omitempty"`
+	SnapshotID                         string                  `json:"SnapshotId,omitempty"`
+	DBParameterGroupName               string                  `json:"DBParameterGroupName,omitempty"`
+	StoreDetailsInSecretManager        bool                    `json:"StoreDetailsInSecretManager,omitempty"`
+	Cloud                              int                     `json:"Cloud,omitempty"`
+	SizeEx                             string                  `json:"SizeEx,omitempty"`
+	EncryptStorage                     bool                    `json:"EncryptStorage,omitempty"`
+	AllocatedStorage                   int                     `json:"AllocatedStorage,omitempty"`
+	EncryptionKmsKeyId                 string                  `json:"EncryptionKmsKeyId,omitempty"`
+	EnableLogging                      bool                    `json:"EnableLogging,omitempty"`
+	MultiAZ                            bool                    `json:"MultiAZ,omitempty"`
+	InstanceStatus                     string                  `json:"InstanceStatus,omitempty"`
+	DBSubnetGroupName                  string                  `json:"DBSubnetGroupName,omitempty"`
+	ReadReplicaIdentifiers             []string                `json:"ReadReplicaIdentifiers,omitempty"`
+	DuploRdsRole                       string                  `json:"DuploRdsRole,omitempty"`
+	StorageType                        string                  `json:"StorageType,omitempty"`
+	Iops                               int                     `json:"Iops,omitempty"`
+	EnableIamAuth                      bool                    `json:"EnableIamAuth"`
+	V2ScalingConfiguration             *V2ScalingConfiguration `json:"V2ScalingConfiguration,omitempty"`
+	EnablePerformanceInsights          bool                    `json:"EnablePerformanceInsights,omitempty"`
+	PerformanceInsightsRetentionPeriod int                     `json:"PerformanceInsightsRetentionPeriod,omitempty"`
+	PerformanceInsightsKMSKeyId        string                  `json:"PerformanceInsightsKMSKeyId,omitempty"`
+}
+
+type V2ScalingConfiguration struct {
+	MinCapacity float64 `json:"MinCapacity,omitempty"`
+	MaxCapacity float64 `json:"MaxCapacity,omitempty"`
 }
 
 // DuploRdsInstancePasswordChange is a Duplo SDK object that represents an RDS instance password change
