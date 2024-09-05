@@ -54,8 +54,9 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 			// if len(rds.ClusterIdentifier) > 0 || len(rds.ReplicationSourceIdentifier) > 0 {
 			if len(rds.DuploRdsRole) > 0 && strings.ToLower(rds.DuploRdsRole) == "reader" {
-				varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
-				inputVars := generateRdsRRVars(rds, varFullPrefix)
+				varFullPrefix := RDS_VAR_PREFIX
+
+				inputVars := generateRdsRRVars(rds, RDS_VAR_PREFIX)
 				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 				rrBlock := rootBody.AppendNewBlock("resource",
@@ -107,7 +108,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf.min_capacity",
+							Name: varFullPrefix + "scaling_conf_min_capacity",
 						},
 					})
 					scalingBody.SetAttributeTraversal("max_capacity", hcl.Traversal{
@@ -115,7 +116,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf.max_capacity",
+							Name: varFullPrefix + "scaling_conf_max_capacity",
 						},
 					})
 				}
@@ -126,7 +127,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.enable",
+							Name: varFullPrefix + "performance_insights_enable",
 						},
 					})
 					inightBody.SetAttributeTraversal("retention_period", hcl.Traversal{
@@ -134,7 +135,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.retention_period",
+							Name: varFullPrefix + "performance_insights_retention_period",
 						},
 					})
 					inightBody.SetAttributeTraversal("kms_key_id", hcl.Traversal{
@@ -142,7 +143,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.kms_key_id",
+							Name: varFullPrefix + "performance_insights_kms_key_id",
 						},
 					})
 				}
@@ -163,7 +164,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 			} else {
 
-				varFullPrefix := RDS_VAR_PREFIX + resourceName + "_"
+				varFullPrefix := RDS_VAR_PREFIX
 				inputVars := generateRdsVars(rds, varFullPrefix)
 				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
@@ -273,7 +274,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf.min_capacity",
+							Name: varFullPrefix + "scaling_config_min_capacity",
 						},
 					})
 					scalingBody.SetAttributeTraversal("max_capacity", hcl.Traversal{
@@ -281,7 +282,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf.max_capacity",
+							Name: varFullPrefix + "scaling_config_max_capacity",
 						},
 					})
 				}
@@ -292,7 +293,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.enable",
+							Name: varFullPrefix + "performance_insights_enable",
 						},
 					})
 					inightBody.SetAttributeTraversal("retention_period", hcl.Traversal{
@@ -300,7 +301,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.retention_period",
+							Name: varFullPrefix + "performance_insights_retention_period",
 						},
 					})
 					inightBody.SetAttributeTraversal("kms_key_id", hcl.Traversal{
@@ -308,7 +309,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights.kms_key_id",
+							Name: varFullPrefix + "performance_insights_kms_key_id",
 						},
 					})
 				}
@@ -360,37 +361,37 @@ func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.
 	varConfigs["size"] = var1
 
 	var2 := common.VarConfig{
-		Name:       prefix + "scale_config.max_capacity",
+		Name:       prefix + "scaling_config_max_capacity",
 		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "float",
+		TypeVal:    "number",
 	}
 	varConfigs["max_capacity"] = var2
 
 	var3 := common.VarConfig{
-		Name:       prefix + "scale_config.min_capacity",
+		Name:       prefix + "scaling_config_min_capacity",
 		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "float",
+		TypeVal:    "number",
 	}
 	varConfigs["min_capacity"] = var3
 
 	var4 := common.VarConfig{
-		Name:       prefix + "performance_insights.enable",
+		Name:       prefix + "performance_insights_enable",
 		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
 		TypeVal:    "bool",
 	}
 	varConfigs["enable"] = var4
 
 	var5 := common.VarConfig{
-		Name:       prefix + "performance_insights.kms_key_id",
+		Name:       prefix + "performance_insights_kms_key_id",
 		DefaultVal: duplo.PerformanceInsightsKMSKeyId,
 		TypeVal:    "string",
 	}
 	varConfigs["kms_key_id"] = var5
 
 	var6 := common.VarConfig{
-		Name:       prefix + "performance_insights.retention_period",
+		Name:       prefix + "performance_insights_retention_period",
 		DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
-		TypeVal:    "int",
+		TypeVal:    "number",
 	}
 	varConfigs["retention_period"] = var6
 
@@ -436,37 +437,37 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 	varConfigs["master_username"] = var4
 
 	var5 := common.VarConfig{
-		Name:       prefix + "scale_config.max_capacity",
+		Name:       prefix + "scaling_config_max_capacity",
 		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "float",
+		TypeVal:    "number",
 	}
 	varConfigs["max_capacity"] = var5
 
 	var6 := common.VarConfig{
-		Name:       prefix + "scale_config.min_capacity",
+		Name:       prefix + "scaling_config_min_capacity",
 		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "float",
+		TypeVal:    "number",
 	}
 	varConfigs["min_capacity"] = var6
 
 	var7 := common.VarConfig{
-		Name:       prefix + "performance_insights.enable",
+		Name:       prefix + "performance_insights_enable",
 		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
 		TypeVal:    "bool",
 	}
 	varConfigs["enable"] = var7
-
-	var8 := common.VarConfig{
-		Name:       prefix + "performance_insights.kms_key_id",
-		DefaultVal: duplo.PerformanceInsightsKMSKeyId,
-		TypeVal:    "string",
+	if duplo.PerformanceInsightsKMSKeyId != "" {
+		var8 := common.VarConfig{
+			Name:       prefix + "performance_insights_kms_key_id",
+			DefaultVal: duplo.PerformanceInsightsKMSKeyId,
+			TypeVal:    "string",
+		}
+		varConfigs["kms_key_id"] = var8
 	}
-	varConfigs["kms_key_id"] = var8
-
 	var9 := common.VarConfig{
-		Name:       prefix + "performance_insights.retention_period",
+		Name:       prefix + "performance_insights_retention_period",
 		DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
-		TypeVal:    "int",
+		TypeVal:    "number",
 	}
 	varConfigs["retention_period"] = var9
 	vars := make([]common.VarConfig, len(varConfigs))
