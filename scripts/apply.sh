@@ -45,7 +45,7 @@ tf_apply() {
   local varfile="config/$ws/$project.tfvars"
   [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
 
-  echo "Project: $project"
+  echo "Project: [$project] Tenant: [$tenant] Workspace: [$ws]"
 
   # shellcheck disable=SC2086    # NOTE: we want word splitting
   (cd "terraform/$project" &&
