@@ -27,7 +27,7 @@ type TfGeneratorService struct {
 func (tfg *TfGeneratorService) PreProcess(config *common.Config, client *duplosdk.Client) error {
 	log.Println("[TRACE] <====== Initialize target directory with customer name and tenant id. =====>")
 	config.TFCodePath = filepath.Join("target", config.CustomerName, config.TenantName, "terraform")
-	config.ConfigVars = filepath.Join("target", config.CustomerName, config.TenantName, "config", config.TenantName)
+	config.ConfigVars = filepath.Join("target", config.CustomerName, config.TenantName, "config")
 	tenantProject := filepath.Join(config.TFCodePath, config.TenantProject)
 	err := os.RemoveAll(filepath.Join("target", config.CustomerName, config.TenantName))
 	if err != nil {

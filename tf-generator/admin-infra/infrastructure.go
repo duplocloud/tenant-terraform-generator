@@ -42,8 +42,8 @@ func (i Infra) Generate(config *common.Config, client *duplosdk.Client) (*common
 			}
 			resourceName := common.GetResourceName(infra.Name)
 			varFullPrefix := INFRA_VAR_PREFIX + resourceName + "_"
-			inputVars := generateInfraVars(infra, varFullPrefix)
-			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
+			//inputVars := generateInfraVars(infra, varFullPrefix)
+			//tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 			fmt.Println("Admin generator tfContext.InputVars ", tfContext.InputVars)
 			rootBody := hclFile.Body()
 
