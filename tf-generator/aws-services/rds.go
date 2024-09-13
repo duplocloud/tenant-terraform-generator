@@ -122,12 +122,12 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				}
 				if rds.EnablePerformanceInsights {
 					inightBody := rrBody.AppendNewBlock("performance_insights", nil).Body()
-					inightBody.SetAttributeTraversal("enable", hcl.Traversal{
+					inightBody.SetAttributeTraversal("enabled", hcl.Traversal{
 						hcl.TraverseRoot{
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights_enable",
+							Name: varFullPrefix + "performance_insights_enabled",
 						},
 					})
 					inightBody.SetAttributeTraversal("retention_period", hcl.Traversal{
@@ -288,12 +288,12 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				}
 				if rds.EnablePerformanceInsights {
 					inightBody := rdsBody.AppendNewBlock("performance_insights", nil).Body()
-					inightBody.SetAttributeTraversal("enable", hcl.Traversal{
+					inightBody.SetAttributeTraversal("enabled", hcl.Traversal{
 						hcl.TraverseRoot{
 							Name: "var",
 						},
 						hcl.TraverseAttr{
-							Name: varFullPrefix + "performance_insights_enable",
+							Name: varFullPrefix + "performance_insights_enabled",
 						},
 					})
 					inightBody.SetAttributeTraversal("retention_period", hcl.Traversal{
@@ -375,11 +375,11 @@ func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.
 	varConfigs["min_capacity"] = var3
 
 	var4 := common.VarConfig{
-		Name:       prefix + "performance_insights_enable",
+		Name:       prefix + "performance_insights_enabled",
 		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
 		TypeVal:    "bool",
 	}
-	varConfigs["enable"] = var4
+	varConfigs["enabled"] = var4
 
 	var5 := common.VarConfig{
 		Name:       prefix + "performance_insights_kms_key_id",
@@ -451,11 +451,11 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 	varConfigs["min_capacity"] = var6
 
 	var7 := common.VarConfig{
-		Name:       prefix + "performance_insights_enable",
+		Name:       prefix + "performance_insights_enabled",
 		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
 		TypeVal:    "bool",
 	}
-	varConfigs["enable"] = var7
+	varConfigs["enabled"] = var7
 	if duplo.PerformanceInsightsKMSKeyId != "" {
 		var8 := common.VarConfig{
 			Name:       prefix + "performance_insights_kms_key_id",
