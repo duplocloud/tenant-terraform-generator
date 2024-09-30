@@ -54,9 +54,9 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 			// if len(rds.ClusterIdentifier) > 0 || len(rds.ReplicationSourceIdentifier) > 0 {
 			if len(rds.DuploRdsRole) > 0 && strings.ToLower(rds.DuploRdsRole) == "reader" {
-				varFullPrefix := RDS_VAR_PREFIX
+				varFullPrefix := RDS_VAR_PREFIX + shortName + "_"
 
-				inputVars := generateRdsRRVars(rds, RDS_VAR_PREFIX)
+				inputVars := generateRdsRRVars(rds, varFullPrefix)
 				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 				rrBlock := rootBody.AppendNewBlock("resource",
@@ -101,25 +101,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						Name: varFullPrefix + "size",
 					},
 				})
-				if rds.V2ScalingConfiguration != nil {
-					scalingBody := rrBody.AppendNewBlock("v2_scaling_configuration", nil).Body()
-					scalingBody.SetAttributeTraversal("min_capacity", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: "var",
-						},
-						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf_min_capacity",
-						},
-					})
-					scalingBody.SetAttributeTraversal("max_capacity", hcl.Traversal{
-						hcl.TraverseRoot{
-							Name: "var",
-						},
-						hcl.TraverseAttr{
-							Name: varFullPrefix + "scaling_conf_max_capacity",
-						},
-					})
-				}
+
 				if rds.EnablePerformanceInsights {
 					inightBody := rrBody.AppendNewBlock("performance_insights", nil).Body()
 					inightBody.SetAttributeTraversal("enabled", hcl.Traversal{
@@ -147,6 +129,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						},
 					})
 				}
+
 				lifecycleBody := rrBody.AppendNewBlock("lifecycle", nil).Body()
 				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
 				lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
@@ -164,7 +147,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 
 			} else {
 
-				varFullPrefix := RDS_VAR_PREFIX
+				varFullPrefix := RDS_VAR_PREFIX + shortName + "_"
 				inputVars := generateRdsVars(rds, varFullPrefix)
 				tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
@@ -360,41 +343,28 @@ func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.
 	}
 	varConfigs["size"] = var1
 
-	var2 := common.VarConfig{
-		Name:       prefix + "scaling_config_max_capacity",
-		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "number",
-	}
-	varConfigs["max_capacity"] = var2
+	if duplo.EnablePerformanceInsights {
+		var4 := common.VarConfig{
+			Name:       prefix + "performance_insights_enabled",
+			DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
+			TypeVal:    "bool",
+		}
+		varConfigs["enabled"] = var4
 
-	var3 := common.VarConfig{
-		Name:       prefix + "scaling_config_min_capacity",
-		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "number",
-	}
-	varConfigs["min_capacity"] = var3
+		var5 := common.VarConfig{
+			Name:       prefix + "performance_insights_kms_key_id",
+			DefaultVal: duplo.PerformanceInsightsKMSKeyId,
+			TypeVal:    "string",
+		}
+		varConfigs["kms_key_id"] = var5
 
-	var4 := common.VarConfig{
-		Name:       prefix + "performance_insights_enabled",
-		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
-		TypeVal:    "bool",
+		var6 := common.VarConfig{
+			Name:       prefix + "performance_insights_retention_period",
+			DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
+			TypeVal:    "number",
+		}
+		varConfigs["retention_period"] = var6
 	}
-	varConfigs["enabled"] = var4
-
-	var5 := common.VarConfig{
-		Name:       prefix + "performance_insights_kms_key_id",
-		DefaultVal: duplo.PerformanceInsightsKMSKeyId,
-		TypeVal:    "string",
-	}
-	varConfigs["kms_key_id"] = var5
-
-	var6 := common.VarConfig{
-		Name:       prefix + "performance_insights_retention_period",
-		DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
-		TypeVal:    "number",
-	}
-	varConfigs["retention_period"] = var6
-
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
@@ -435,41 +405,46 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 		TypeVal:    "string",
 	}
 	varConfigs["master_username"] = var4
-
-	var5 := common.VarConfig{
-		Name:       prefix + "scaling_config_max_capacity",
-		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "number",
-	}
-	varConfigs["max_capacity"] = var5
-
-	var6 := common.VarConfig{
-		Name:       prefix + "scaling_config_min_capacity",
-		DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
-		TypeVal:    "number",
-	}
-	varConfigs["min_capacity"] = var6
-
-	var7 := common.VarConfig{
-		Name:       prefix + "performance_insights_enabled",
-		DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
-		TypeVal:    "bool",
-	}
-	varConfigs["enabled"] = var7
-	if duplo.PerformanceInsightsKMSKeyId != "" {
-		var8 := common.VarConfig{
-			Name:       prefix + "performance_insights_kms_key_id",
-			DefaultVal: duplo.PerformanceInsightsKMSKeyId,
-			TypeVal:    "string",
+	if duplo.V2ScalingConfiguration.MaxCapacity > 0 && duplo.V2ScalingConfiguration.MinCapacity > 0 {
+		var5 := common.VarConfig{
+			Name:       prefix + "scaling_config_max_capacity",
+			DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
+			TypeVal:    "number",
 		}
-		varConfigs["kms_key_id"] = var8
+		varConfigs["max_capacity"] = var5
+
+		var6 := common.VarConfig{
+			Name:       prefix + "scaling_config_min_capacity",
+			DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MinCapacity),
+			TypeVal:    "number",
+		}
+		varConfigs["min_capacity"] = var6
 	}
-	var9 := common.VarConfig{
-		Name:       prefix + "performance_insights_retention_period",
-		DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
-		TypeVal:    "number",
+
+	if duplo.EnablePerformanceInsights {
+
+		var7 := common.VarConfig{
+			Name:       prefix + "performance_insights_enabled",
+			DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
+			TypeVal:    "bool",
+		}
+		varConfigs["enabled"] = var7
+		if duplo.PerformanceInsightsKMSKeyId != "" {
+			var8 := common.VarConfig{
+				Name:       prefix + "performance_insights_kms_key_id",
+				DefaultVal: duplo.PerformanceInsightsKMSKeyId,
+				TypeVal:    "string",
+			}
+			varConfigs["kms_key_id"] = var8
+		}
+
+		var9 := common.VarConfig{
+			Name:       prefix + "performance_insights_retention_period",
+			DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
+			TypeVal:    "number",
+		}
+		varConfigs["retention_period"] = var9
 	}
-	varConfigs["retention_period"] = var9
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
