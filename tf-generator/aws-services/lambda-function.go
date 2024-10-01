@@ -29,6 +29,8 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 		fmt.Println(clientErr)
 		return nil, clientErr
 	}
+	s3s, _ := client.TenantListS3Buckets(config.TenantId)
+
 	tfContext := common.TFContext{}
 	importConfigs := []common.ImportConfig{}
 	if list != nil {
@@ -46,6 +48,8 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 			varFullPrefix := LF_VAR_PREFIX + resourceName + "_"
 			// create new empty hcl file object
 			hclFile := hclwrite.NewEmptyFile()
+			inputVars := generatelambdaVars(lf, varFullPrefix)
+			tfContext.InputVars = append(tfContext.InputVars, inputVars...)
 
 			// create new file on system
 			path := filepath.Join(workingDir, "lf-"+shortName+".tf")
@@ -83,14 +87,42 @@ func (lf *LambdaFunction) Generate(config *common.Config, client *duplosdk.Clien
 				lfBody.SetAttributeValue("package_type",
 					cty.StringVal(lf.PackageType.Value))
 				if strings.ToLower(lf.PackageType.Value) == strings.ToLower("Zip") {
-					if len(lfDetails.Code.S3Bucket) > 0 {
-						lfBody.SetAttributeValue("s3_bucket",
-							cty.StringVal(lfDetails.Code.S3Bucket))
+
+					lfBody.SetAttributeTraversal("s3_bucket", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "var",
+						},
+						hcl.TraverseAttr{
+							Name: varFullPrefix + "s3_bucket",
+						},
+					})
+
+					lfBody.SetAttributeTraversal("s3_key", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "var",
+						},
+						hcl.TraverseAttr{
+							Name: varFullPrefix + "s3_key",
+						},
+					})
+					s3resrc := []string{}
+					for _, s3 := range *s3s {
+						shortName := s3.Name
+						if strings.HasPrefix(s3.Name, "duploservices-") {
+							shortName = s3.Name[len("duploservices-"+config.TenantName+"-"):len(s3.Name)]
+							parts := strings.Split(shortName, "-")
+							if len(parts) > 0 {
+								parts = parts[:len(parts)-1]
+							}
+							shortName = strings.Join(parts, "-")
+						}
+						resourceName := common.GetResourceName(shortName)
+						s3resrc = append(s3resrc, "duplocloud_s3_bucket."+resourceName)
+
 					}
-					if len(lfDetails.Code.S3Key) > 0 {
-						lfBody.SetAttributeValue("s3_key",
-							cty.StringVal(lfDetails.Code.S3Key))
-					}
+					depends := common.StringSliceToListVal(s3resrc)
+					lfBody.SetAttributeValue("depends_on", cty.ListVal(depends))
+
 				} else if strings.ToLower(lf.PackageType.Value) == strings.ToLower("Image") {
 					lfBody.SetAttributeValue("image_uri",
 						cty.StringVal(lfDetails.Code.ImageURI))
@@ -243,4 +275,28 @@ func generateLFOutputVars(prefix, resourceName string) []common.OutputVarConfig 
 		outVars = append(outVars, v)
 	}
 	return outVars
+}
+
+func generatelambdaVars(lf duplosdk.DuploLambdaConfiguration, prefix string) []common.VarConfig {
+	varConfigs := make(map[string]common.VarConfig)
+	if strings.ToLower(lf.PackageType.Value) == strings.ToLower("Zip") {
+		var1 := common.VarConfig{
+			Name:       prefix + "s3_bucket",
+			DefaultVal: "place-holder",
+			TypeVal:    "string",
+		}
+		varConfigs["s3_bucket"] = var1
+
+		var2 := common.VarConfig{
+			Name:       prefix + "s3_key",
+			DefaultVal: "place-holder.zip",
+			TypeVal:    "string",
+		}
+		varConfigs["s3_key"] = var2
+	}
+	vars := make([]common.VarConfig, len(varConfigs))
+	for _, v := range varConfigs {
+		vars = append(vars, v)
+	}
+	return vars
 }
