@@ -282,14 +282,14 @@ func generatelambdaVars(lf duplosdk.DuploLambdaConfiguration, prefix string) []c
 	if strings.ToLower(lf.PackageType.Value) == strings.ToLower("Zip") {
 		var1 := common.VarConfig{
 			Name:       prefix + "s3_bucket",
-			DefaultVal: "place-holder",
+			DefaultVal: "",
 			TypeVal:    "string",
 		}
 		varConfigs["s3_bucket"] = var1
 
 		var2 := common.VarConfig{
 			Name:       prefix + "s3_key",
-			DefaultVal: "place-holder.zip",
+			DefaultVal: "",
 			TypeVal:    "string",
 		}
 		varConfigs["s3_key"] = var2
