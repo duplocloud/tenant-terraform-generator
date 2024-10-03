@@ -40,9 +40,9 @@ tf_plan() {
 
     # '-parallelism=1' slows down requests to DuploCloud, which reduces the odds of timeouts when managing many resources.
     local tf_args=( -input=false -parallelism=1 "$@" )
-    local varfile="config/$project.tfvars.json"
+    local varfile="config/$ws/$project.tfvars.json"
     [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
-    local varfile="config/$project.tfvars"
+    local varfile="config/$ws/$project.tfvars"
     [ -f "$varfile" ] && tf_args=( "${tf_args[@]}" "-var-file=../../$varfile" )
 
     echo "Project: [$project] Tenant: [$tenant] Workspace: [$ws]"
