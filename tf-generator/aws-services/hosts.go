@@ -34,6 +34,9 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 		log.Println("[TRACE] <====== Hosts TF generation started. =====>")
 		for _, host := range *list {
 			shortName := host.FriendlyName
+			if shortName == "" {
+				continue
+			}
 			if strings.Contains(host.FriendlyName, "duploservices-"+config.TenantName+"-") {
 				shortName = host.FriendlyName[len("duploservices-"+config.TenantName+"-"):len(host.FriendlyName)]
 			}
