@@ -164,7 +164,21 @@ func (h *Hosts) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					rootBody.AppendNewline()
 				}
 			}
+			if host.IsMinion {
+				rp, err := client.GetMinionForHost(host.TenantID, host.InstanceID)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				for _, duploObject := range *rp.Taints {
+					taintBlock := hostBody.AppendNewBlock("taints", nil)
+					taintBody := taintBlock.Body()
+					taintBody.SetAttributeValue("key", cty.StringVal(duploObject.Key))
+					taintBody.SetAttributeValue("value", cty.StringVal(duploObject.Value))
+					taintBody.SetAttributeValue("effect", cty.StringVal(duploObject.Effect))
 
+				}
+			}
 			lifecycleBody := hostBody.AppendNewBlock("lifecycle", nil).Body()
 			lifecycle := common.StringSliceToListVal([]string{"image_id"})
 			lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))

@@ -37,6 +37,13 @@ type DuploNativeHost struct {
 	Tags               *[]DuploKeyStringValue             `json:"Tags,omitempty"`
 	TagsEx             *[]DuploKeyStringValue             `json:"TagsEx,omitempty"`
 	MinionTags         *[]DuploKeyStringValue             `json:"MinionTags,omitempty"`
+	Taints             *[]DuploTaints                     `json:"Taints,omitempty"`
+}
+
+type DuploTaints struct {
+	Key    string `json:"Key"`
+	Value  string `json:"Value"`
+	Effect string `json:"Effect"`
 }
 
 // DuploNativeHostNetworkInterface is a Duplo SDK object that represents a network interface of a native host
@@ -65,4 +72,20 @@ func (c *Client) NativeHostGetList(tenantID string) (*[]DuploNativeHost, ClientE
 		fmt.Sprintf("v2/subscriptions/%s/NativeHostV2", tenantID),
 		&rp)
 	return &rp, err
+}
+
+func (c *Client) GetMinionForHost(tenantID, name string) (*DuploMinion, ClientError) {
+	list, err := c.TenantListMinions(tenantID)
+	if err != nil {
+		return nil, err
+	}
+
+	if list != nil {
+		for _, minion := range *list {
+			if minion.Name == name {
+				return &minion, nil
+			}
+		}
+	}
+	return nil, nil
 }
