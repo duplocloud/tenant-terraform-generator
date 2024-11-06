@@ -627,7 +627,7 @@ func flattenConfigMapRef(in *corev1.ConfigMapEnvSource, confMapBody *hclwrite.Bo
 	}
 	if in.Optional != nil {
 		att["optional"] = *in.Optional
-		confMapBody.SetAttributeValue("name", cty.BoolVal(*in.Optional))
+		confMapBody.SetAttributeValue("optional", cty.BoolVal(*in.Optional))
 
 	}
 	return []interface{}{att}
