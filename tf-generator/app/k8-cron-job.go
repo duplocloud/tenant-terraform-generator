@@ -490,7 +490,7 @@ func flattenContainers(container []corev1.Container, containerBody *hclwrite.Bod
 		}
 		//env_from
 		if len(v.EnvFrom) > 0 {
-			envformBody := containerBody.AppendNewBlock("env_form", nil).Body()
+			envformBody := containerBody.AppendNewBlock("env_from", nil).Body()
 			flattenContainerEnvFroms(v.EnvFrom, envformBody)
 
 		}
