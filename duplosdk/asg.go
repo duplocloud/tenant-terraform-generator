@@ -32,6 +32,7 @@ type DuploAsgProfile struct {
 	KeyPairType       int                                `json:"KeyPairType,omitempty"`
 	MaxSpotPrice      string                             `json:"SpotPrice,omitempty"`
 	UseSpotInstances  bool                               `json:"UseSpotInstances"`
+	Taints            *[]DuploTaints                     `json:"Taints,omitempty"`
 }
 
 type DuploAsgProfileDeleteReq struct {
