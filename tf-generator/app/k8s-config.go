@@ -74,7 +74,7 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 				cty.StringVal(k8sConfig.Name))
 
 			if len(k8sConfig.Data) > 0 {
-				configDataStr, err := duplosdk.JSONMarshal(k8sConfig.Data)
+				configDataStr, err := duplosdk.JSONMarshal(EscapeDollarEscapes(k8sConfig.Data))
 				if err != nil {
 					panic(err)
 				}
@@ -106,4 +106,32 @@ func (k8sConfig *K8sConfig) Generate(config *common.Config, client *duplosdk.Cli
 	}
 
 	return &tfContext, nil
+}
+
+func EscapeDollarEscapes(data map[string]interface{}) map[string]interface{} {
+	var processMap func(map[string]interface{}) map[string]interface{}
+	processMap = func(input map[string]interface{}) map[string]interface{} {
+		result := make(map[string]interface{})
+		for key, value := range input {
+			switch v := value.(type) {
+			case string:
+				if strings.Contains(v, "${") && !strings.Contains(v, "$${") {
+					result[key] = strings.ReplaceAll(v, "${", "$${")
+				} else {
+					result[key] = v
+				}
+			case map[string]interface{}:
+				// Process nested maps recursively
+				result[key] = processMap(v)
+			default:
+				// Leave non-string values unchanged
+				result[key] = v
+			}
+		}
+		return result
+	}
+
+	// Process the top-level map
+	return processMap(data)
+
 }
