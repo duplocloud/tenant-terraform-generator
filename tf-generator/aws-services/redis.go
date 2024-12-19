@@ -194,7 +194,7 @@ func generateRedisVars(duplo duplosdk.DuploEcacheInstance, prefix string) []comm
 	ver := duplo.EngineVersion
 	if duplo.CacheType == 0 {
 		verSplit := strings.Split(duplo.EngineVersion, ".")
-		if verSplit[1] == "0" || verSplit[2] == "0" {
+		if verSplit[1] == "0" || (len(verSplit) == 3 && verSplit[2] == "0") {
 			ver = verSplit[0] + "." + verSplit[1]
 		}
 	}
