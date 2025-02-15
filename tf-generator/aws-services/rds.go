@@ -129,6 +129,14 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						},
 					})
 				}
+				rrBody.SetAttributeTraversal("enhanced_monitoring", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "enhanced_monitoring",
+					},
+				})
 
 				lifecycleBody := rrBody.AppendNewBlock("lifecycle", nil).Body()
 				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
@@ -296,6 +304,14 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						},
 					})
 				}
+				rdsBody.SetAttributeTraversal("enhanced_monitoring", hcl.Traversal{
+					hcl.TraverseRoot{
+						Name: "var",
+					},
+					hcl.TraverseAttr{
+						Name: varFullPrefix + "enhanced_monitoring",
+					},
+				})
 
 				rdsBody.SetAttributeValue("enable_iam_auth", cty.BoolVal(rds.EnableIamAuth))
 				lifecycleBody := rdsBody.AppendNewBlock("lifecycle", nil).Body()
@@ -365,6 +381,13 @@ func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.
 		}
 		varConfigs["retention_period"] = var6
 	}
+	var2 := common.VarConfig{
+		Name:       prefix + "enchanced_monitoring",
+		DefaultVal: strconv.Itoa(duplo.MonitoringInterval),
+		TypeVal:    "number",
+	}
+	varConfigs["enhanced_monitoring"] = var2
+
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)
@@ -445,6 +468,12 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 		}
 		varConfigs["retention_period"] = var9
 	}
+	var10 := common.VarConfig{
+		Name:       prefix + "enchanced_monitoring",
+		DefaultVal: strconv.Itoa(duplo.MonitoringInterval),
+		TypeVal:    "number",
+	}
+	varConfigs["enhanced_monitoring"] = var10
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
 		vars = append(vars, v)

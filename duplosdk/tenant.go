@@ -136,7 +136,9 @@ func (c *Client) TenantDelete(tenantID string) ClientError {
 // ListTenantsForUser retrieves a list of tenants for the current user via the Duplo API.
 func (c *Client) ListTenantsForUser() (*[]DuploTenant, ClientError) {
 	list := []DuploTenant{}
-	err := c.getAPI("ListTenantsForUser()", "admin/GetTenantsForUser", &list)
+	//err := c.getAPI("ListTenantsForUser()", "admin/GetTenantsForUser", &list)
+	err := c.getAPI("ListTenantsForUser()", "adminproxy/GetTenantNames", &list)
+
 	if err != nil {
 		return nil, err
 	}
