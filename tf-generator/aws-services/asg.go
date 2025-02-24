@@ -141,13 +141,15 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					rootBody.AppendNewline()
 				}
 			}
-			for _, duploObject := range *asgProfile.Taints {
-				taintBlock := asgBody.AppendNewBlock("taints", nil)
-				taintBody := taintBlock.Body()
-				taintBody.SetAttributeValue("key", cty.StringVal(duploObject.Key))
-				taintBody.SetAttributeValue("value", cty.StringVal(duploObject.Value))
-				taintBody.SetAttributeValue("effect", cty.StringVal(duploObject.Effect))
+			if asgProfile.Taints != nil {
+				for _, duploObject := range *asgProfile.Taints {
+					taintBlock := asgBody.AppendNewBlock("taints", nil)
+					taintBody := taintBlock.Body()
+					taintBody.SetAttributeValue("key", cty.StringVal(duploObject.Key))
+					taintBody.SetAttributeValue("value", cty.StringVal(duploObject.Value))
+					taintBody.SetAttributeValue("effect", cty.StringVal(duploObject.Effect))
 
+				}
 			}
 
 			//TODO - Duplo provider doesn't handle this yet.
