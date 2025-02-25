@@ -57,6 +57,9 @@ func (k8sJob *K8sJob) Generate(config *common.Config, client *duplosdk.Client) (
 		flattenJobV1Spec(d.Spec, specBody)
 
 		cronjobBody.SetAttributeValue("is_any_host_allowed", cty.BoolVal(d.IsAnyHostAllowed))
+		allocationTags := GetAllocationTags(d.Spec.Template.Spec.NodeSelector)
+
+		cronjobBody.SetAttributeValue("allocation_tags", cty.StringVal(allocationTags))
 
 		_, err = tfFile.Write(hclFile.Bytes())
 		if err != nil {

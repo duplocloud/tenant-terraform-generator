@@ -60,6 +60,10 @@ func (k8sCronJob *K8sCronJob) Generate(config *common.Config, client *duplosdk.C
 		specBody := specBlock.Body()
 		flattenSpec(d.Spec, specBody)
 		cronjobBody.SetAttributeValue("is_any_host_allowed", cty.BoolVal(d.IsAnyHostAllowed))
+		allocationTags := GetAllocationTags(d.Spec.JobTemplate.Spec.Template.Spec.NodeSelector)
+
+		cronjobBody.SetAttributeValue("allocation_tags", cty.StringVal(allocationTags))
+
 		_, err = tfFile.Write(hclFile.Bytes())
 		if err != nil {
 			fmt.Println(err)
@@ -1002,4 +1006,11 @@ func flattenNodeSelectorRequirementList(nodeSelecterReqs []corev1.NodeSelectorRe
 		matchExpBody.SetAttributeValue("operator", cty.StringVal(string(n.Operator)))
 		matchExpBody.SetAttributeValue("values", cty.ListVal(common.StringSliceToListVal(n.Values)))
 	}
+}
+
+func GetAllocationTags(nodeSelector map[string]string) string {
+	if val, ok := nodeSelector["allocationtags"]; ok {
+		return val
+	}
+	return ""
 }
