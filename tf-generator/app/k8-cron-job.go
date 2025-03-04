@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"tenant-terraform-generator/duplosdk"
 	"tenant-terraform-generator/tf-generator/common"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/zclconf/go-cty/cty"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
@@ -60,6 +62,10 @@ func (k8sCronJob *K8sCronJob) Generate(config *common.Config, client *duplosdk.C
 		specBody := specBlock.Body()
 		flattenSpec(d.Spec, specBody)
 		cronjobBody.SetAttributeValue("is_any_host_allowed", cty.BoolVal(d.IsAnyHostAllowed))
+		allocationTags := GetAllocationTags(d.Spec.JobTemplate.Spec.Template.Spec.NodeSelector)
+
+		cronjobBody.SetAttributeValue("allocation_tags", cty.StringVal(allocationTags))
+
 		_, err = tfFile.Write(hclFile.Bytes())
 		if err != nil {
 			fmt.Println(err)
@@ -312,7 +318,137 @@ func flattenPodSpec(spec corev1.PodSpec, specBody *hclwrite.Body) {
 		topologyBlock := specBody.AppendNewBlock("topology_spread_constraint", nil)
 		flattenTopologySpreadConstraints(spec.TopologySpreadConstraints, topologyBlock)
 	}
+	if len(spec.Volumes) > 0 {
+
+		flattenVolumes(spec.Volumes, specBody)
+
+	}
 }
+
+func flattenVolumes(volumes []corev1.Volume, specBody *hclwrite.Body) {
+	for _, v := range volumes {
+		volBlock := specBody.AppendNewBlock("volume", nil)
+
+		volBody := volBlock.Body()
+
+		if v.Name != "" {
+			volBody.SetAttributeValue("name", cty.StringVal(v.Name))
+		}
+		if v.ConfigMap != nil {
+			confMap := volBody.AppendNewBlock("config_map", nil)
+			flattenConfigMapVolumeSource(v.ConfigMap, confMap)
+		}
+		if v.GitRepo != nil {
+			gitBlk := volBody.AppendNewBlock("git_repo", nil)
+			flattenGitRepoVolumeSource(v.GitRepo, gitBlk)
+		}
+		if v.EmptyDir != nil {
+			emptyDir := volBody.AppendNewBlock("empty_dir", nil)
+			flattenEmptyDirVolumeSource(v.EmptyDir, emptyDir)
+		}
+		if v.DownwardAPI != nil {
+			downWardApi := volBody.AppendNewBlock("downward_api", nil)
+
+			flattenDownwardAPIVolumeSource(v.DownwardAPI, downWardApi)
+		}
+		if v.PersistentVolumeClaim != nil {
+			pvcBlk := volBody.AppendNewBlock("persistent_volume_claim", nil)
+			pvc := pvcBlk.Body()
+			flattenPersistentVolumeClaimVolumeSource(v.PersistentVolumeClaim, pvc)
+		}
+		if v.Secret != nil {
+			secBlock := volBody.AppendNewBlock("secret", nil)
+
+			flattenSecretVolumeSource(v.Secret, secBlock)
+		}
+		if v.Projected != nil {
+			pvc := volBody.AppendNewBlock("projected", nil)
+
+			flattenProjectedVolumeSource(v.Projected, pvc.Body())
+		}
+		if v.GCEPersistentDisk != nil {
+			pd := volBody.AppendNewBlock("gce_persistent_disk", nil)
+
+			flattenGCEPersistentDiskVolumeSource(v.GCEPersistentDisk, pd.Body())
+		}
+		if v.AWSElasticBlockStore != nil {
+			ebd := volBody.AppendNewBlock("aws_elastic_block_store", nil)
+			flattenAWSElasticBlockStoreVolumeSource(v.AWSElasticBlockStore, ebd.Body())
+		}
+		if v.HostPath != nil {
+			hp := volBody.AppendNewBlock("host_path", nil)
+			flattenHostPathVolumeSource(v.HostPath, hp.Body())
+		}
+		if v.Glusterfs != nil {
+			gfs := volBody.AppendNewBlock("glusterfs", nil)
+			flattenGlusterfsVolumeSource(v.Glusterfs, gfs.Body())
+		}
+		if v.NFS != nil {
+			nfs := volBody.AppendNewBlock("nfs", nil)
+			flattenNFSVolumeSource(v.NFS, nfs.Body())
+		}
+		if v.RBD != nil {
+			rbd := volBody.AppendNewBlock("rbd", nil)
+
+			flattenRBDVolumeSource(v.RBD, rbd.Body())
+		}
+		if v.ISCSI != nil {
+			isc := volBody.AppendNewBlock("iscsi", nil)
+			flattenISCSIVolumeSource(v.ISCSI, isc.Body())
+		}
+		if v.Cinder != nil {
+			cin := volBody.AppendNewBlock("cinder", nil)
+
+			flattenCinderVolumeSource(v.Cinder, cin.Body())
+		}
+		if v.CephFS != nil {
+			cep := volBody.AppendNewBlock("ceph_fs", nil)
+
+			flattenCephFSVolumeSource(v.CephFS, cep.Body())
+		}
+		if v.CSI != nil {
+			csi := volBody.AppendNewBlock("csi", nil)
+
+			flattenCSIVolumeSource(v.CSI, csi.Body())
+		}
+		if v.FC != nil {
+			fc := volBody.AppendNewBlock("fc", nil)
+			flattenFCVolumeSource(v.FC, fc.Body())
+		}
+		if v.Flocker != nil {
+			flok := volBody.AppendNewBlock("flocker", nil)
+			flattenFlockerVolumeSource(v.Flocker, flok.Body())
+		}
+		if v.FlexVolume != nil {
+			flxVol := volBody.AppendNewBlock("flex_volume", nil)
+
+			flattenFlexVolumeSource(v.FlexVolume, flxVol.Body())
+		}
+		if v.AzureFile != nil {
+			az := volBody.AppendNewBlock("azure_file", nil)
+
+			flattenAzureFileVolumeSource(v.AzureFile, az.Body())
+		}
+		if v.VsphereVolume != nil {
+			vs := volBody.AppendNewBlock("vsphere_volume", nil)
+
+			flattenVsphereVirtualDiskVolumeSource(v.VsphereVolume, vs.Body())
+		}
+		if v.Quobyte != nil {
+			qb := volBody.AppendNewBlock("quobyte", nil)
+			flattenQuobyteVolumeSource(v.Quobyte, qb.Body())
+		}
+		if v.AzureDisk != nil {
+			azd := volBody.AppendNewBlock("azure_disk", nil)
+			flattenAzureDiskVolumeSource(v.AzureDisk, azd.Body())
+		}
+		if v.PhotonPersistentDisk != nil {
+			ppd := volBody.AppendNewBlock("photon_persistent_disk", nil)
+			flattenPhotonPersistentDiskVolumeSource(v.PhotonPersistentDisk, ppd.Body())
+		}
+	}
+}
+
 func flattenTopologySpreadConstraints(tsc []corev1.TopologySpreadConstraint, tscBlock *hclwrite.Block) {
 	for _, v := range tsc {
 		tscBody := tscBlock.Body()
@@ -1001,5 +1137,520 @@ func flattenNodeSelectorRequirementList(nodeSelecterReqs []corev1.NodeSelectorRe
 		matchExpBody.SetAttributeValue("key", cty.StringVal(n.Key))
 		matchExpBody.SetAttributeValue("operator", cty.StringVal(string(n.Operator)))
 		matchExpBody.SetAttributeValue("values", cty.ListVal(common.StringSliceToListVal(n.Values)))
+	}
+}
+
+func GetAllocationTags(nodeSelector map[string]string) string {
+	if val, ok := nodeSelector["allocationtags"]; ok {
+		return val
+	}
+	return ""
+}
+
+func flattenConfigMapVolumeSource(in *corev1.ConfigMapVolumeSource, configMapBlock *hclwrite.Block) {
+	configBody := configMapBlock.Body()
+	if in.DefaultMode != nil {
+		configBody.SetAttributeValue("default_mode", cty.StringVal("0"+strconv.FormatInt(int64(*in.DefaultMode), 8)))
+	}
+	configBody.SetAttributeValue("name", cty.StringVal(in.Name))
+	if len(in.Items) > 0 {
+		for _, v := range in.Items {
+			itemBlock := configBody.AppendNewBlock("items", nil)
+			flattenItemBlock(v, itemBlock)
+
+		}
+	}
+	if in.Optional != nil {
+		configBody.SetAttributeValue("optional", cty.BoolVal(*in.Optional))
+	}
+}
+
+func flattenSecretVolumeSource(in *corev1.SecretVolumeSource, secretBlock *hclwrite.Block) {
+	secretBody := secretBlock.Body()
+	if in.DefaultMode != nil {
+		secretBody.SetAttributeValue("default_mode", cty.StringVal("0"+strconv.FormatInt(int64(*in.DefaultMode), 8)))
+	}
+	if in.SecretName != "" {
+		secretBody.SetAttributeValue("secret_name", cty.StringVal(in.SecretName))
+	}
+	if len(in.Items) > 0 {
+		for _, v := range in.Items {
+			itemBlock := secretBody.AppendNewBlock("items", nil)
+			flattenItemBlock(v, itemBlock)
+		}
+	}
+	if in.Optional != nil {
+		secretBody.SetAttributeValue("optional", cty.BoolVal(*in.Optional))
+	}
+}
+
+func flattenItemBlock(item corev1.KeyToPath, itemBlock *hclwrite.Block) {
+	itemBody := itemBlock.Body()
+	m := map[string]interface{}{}
+	if item.Key != "" {
+		itemBody.SetAttributeValue("key", cty.StringVal(item.Key))
+	}
+	if item.Mode != nil {
+		itemBody.SetAttributeValue("mode", cty.StringVal("0"+strconv.FormatInt(int64(*item.Mode), 8)))
+	}
+	if item.Path != "" {
+		m["path"] = item.Path
+		itemBody.SetAttributeValue("path", cty.StringVal(item.Path))
+
+	}
+}
+
+func flattenGitRepoVolumeSource(in *corev1.GitRepoVolumeSource, gitRepoBlock *hclwrite.Block) {
+	gitRepoBody := gitRepoBlock.Body()
+	if in.Directory != "" {
+		gitRepoBody.SetAttributeValue("directory", cty.StringVal(in.Directory))
+	}
+
+	gitRepoBody.SetAttributeValue("repository", cty.StringVal(in.Repository))
+
+	if in.Revision != "" {
+		gitRepoBody.SetAttributeValue("revision", cty.StringVal(in.Revision))
+
+	}
+}
+
+func flattenEmptyDirVolumeSource(in *corev1.EmptyDirVolumeSource, emptyDir *hclwrite.Block) {
+	emptyBody := emptyDir.Body()
+	emptyBody.SetAttributeValue("medium", cty.StringVal(string(in.Medium)))
+	if in.SizeLimit != nil {
+		emptyBody.SetAttributeValue("size_limit", cty.StringVal(in.SizeLimit.String()))
+
+	}
+}
+
+func flattenDownwardAPIVolumeSource(in *corev1.DownwardAPIVolumeSource, downwardApi *hclwrite.Block) {
+	downwardApiBody := downwardApi.Body()
+	if in.DefaultMode != nil {
+		downwardApiBody.SetAttributeValue("default_mode", cty.StringVal("0"+strconv.FormatInt(int64(*in.DefaultMode), 8)))
+	}
+	if len(in.Items) > 0 {
+		flattenDownwardAPIVolumeFile(in.Items, downwardApiBody)
+	}
+}
+
+func flattenDownwardAPIVolumeFile(in []corev1.DownwardAPIVolumeFile, downwardApi *hclwrite.Body) {
+	for _, v := range in {
+		item := downwardApi.AppendNewBlock("items", nil)
+		itemBody := item.Body()
+		if v.FieldRef != nil {
+			fref := itemBody.AppendNewBlock("field_ref", nil)
+			frefBody := fref.Body()
+			flattenObjectFieldSelector(v.FieldRef, frefBody)
+		}
+		if v.Mode != nil {
+			itemBody.SetAttributeValue("mode", cty.StringVal("0"+strconv.FormatInt(int64(*v.Mode), 8)))
+		}
+		if v.Path != "" {
+			itemBody.SetAttributeValue("path", cty.StringVal(v.Path))
+
+		}
+		if v.ResourceFieldRef != nil {
+			rfref := itemBody.AppendNewBlock("resource_field_ref", nil)
+			rfrefBody := rfref.Body()
+
+			flattenResourceFieldSelector(v.ResourceFieldRef, rfrefBody)
+		}
+	}
+}
+
+func flattenPersistentVolumeClaimVolumeSource(in *corev1.PersistentVolumeClaimVolumeSource, pvcs *hclwrite.Body) {
+	if in.ClaimName != "" {
+		pvcs.SetAttributeValue("claim_name", cty.StringVal(in.ClaimName))
+	}
+	if in.ReadOnly {
+		pvcs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+}
+
+func flattenProjectedVolumeSource(in *corev1.ProjectedVolumeSource, pvs *hclwrite.Body) {
+	if in.DefaultMode != nil {
+		pvs.SetAttributeValue("default_mode", cty.StringVal("0"+strconv.FormatInt(int64(*in.DefaultMode), 8)))
+	}
+	if len(in.Sources) > 0 {
+		for _, src := range in.Sources {
+			if src.Secret != nil {
+				sp := pvs.AppendNewBlock("secret", nil)
+				flattenSecretProjection(src.Secret, sp.Body())
+			}
+			if src.ConfigMap != nil {
+				cmp := pvs.AppendNewBlock("config_map", nil)
+				flattenConfigMapProjection(src.ConfigMap, cmp.Body())
+			}
+			if src.DownwardAPI != nil {
+				dapi := pvs.AppendNewBlock("downward_api", nil)
+				flattenDownwardAPIProjection(src.DownwardAPI, dapi.Body())
+			}
+			if src.ServiceAccountToken != nil {
+				sat := pvs.AppendNewBlock("service_account_token", nil)
+				flattenServiceAccountTokenProjection(src.ServiceAccountToken, *sat.Body())
+			}
+		}
+	}
+}
+
+func flattenSecretProjection(in *corev1.SecretProjection, sp *hclwrite.Body) {
+	if in.Name != "" {
+		sp.SetAttributeValue("name", cty.StringVal(in.Name))
+	}
+	if len(in.Items) > 0 {
+		for _, v := range in.Items {
+			itemBlock := sp.AppendNewBlock("items", nil)
+			flattenItemBlock(v, itemBlock)
+		}
+
+	}
+	if in.Optional != nil {
+		sp.SetAttributeValue("optional", cty.BoolVal(*in.Optional))
+
+	}
+}
+func flattenConfigMapProjection(in *corev1.ConfigMapProjection, cmp *hclwrite.Body) {
+	cmp.SetAttributeValue("name", cty.StringVal(in.Name))
+	if len(in.Items) > 0 {
+		for _, v := range in.Items {
+			itemBlock := cmp.AppendNewBlock("items", nil)
+			flattenItemBlock(v, itemBlock)
+
+		}
+	}
+}
+
+func flattenDownwardAPIProjection(in *corev1.DownwardAPIProjection, dwapi *hclwrite.Body) {
+	if len(in.Items) > 0 {
+		flattenDownwardAPIVolumeFile(in.Items, dwapi)
+	}
+}
+
+func flattenServiceAccountTokenProjection(in *corev1.ServiceAccountTokenProjection, tok hclwrite.Body) {
+	if in.Audience != "" {
+		tok.SetAttributeValue("audience", cty.StringVal(in.Audience))
+	}
+	if in.ExpirationSeconds != nil {
+		tok.SetAttributeValue("expiration_seconds", cty.NumberIntVal(*in.ExpirationSeconds))
+	}
+	if in.Path != "" {
+		tok.SetAttributeValue("path", cty.StringVal(in.Path))
+	}
+}
+
+func flattenGCEPersistentDiskVolumeSource(in *corev1.GCEPersistentDiskVolumeSource, pdvs *hclwrite.Body) {
+	pdvs.SetAttributeValue("pd_name", cty.StringVal(in.PDName))
+	if in.FSType != "" {
+		pdvs.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+
+	}
+	if in.Partition != 0 {
+		pdvs.SetAttributeValue("partition", cty.NumberIntVal(int64(in.Partition)))
+
+	}
+	if in.ReadOnly {
+		pdvs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+
+	}
+}
+
+func flattenAWSElasticBlockStoreVolumeSource(in *corev1.AWSElasticBlockStoreVolumeSource, ebs *hclwrite.Body) {
+	ebs.SetAttributeValue("volume_id", cty.StringVal(in.VolumeID))
+	if in.FSType != "" {
+		ebs.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+	}
+	if in.Partition != 0 {
+		ebs.SetAttributeValue("partition", cty.NumberIntVal(int64(in.Partition)))
+	}
+	if in.ReadOnly {
+		ebs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+}
+
+func flattenHostPathVolumeSource(in *corev1.HostPathVolumeSource, hpv *hclwrite.Body) {
+	hpv.SetAttributeValue("path", cty.StringVal(in.Path))
+	if in.Type != nil {
+		hpv.SetAttributeValue("type", cty.StringVal(string(*in.Type)))
+
+	}
+}
+
+func flattenGlusterfsVolumeSource(in *corev1.GlusterfsVolumeSource, gfs *hclwrite.Body) {
+	att := make(map[string]interface{})
+	gfs.SetAttributeValue("endpoints_name", cty.StringVal(in.EndpointsName))
+	gfs.SetAttributeValue("endpoints_name", cty.StringVal(in.Path))
+
+	if in.ReadOnly {
+		att["read_only"] = in.ReadOnly
+		gfs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+
+	}
+}
+
+func flattenNFSVolumeSource(in *corev1.NFSVolumeSource, nfs *hclwrite.Body) {
+	nfs.SetAttributeValue("server", cty.StringVal(in.Server))
+	nfs.SetAttributeValue("path", cty.StringVal(in.Path))
+	if in.ReadOnly {
+		nfs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+}
+
+func flattenRBDVolumeSource(in *corev1.RBDVolumeSource, rbd *hclwrite.Body) {
+	set := newStringSet(schema.HashString, in.CephMonitors)
+	val := setToCty(set)
+	rbd.SetAttributeValue("ceph_monitors", cty.SetVal(val))
+	rbd.SetAttributeValue("rbd_image", cty.StringVal(in.RBDImage))
+	if in.FSType != "" {
+		rbd.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+
+	}
+	if in.RBDPool != "" {
+		rbd.SetAttributeValue("fs_type", cty.StringVal(in.RBDPool))
+
+	}
+	if in.FSType != "" {
+		rbd.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+
+	}
+	if in.RBDPool != "" {
+		rbd.SetAttributeValue("rbd_pool", cty.StringVal(in.RBDPool))
+
+	}
+	if in.RadosUser != "" {
+		rbd.SetAttributeValue("rados_user", cty.StringVal(in.RBDPool))
+
+	}
+	if in.Keyring != "" {
+		rbd.SetAttributeValue("keyring", cty.StringVal(in.Keyring))
+
+	}
+
+	if in.ReadOnly {
+		rbd.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+
+	}
+	if in.SecretRef != nil {
+		secrf := rbd.AppendNewBlock("secret_ref", nil)
+		flattenLocalObjectReference(in.SecretRef, secrf.Body())
+
+	}
+
+}
+
+func newStringSet(f schema.SchemaSetFunc, in []string) *schema.Set {
+	var out = make([]interface{}, len(in))
+	for i, v := range in {
+		out[i] = v
+	}
+	return schema.NewSet(f, out)
+}
+
+func setToCty(set *schema.Set) []cty.Value {
+	if set == nil || set.Len() == 0 {
+		return nil
+	}
+
+	// Extract list of values
+	values := set.List()
+
+	// Convert to cty values
+	ctyValues := make([]cty.Value, len(values))
+	for i, v := range values {
+		ctyValues[i] = cty.StringVal(v.(string))
+	}
+
+	return ctyValues
+}
+
+func flattenLocalObjectReference(in *corev1.LocalObjectReference, lbr *hclwrite.Body) {
+	if in.Name != "" {
+		lbr.SetAttributeValue("name", cty.StringVal(in.Name))
+	}
+}
+
+func flattenISCSIVolumeSource(in *corev1.ISCSIVolumeSource, iscvol *hclwrite.Body) {
+
+	if in.TargetPortal != "" {
+		iscvol.SetAttributeValue("target_portal", cty.StringVal(in.TargetPortal))
+	}
+	if in.IQN != "" {
+		iscvol.SetAttributeValue("iqn", cty.StringVal(in.IQN))
+
+	}
+	if in.Lun != 0 {
+		iscvol.SetAttributeValue("lun", cty.NumberIntVal(int64(in.Lun)))
+
+	}
+	if in.ISCSIInterface != "" {
+		iscvol.SetAttributeValue("iscsi_interface", cty.StringVal(in.ISCSIInterface))
+	}
+	if in.FSType != "" {
+		iscvol.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+
+	}
+	if in.ReadOnly {
+		iscvol.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+
+	}
+}
+
+func flattenCinderVolumeSource(in *corev1.CinderVolumeSource, cin *hclwrite.Body) {
+	cin.SetAttributeValue("volume_id", cty.StringVal(in.VolumeID))
+	if in.FSType != "" {
+		cin.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+	}
+	if in.ReadOnly {
+		cin.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+
+}
+
+func flattenCephFSVolumeSource(in *corev1.CephFSVolumeSource, cep *hclwrite.Body) {
+	set := newStringSet(schema.HashString, in.Monitors)
+	val := setToCty(set)
+	cep.SetAttributeValue("monitors", cty.SetVal(val))
+
+	if in.Path != "" {
+		cep.SetAttributeValue("path", cty.StringVal(in.Path))
+
+	}
+	if in.User != "" {
+		cep.SetAttributeValue("user", cty.StringVal(in.User))
+
+	}
+	if in.SecretFile != "" {
+		cep.SetAttributeValue("secret_file", cty.StringVal(in.SecretFile))
+
+	}
+	if in.SecretRef != nil {
+		secrf := cep.AppendNewBlock("secret_ref", nil)
+		flattenLocalObjectReference(in.SecretRef, secrf.Body())
+	}
+	if in.ReadOnly {
+		cep.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+
+	}
+}
+
+func flattenCSIVolumeSource(in *corev1.CSIVolumeSource, csi *hclwrite.Body) {
+	csi.SetAttributeValue("driver", cty.StringVal(in.Driver))
+	if in.ReadOnly != nil {
+		csi.SetAttributeValue("read_only", cty.BoolVal(*in.ReadOnly))
+
+	}
+	if in.FSType != nil {
+		csi.SetAttributeValue("fs_type", cty.StringVal(*in.FSType))
+	}
+	if len(in.VolumeAttributes) > 0 {
+		volAtt := make(map[string]cty.Value)
+		for k, v := range in.VolumeAttributes {
+			volAtt[k] = cty.StringVal(v)
+		}
+		csi.SetAttributeValue("volume_attributes", cty.MapVal(volAtt))
+
+	}
+	if in.NodePublishSecretRef != nil {
+		npsr := csi.AppendNewBlock("node_publish_secret_ref", nil)
+		flattenLocalObjectReference(in.NodePublishSecretRef, npsr.Body())
+	}
+}
+
+func flattenFCVolumeSource(in *corev1.FCVolumeSource, fc *hclwrite.Body) {
+	set := newStringSet(schema.HashString, in.TargetWWNs)
+	val := setToCty(set)
+	fc.SetAttributeValue("target_ww_ns", cty.SetVal(val))
+
+	if in.Lun != nil {
+		fc.SetAttributeValue("lun", cty.NumberIntVal(int64(*in.Lun)))
+	}
+	if in.FSType != "" {
+		fc.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+	}
+	if in.ReadOnly {
+		fc.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+}
+
+func flattenFlockerVolumeSource(in *corev1.FlockerVolumeSource, flk *hclwrite.Body) {
+	flk.SetAttributeValue("dataset_name", cty.StringVal(in.DatasetName))
+	flk.SetAttributeValue("dataset_uuid", cty.StringVal(in.DatasetUUID))
+}
+
+func flattenFlexVolumeSource(in *corev1.FlexVolumeSource, fvs *hclwrite.Body) {
+	fvs.SetAttributeValue("driver", cty.StringVal(in.Driver))
+	if in.FSType != "" {
+		fvs.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+	}
+	if in.SecretRef != nil {
+		sec := fvs.AppendNewBlock("node_publish_secret_ref", nil)
+		flattenLocalObjectReference(in.SecretRef, sec.Body())
+	}
+	if in.ReadOnly {
+		fvs.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+
+	if len(in.Options) > 0 {
+		op := make(map[string]cty.Value)
+		for k, v := range in.Options {
+			op[k] = cty.StringVal(v)
+		}
+		fvs.SetAttributeValue("options", cty.MapVal(op))
+
+	}
+}
+
+func flattenAzureFileVolumeSource(in *corev1.AzureFileVolumeSource, az *hclwrite.Body) {
+	az.SetAttributeValue("secret_name", cty.StringVal(in.SecretName))
+	az.SetAttributeValue("share_name", cty.StringVal(in.ShareName))
+
+	if in.ReadOnly {
+		az.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+}
+
+func flattenVsphereVirtualDiskVolumeSource(in *corev1.VsphereVirtualDiskVolumeSource, vs *hclwrite.Body) {
+	vs.SetAttributeValue("volume_path", cty.StringVal(in.VolumePath))
+	if in.FSType != "" {
+		vs.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+	}
+}
+
+func flattenQuobyteVolumeSource(in *corev1.QuobyteVolumeSource, qb *hclwrite.Body) {
+
+	qb.SetAttributeValue("registry", cty.StringVal(in.Registry))
+	qb.SetAttributeValue("volume", cty.StringVal(in.Volume))
+	if in.ReadOnly {
+		qb.SetAttributeValue("read_only", cty.BoolVal(in.ReadOnly))
+	}
+	if in.User != "" {
+		qb.SetAttributeValue("user", cty.StringVal(in.User))
+	}
+	if in.Group != "" {
+		qb.SetAttributeValue("group", cty.StringVal(in.Group))
+	}
+}
+
+func flattenAzureDiskVolumeSource(in *corev1.AzureDiskVolumeSource, azd *hclwrite.Body) {
+	azd.SetAttributeValue("disk_name", cty.StringVal(in.DiskName))
+	azd.SetAttributeValue("data_disk_uri", cty.StringVal(in.DataDiskURI))
+	if in.Kind != nil {
+		azd.SetAttributeValue("kind", cty.StringVal(string(*in.Kind)))
+	}
+	if in.CachingMode != nil {
+		azd.SetAttributeValue("caching_mode", cty.StringVal(string(*in.CachingMode)))
+	}
+	if in.FSType != nil {
+		azd.SetAttributeValue("fs_type", cty.StringVal(*in.FSType))
+	}
+	if in.ReadOnly != nil {
+		azd.SetAttributeValue("read_only", cty.BoolVal(*in.ReadOnly))
+	}
+}
+
+func flattenPhotonPersistentDiskVolumeSource(in *corev1.PhotonPersistentDiskVolumeSource, ppd *hclwrite.Body) {
+	ppd.SetAttributeValue("pd_id", cty.StringVal(in.PdID))
+	if in.FSType != "" {
+		ppd.SetAttributeValue("fs_type", cty.StringVal(in.FSType))
+
 	}
 }
