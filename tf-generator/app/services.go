@@ -439,6 +439,11 @@ func (s *Services) Generate(config *common.Config, client *duplosdk.Client) (*co
 							},
 						})
 					}
+					if serviceConfig.BeProtocolVersion != "" && serviceConfig.LbType == 1 {
+						lbConfigBlockBody.SetAttributeValue("backend_protocol",
+							cty.StringVal(serviceConfig.BeProtocolVersion))
+
+					}
 					//svcConfigBody.AppendNewline()
 				}
 				if doesReplicationControllerHaveAlbOrNlb(&service) {
