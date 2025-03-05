@@ -1,0 +1,49 @@
+2025-03-05T14:36:13.019+0530 [INFO]  Terraform version: 1.5.7
+2025-03-05T14:36:13.019+0530 [DEBUG] using github.com/hashicorp/go-tfe v1.26.0
+2025-03-05T14:36:13.019+0530 [DEBUG] using github.com/hashicorp/hcl/v2 v2.16.2
+2025-03-05T14:36:13.019+0530 [DEBUG] using github.com/hashicorp/terraform-svchost v0.1.0
+2025-03-05T14:36:13.019+0530 [DEBUG] using github.com/zclconf/go-cty v1.12.2
+2025-03-05T14:36:13.019+0530 [INFO]  Go runtime version: go1.23.1
+2025-03-05T14:36:13.019+0530 [INFO]  CLI args: []string{"terraform", "destroy"}
+2025-03-05T14:36:13.019+0530 [DEBUG] Attempting to open CLI config file: /Users/nikhil/.terraformrc
+2025-03-05T14:36:13.019+0530 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2025-03-05T14:36:13.020+0530 [DEBUG] checking for credentials in "/Users/nikhil/.terraform.d/plugins"
+2025-03-05T14:36:13.020+0530 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2025-03-05T14:36:13.020+0530 [DEBUG] will search for provider plugins in /Users/nikhil/.terraform.d/plugins
+2025-03-05T14:36:13.020+0530 [DEBUG] ignoring non-existing provider search directory /Users/nikhil/Library/Application Support/io.terraform/plugins
+2025-03-05T14:36:13.020+0530 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2025-03-05T14:36:13.021+0530 [INFO]  CLI command args: []string{"destroy"}
+2025-03-05T14:36:13.024+0530 [DEBUG] New state was assigned lineage "521ea06e-750c-1105-9952-709b6f6fc632"
+2025-03-05T14:36:13.024+0530 [DEBUG] checking for provisioner in "."
+2025-03-05T14:36:13.025+0530 [DEBUG] checking for provisioner in "/opt/homebrew/bin"
+2025-03-05T14:36:13.025+0530 [DEBUG] checking for provisioner in "/Users/nikhil/.terraform.d/plugins"
+2025-03-05T14:36:13.027+0530 [INFO]  backend/local: starting Apply operation
+2025-03-05T14:36:13.032+0530 [DEBUG] Building and walking validate graph
+2025-03-05T14:36:13.033+0530 [DEBUG] Starting graph walk: walkValidate
+2025-03-05T14:36:13.034+0530 [INFO]  backend/local: apply calling Plan
+2025-03-05T14:36:13.034+0530 [DEBUG] Building and walking plan graph for DestroyMode
+2025-03-05T14:36:13.035+0530 [DEBUG] Starting graph walk: walkPlanDestroy
+2025-03-05T14:36:13.035+0530 [DEBUG] no planned changes, skipping apply graph check
+2025-03-05T14:36:13.035+0530 [INFO]  backend/local: apply calling Apply
+2025-03-05T14:36:13.035+0530 [DEBUG] Building and walking apply graph for DestroyMode plan
+2025-03-05T14:36:13.035+0530 [DEBUG] Starting graph walk: walkDestroy
+2025-03-05T15:07:21.786+0530 [INFO]  Terraform version: 1.5.7
+2025-03-05T15:07:21.787+0530 [DEBUG] using github.com/hashicorp/go-tfe v1.26.0
+2025-03-05T15:07:21.787+0530 [DEBUG] using github.com/hashicorp/hcl/v2 v2.16.2
+2025-03-05T15:07:21.787+0530 [DEBUG] using github.com/hashicorp/terraform-svchost v0.1.0
+2025-03-05T15:07:21.787+0530 [DEBUG] using github.com/zclconf/go-cty v1.12.2
+2025-03-05T15:07:21.787+0530 [INFO]  Go runtime version: go1.23.1
+2025-03-05T15:07:21.787+0530 [INFO]  CLI args: []string{"terraform", "apply"}
+2025-03-05T15:07:21.787+0530 [DEBUG] Attempting to open CLI config file: /Users/nikhil/.terraformrc
+2025-03-05T15:07:21.787+0530 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2025-03-05T15:07:21.787+0530 [DEBUG] checking for credentials in "/Users/nikhil/.terraform.d/plugins"
+2025-03-05T15:07:21.787+0530 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2025-03-05T15:07:21.787+0530 [DEBUG] will search for provider plugins in /Users/nikhil/.terraform.d/plugins
+2025-03-05T15:07:21.787+0530 [DEBUG] ignoring non-existing provider search directory /Users/nikhil/Library/Application Support/io.terraform/plugins
+2025-03-05T15:07:21.787+0530 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2025-03-05T15:07:21.788+0530 [INFO]  CLI command args: []string{"apply"}
+2025-03-05T15:07:21.789+0530 [DEBUG] New state was assigned lineage "237be50b-109a-cc29-ad51-1715b94e4ce2"
+2025-03-05T15:07:21.789+0530 [DEBUG] checking for provisioner in "."
+2025-03-05T15:07:21.790+0530 [DEBUG] checking for provisioner in "/opt/homebrew/bin"
+2025-03-05T15:07:21.790+0530 [DEBUG] checking for provisioner in "/Users/nikhil/.terraform.d/plugins"
+2025-03-05T15:07:21.791+0530 [INFO]  backend/local: starting Apply operation

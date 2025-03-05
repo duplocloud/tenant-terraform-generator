@@ -301,7 +301,8 @@ func flattenPodSpec(spec corev1.PodSpec, specBody *hclwrite.Body) {
 	}
 	//image_pull_secrets
 	if len(spec.ImagePullSecrets) > 0 {
-		specBody.SetAttributeValue("image_pull_secrets", cty.ListVal(flattenLocalObjectReferenceArray(spec.ImagePullSecrets)))
+
+		flattenLocalObjectReferenceArray(spec.ImagePullSecrets, specBody)
 	}
 	//security_context
 	if spec.SecurityContext != nil {
@@ -540,16 +541,12 @@ func flattenSysctls(sysctls []corev1.Sysctl, sysctlBody *hclwrite.Body) {
 	}
 }
 
-func flattenLocalObjectReferenceArray(in []corev1.LocalObjectReference) []cty.Value {
-	list := []cty.Value{}
+func flattenLocalObjectReferenceArray(in []corev1.LocalObjectReference, specBody *hclwrite.Body) {
 	for _, v := range in {
-		m := map[string]cty.Value{
-			"name": cty.StringVal(v.Name),
-		}
-		mp := cty.MapVal(m)
-		list = append(list, mp)
+		imgPullSecretBlck := specBody.AppendNewBlock("image_pull_secrets", nil)
+		imgBody := imgPullSecretBlck.Body()
+		imgBody.SetAttributeValue("name", cty.StringVal(v.Name))
 	}
-	return list
 }
 
 func flattenReadinessGates(in []corev1.PodReadinessGate, gateBody *hclwrite.Body) {
@@ -616,30 +613,27 @@ func flattenContainers(container []corev1.Container, containerBody *hclwrite.Bod
 		}
 		//port
 		if len(v.Ports) > 0 {
-			portBlock := containerBody.AppendNewBlock("port", nil)
-			flattenContainerPorts(v.Ports, portBlock)
+			flattenContainerPorts(v.Ports, containerBody)
 		}
 		//env
 		if len(v.Env) > 0 {
-			envBlock := containerBody.AppendNewBlock("env", nil)
-			flattenContainerEnvs(v.Env, envBlock)
+			flattenContainerEnvs(v.Env, containerBody)
 		}
 		//env_from
 		if len(v.EnvFrom) > 0 {
-			envformBody := containerBody.AppendNewBlock("env_from", nil).Body()
-			flattenContainerEnvFroms(v.EnvFrom, envformBody)
+			flattenContainerEnvFroms(v.EnvFrom, containerBody)
 
 		}
 		//volumemount
 		if len(v.VolumeMounts) > 0 {
-			volmBlock := containerBody.AppendNewBlock("volume_mount", nil)
-			flattenContainerVolumeMounts(v.VolumeMounts, volmBlock)
+			flattenContainerVolumeMounts(v.VolumeMounts, containerBody)
 		}
 	}
 }
 
-func flattenContainerEnvs(env []corev1.EnvVar, envBlock *hclwrite.Block) {
+func flattenContainerEnvs(env []corev1.EnvVar, containerBody *hclwrite.Body) {
 	for _, v := range env {
+		envBlock := containerBody.AppendNewBlock("env", nil)
 		envBody := envBlock.Body()
 		if v.Name != "" {
 			envBody.SetAttributeValue("name", cty.StringVal(v.Name))
@@ -727,8 +721,10 @@ func flattenValueFrom(value *corev1.EnvVarSource, valueFormBody *hclwrite.Body) 
 	}
 }
 
-func flattenContainerEnvFroms(envForm []corev1.EnvFromSource, envFormBody *hclwrite.Body) {
+func flattenContainerEnvFroms(envForm []corev1.EnvFromSource, containerBody *hclwrite.Body) {
 	for _, v := range envForm {
+		envFormBodyBlck := containerBody.AppendNewBlock("env_from", nil)
+		envFormBody := envFormBodyBlck.Body()
 		if v.ConfigMapRef != nil {
 			confmapBody := envFormBody.AppendNewBlock("config_map_ref", nil).Body()
 			flattenConfigMapRef(v.ConfigMapRef, confmapBody)
@@ -769,9 +765,11 @@ func flattenConfigMapRef(in *corev1.ConfigMapEnvSource, confMapBody *hclwrite.Bo
 	return []interface{}{att}
 }
 
-func flattenContainerPorts(ports []corev1.ContainerPort, portsBlock *hclwrite.Block) {
+func flattenContainerPorts(ports []corev1.ContainerPort, containerBody *hclwrite.Body) {
 	for _, v := range ports {
-		portsBody := portsBlock.Body()
+		portBlock := containerBody.AppendNewBlock("port", nil)
+
+		portsBody := portBlock.Body()
 		portsBody.SetAttributeValue("container_port", cty.NumberIntVal(int64(v.ContainerPort)))
 		if v.HostIP != "" {
 			portsBody.SetAttributeValue("host_ip", cty.StringVal(v.HostIP))
@@ -983,9 +981,11 @@ func flattenExec(exec *corev1.ExecAction, execBlock *hclwrite.Block) {
 	}
 }
 
-func flattenContainerVolumeMounts(volumeMounts []corev1.VolumeMount, volumemountBlock *hclwrite.Block) {
+func flattenContainerVolumeMounts(volumeMounts []corev1.VolumeMount, containerBody *hclwrite.Body) {
 	for _, v := range volumeMounts {
-		vmBody := volumemountBlock.Body()
+		volmBlock := containerBody.AppendNewBlock("volume_mount", nil)
+
+		vmBody := volmBlock.Body()
 		vmBody.SetAttributeValue("read_only", cty.BoolVal(v.ReadOnly))
 		if v.MountPath != "" {
 			vmBody.SetAttributeValue("mount_path", cty.StringVal(v.MountPath))
