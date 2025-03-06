@@ -114,6 +114,9 @@ func (asg *ASG) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				cty.NumberIntVal(int64(asgProfile.Zone)))
 			asgBody.SetAttributeValue("is_minion",
 				cty.BoolVal(asgProfile.IsMinion))
+			asgBody.SetAttributeValue("is_cluster_autoscaled",
+				cty.BoolVal(asgProfile.IsClusterAutoscaled))
+
 			asgBody.SetAttributeValue("is_ebs_optimized",
 				cty.BoolVal(asgProfile.IsEbsOptimized))
 			asgBody.SetAttributeValue("encrypt_disk",
