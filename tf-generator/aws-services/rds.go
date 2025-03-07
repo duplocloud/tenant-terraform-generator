@@ -137,7 +137,25 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 						Name: varFullPrefix + "enhanced_monitoring",
 					},
 				})
-
+				if rds.V2ScalingConfiguration != nil && (rds.V2ScalingConfiguration.MaxCapacity > 0 || rds.V2ScalingConfiguration.MinCapacity > 0) {
+					scalingBody := rrBody.AppendNewBlock("v2_scaling_configuration", nil).Body()
+					scalingBody.SetAttributeTraversal("min_capacity", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "var",
+						},
+						hcl.TraverseAttr{
+							Name: varFullPrefix + "scaling_config_min_capacity",
+						},
+					})
+					scalingBody.SetAttributeTraversal("max_capacity", hcl.Traversal{
+						hcl.TraverseRoot{
+							Name: "var",
+						},
+						hcl.TraverseAttr{
+							Name: varFullPrefix + "scaling_config_max_capacity",
+						},
+					})
+				}
 				lifecycleBody := rrBody.AppendNewBlock("lifecycle", nil).Body()
 				lifecycle := common.StringSliceToListVal([]string{"engine_version"})
 				lifecycleBody.SetAttributeValue("ignore_changes", cty.ListVal(lifecycle))
@@ -215,6 +233,7 @@ func (r *Rds) Generate(config *common.Config, client *duplosdk.Client) (*common.
 				if len(rds.SnapshotID) > 0 {
 					rdsBody.SetAttributeValue("snapshot_id",
 						cty.StringVal(rds.SnapshotID))
+
 				} else {
 					rdsBody.SetAttributeTraversal("master_username", hcl.Traversal{
 						hcl.TraverseRoot{
@@ -360,33 +379,49 @@ func generateRdsRRVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.
 	varConfigs["size"] = var1
 
 	if duplo.EnablePerformanceInsights {
-		var4 := common.VarConfig{
+		var2 := common.VarConfig{
 			Name:       prefix + "performance_insights_enabled",
 			DefaultVal: strconv.FormatBool(duplo.EnablePerformanceInsights),
 			TypeVal:    "bool",
 		}
-		varConfigs["enabled"] = var4
+		varConfigs["enabled"] = var2
 
-		var5 := common.VarConfig{
+		var3 := common.VarConfig{
 			Name:       prefix + "performance_insights_kms_key_id",
 			DefaultVal: duplo.PerformanceInsightsKMSKeyId,
 			TypeVal:    "string",
 		}
-		varConfigs["kms_key_id"] = var5
+		varConfigs["kms_key_id"] = var3
 
-		var6 := common.VarConfig{
+		var4 := common.VarConfig{
 			Name:       prefix + "performance_insights_retention_period",
 			DefaultVal: strconv.Itoa(duplo.PerformanceInsightsRetentionPeriod),
 			TypeVal:    "number",
 		}
-		varConfigs["retention_period"] = var6
+		varConfigs["retention_period"] = var4
 	}
-	var2 := common.VarConfig{
-		Name:       prefix + "enchanced_monitoring",
+	var5 := common.VarConfig{
+		Name:       prefix + "enhanced_monitoring",
 		DefaultVal: strconv.Itoa(duplo.MonitoringInterval),
 		TypeVal:    "number",
 	}
-	varConfigs["enhanced_monitoring"] = var2
+	varConfigs["enhanced_monitoring"] = var5
+
+	if duplo.V2ScalingConfiguration.MaxCapacity > 0 && duplo.V2ScalingConfiguration.MinCapacity > 0 {
+		var6 := common.VarConfig{
+			Name:       prefix + "scaling_config_max_capacity",
+			DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MaxCapacity),
+			TypeVal:    "number",
+		}
+		varConfigs["max_capacity"] = var6
+
+		var7 := common.VarConfig{
+			Name:       prefix + "scaling_config_min_capacity",
+			DefaultVal: fmt.Sprintf("%f", duplo.V2ScalingConfiguration.MinCapacity),
+			TypeVal:    "number",
+		}
+		varConfigs["min_capacity"] = var7
+	}
 
 	vars := make([]common.VarConfig, len(varConfigs))
 	for _, v := range varConfigs {
@@ -469,7 +504,7 @@ func generateRdsVars(duplo duplosdk.DuploRdsInstance, prefix string) []common.Va
 		varConfigs["retention_period"] = var9
 	}
 	var10 := common.VarConfig{
-		Name:       prefix + "enchanced_monitoring",
+		Name:       prefix + "enhanced_monitoring",
 		DefaultVal: strconv.Itoa(duplo.MonitoringInterval),
 		TypeVal:    "number",
 	}
