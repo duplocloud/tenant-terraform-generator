@@ -226,9 +226,9 @@ This infrastructure is divided into terraform sub projects which manages differe
 
   To update your Terraform files with a new tenant name, follow these steps:
 
- **Find the old tenant name in all `.tf` files:**
+  **Find the old tenant name in all `.tf` files:**
 
-   Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
+  Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
 
    ```sh
    grep -ri "oldtenant" --include="*.tf" .
@@ -238,7 +238,7 @@ This infrastructure is divided into terraform sub projects which manages differe
    
    eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
 
->> **Note:**
+  **Note:**
    Use the command below to replace all instances of the old tenant name (`oldtenant`) with the new tenant name (`newtenant`) in all `.tf` files:
 
    ```sh
@@ -252,7 +252,6 @@ This infrastructure is divided into terraform sub projects which manages differe
     - ```shell
        cd ../script 
       ```
-
   - Dry-run
 
     - ```shell
