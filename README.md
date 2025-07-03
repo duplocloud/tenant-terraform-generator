@@ -185,7 +185,7 @@ This infrastructure is divided into terraform sub projects which manages differe
      grep -ri "oldtenant" --include="*.tf" .
      ```
   
-     Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name ith new tenant name. 
+     Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name it new tenant name accordingly. 
      
      eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
 
