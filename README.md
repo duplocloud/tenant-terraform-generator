@@ -175,6 +175,35 @@ This infrastructure is divided into terraform sub projects which manages differe
 
   This project manages AWS services like Redis, RDS, Kafka, S3 buckets, Elastic Search, etc. inside DuploCloud.
 
+  To update your Terraform files with a new tenant name, follow these steps:
+
+ **Find the old tenant name in all `.tf` files:**
+
+   Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
+
+   ```sh
+   grep -ri "oldtenant" --include="*.tf" .
+   ```
+
+   Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name ith new tenant name. 
+   
+   eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
+
+>> **Note:**
+   Use the command below to replace all instances of the old tenant name (`oldtenant`) with the new tenant name (`newtenant`) in all `.tf` files:
+
+   ```sh
+   find . -type f -name "*.tf" -exec sed -i '' 's/oldtenant/newtenant/g' {} +
+   ```
+  kindly test and modify document accordingly
+  
+  **Procedure to execute the scipts:**
+
+  Go to script directory
+    - ```shell
+       cd ../script 
+      ```
+
   - Dry-run
 
     - ```shell
@@ -194,6 +223,35 @@ This infrastructure is divided into terraform sub projects which manages differe
 - **Project - app**
 
   This project manages containerized applications inside DuploCloud like EKS services, ECS, Docker Native service etc.
+
+  To update your Terraform files with a new tenant name, follow these steps:
+
+ **Find the old tenant name in all `.tf` files:**
+
+   Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
+
+   ```sh
+   grep -ri "oldtenant" --include="*.tf" .
+   ```
+
+   Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name ith new tenant name. 
+   
+   eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
+
+>> **Note:**
+   Use the command below to replace all instances of the old tenant name (`oldtenant`) with the new tenant name (`newtenant`) in all `.tf` files:
+
+   ```sh
+   find . -type f -name "*.tf" -exec sed -i '' 's/oldtenant/newtenant/g' {} +
+   ```
+  kindly test and modify document accordingly
+
+  **Procedure to execute the scipts:**
+
+  Go to script directory
+    - ```shell
+       cd ../script 
+      ```
 
   - Dry-run
 
