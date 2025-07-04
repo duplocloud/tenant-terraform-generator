@@ -186,9 +186,9 @@ This infrastructure is divided into terraform sub projects which manages differe
      grep -ri "oldtenant" --include="*.tf" .
      ```
   
-     Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name it new tenant name accordingly. 
+     Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name with new tenant name accordingly. 
      
-     eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
+     Basically, we have to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. as per new tenant name for aws-services and app
 
    **Note:**
      Use the command below to replace all instances of the old tenant name (`oldtenant`) with the new tenant name (`newtenant`) in all `.tf` files:
@@ -236,9 +236,9 @@ This infrastructure is divided into terraform sub projects which manages differe
    grep -ri "oldtenant" --include="*.tf" .
    ```
 
-   Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name ith new tenant name. 
+   Review the output to confirm all occurrences of the old tenant name. Then manually replace the old tenant name with new tenant name. 
    
-   eg: we need to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. for aws-services and app
+   Basically, we have to replace database name and it parameters, secret mongodb url name, ingress rules, fqdn name etc. as per new tenant name for aws-services and app
 
   **Note:**
    Use the command below to replace all instances of the old tenant name (`oldtenant`) with the new tenant name (`newtenant`) in all `.tf` files:
