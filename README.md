@@ -182,6 +182,7 @@ This infrastructure is divided into terraform sub projects which manages differe
     Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
   
     ```sh
+     cd aws-services
      grep -ri "oldtenant" --include="*.tf" .
      ```
   
@@ -231,6 +232,7 @@ This infrastructure is divided into terraform sub projects which manages differe
   Use the following command to search for the old tenant name (replace `oldtenant` with your actual old tenant name):
 
    ```sh
+   cd app
    grep -ri "oldtenant" --include="*.tf" .
    ```
 
