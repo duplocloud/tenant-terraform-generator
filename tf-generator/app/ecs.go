@@ -348,13 +348,13 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 				},
 			})
 
-			name := "duploservices-${local.tenant_name}-" + shortName
-			tdNameTokens := hclwrite.Tokens{
-				{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
-				{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
-				{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
-			}
-			tdBody.SetAttributeRaw("family", tdNameTokens)
+			//name := "duploservices-${local.tenant_name}-" + shortName
+			//tdNameTokens := hclwrite.Tokens{
+			//	{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+			//	{Type: hclsyntax.TokenIdent, Bytes: []byte(name)},
+			//	{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+			//}
+			tdBody.SetAttributeValue("family", cty.StringVal(shortName))
 
 			// tdBody.SetAttributeValue("family",
 			// 	cty.StringVal(taskDefObj.Family))
@@ -365,7 +365,7 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 			tdBody.SetAttributeValue("network_mode",
 				cty.StringVal(tdObj.NetworkMode.Value))
 			tdBody.SetAttributeValue("prevent_tf_destroy",
-				cty.BoolVal(false))
+				cty.BoolVal(true))
 
 			if tdObj.RequiresCompatibilities != nil && len(tdObj.RequiresCompatibilities) > 0 {
 				var vals []cty.Value
@@ -398,7 +398,15 @@ func (ecs *ECS) Generate(config *common.Config, client *duplosdk.Client) (*commo
 					},
 				})
 			}
+			if tdObj.RuntimePlatform != nil {
+				block := tdBody.AppendNewBlock("runtime_platform", nil)
+				body := block.Body()
+				body.SetAttributeValue("operating_system_family",
+					cty.StringVal(tdObj.RuntimePlatform.OSFamily.Value))
+				body.SetAttributeValue("cpu_architecture",
+					cty.StringVal(tdObj.RuntimePlatform.CPUArchitecture.Value))
 
+			}
 			_, err = tfFile.Write(hclFile.Bytes())
 			if err != nil {
 				fmt.Println(err)
